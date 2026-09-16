@@ -165,6 +165,8 @@
     }
     @foreach (var m in modules)
     {
+        // Sistem Tanımları (ülke/şehir/ana birim) tüm kiracıların ORTAK verisi → yalnız SysAdmin (nav ile aynı kapı).
+        if (m.url == "/BackOffice/SystemDefinitions" && !MindAeonRest.Helpers.Session.IsSysAdmin) { continue; }
         var licensed = m.feat is null || Model.Has(m.feat.Value);
         if (licensed)
         {

@@ -44,7 +44,7 @@ public class IndexModel : PageModel
     public List<SelectListItem> TaxOptions { get; private set; } = new();
 
     // Gate: SysAdmin/Patron + Feature.ProductBasic (Products/Edit ile aynı).
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.ProductBasic);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.ProductBasic);
 
     public IActionResult OnGet()
     {

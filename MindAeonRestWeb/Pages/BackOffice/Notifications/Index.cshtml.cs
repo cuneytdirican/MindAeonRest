@@ -39,7 +39,7 @@ public class IndexModel : PageModel
     public string? Saved { get; private set; }
 
     // Bildirim ayarları yönetimsel: yalnız SysAdmin/Patron (Core özellik — lisans kapısı yok).
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     /// <summary>Kanala uygun sağlayıcı seçenekleri (Yok + o kanalın sağlayıcıları).</summary>
     public static List<SelectListItem> ProvidersFor(NotificationChannel ch)

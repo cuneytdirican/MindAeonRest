@@ -31,7 +31,7 @@ public class IndexModel : PageModel
     public bool IsTransfer => Type == DocType.DepoTransfer;
 
     // Ön Muhasebe kapısı — yalnız SysAdmin/Patron + Feature.PreAccounting.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     /// <summary>WPF "İşle"nin özet etkisi (onay diyaloğu metni).</summary>
     public string PostEffect => Type switch

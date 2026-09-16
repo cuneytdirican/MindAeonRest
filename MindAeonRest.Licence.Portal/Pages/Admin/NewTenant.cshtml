@@ -71,6 +71,38 @@ else if (Model.Result is not null)
             </div>
         </div>
 
+        @if (Model.LicenseOutcome is { } lo)
+        {
+            <!-- Lisans atama sonucu (opsiyonel adım). Hata olsa bile yukarıdaki parola görünür kalır. -->
+            @if (lo.Ok)
+            {
+                <div style="background:color-mix(in srgb, var(--success) 12%, transparent);
+                            border:1px solid color-mix(in srgb, var(--success) 45%, transparent);
+                            border-radius:var(--radius-sm); padding:var(--sp-4); margin-bottom:var(--sp-4);">
+                    <div class="flex items-center gap-2" style="color:var(--success); font-weight:600; margin-bottom:var(--sp-2);">
+                        <i data-lucide="key-round"></i> @lo.Message
+                    </div>
+                    @if (lo.Status is { } ls)
+                    {
+                        var lbl = MindAeonRest.Licence.Portal.Models.AdminLabels.PosLicense(ls.State);
+                        <div class="text-sm text-muted">
+                            Lisans kodu <code>@lo.LicenseCode</code> ·
+                            <span class="badge @lbl.Css"><span class="dot"></span> @lbl.Text</span>
+                            · Paket <strong>@ls.Package</strong>
+                            · Bitiş @(ls.ExpiresUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? "Süresiz")
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert-error" style="margin-bottom:var(--sp-4);">
+                    <strong>Tenant oluşturuldu ancak lisans atanamadı.</strong> @lo.Message
+                    <div class="text-sm" style="margin-top:var(--sp-2);">Tenant'lar ekranındaki "Lisans Ata" ile tekrar deneyebilirsiniz.</div>
+                </div>
+            }
+        }
+
         <div class="flex items-center gap-2">
             <a class="btn btn-primary" href="/Admin/Businesses">
                 <i data-lucide="building-2"></i> Portal'da İşletme + Lisans Oluştur
@@ -79,8 +111,8 @@ else if (Model.Result is not null)
             <a class="btn btn-ghost" href="/Admin/NewTenant"><i data-lucide="plus"></i> Yeni bir tane daha</a>
         </div>
         <div class="hint" style="margin-top:var(--sp-3);">
-            Sonraki adım: bu tenant için Portal'da Business kaydı ve lisans oluşturarak faturalandırma/lisans
-            akışına bağlayın.
+            Lisans: Tenant'lar ekranındaki "Lisans Ata" ile paket atayabilir/değiştirebilirsiniz (Business kaydı
+            gerekirse otomatik oluşturulur).
         </div>
     </div>
 }
@@ -112,6 +144,40 @@ else
                 <div class="form-field">
                     <label>Admin Ad Soyad *</label>
                     <input type="text" name="AdminFullName" value="@Model.AdminFullName" required autocomplete="off" />
+                </div>
+            </div>
+            <div x-data="{ pkg: '@(Model.LicensePackage?.ToString() ?? "")', duration: @((int)Model.LicenseDuration), expires: '@(Model.LicenseExpires?.ToString("yyyy-MM-dd") ?? "")',
+                          prefill() {
+                              if (this.duration === 0) { this.expires = ''; return; }
+                              const d = new Date();
+                              if (this.duration === 1) d.setMonth(d.getMonth() + 1); else d.setFullYear(d.getFullYear() + 1);
+                              const pad = n => String(n).padStart(2, '0');
+                              this.expires = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                          } }">
+                <div class="grid grid-3">
+                    <div class="form-field">
+                        <label>Lisans Paketi</label>
+                        <select name="LicensePackage" x-model="pkg">
+                            <option value="">Atama (Lite deneme)</option>
+                            @foreach (var pk in Enum.GetValues<MindAeonRest.Licensing.LicensePackage>())
+                            {
+                                <option value="@((int)pk)">@MindAeonRest.Licensing.PackageMatrix.Name(pk)</option>
+                            }
+                        </select>
+                        <div class="hint">Opsiyonel — seçilirse oluşturma sonrası otomatik atanır.</div>
+                    </div>
+                    <div class="form-field" x-show="pkg !== ''">
+                        <label>Süre</label>
+                        <select name="LicenseDuration" x-model.number="duration" x-on:change="prefill()" x-bind:disabled="pkg === ''">
+                            <option value="0">Süresiz</option>
+                            <option value="1">Aylık</option>
+                            <option value="2">Yıllık</option>
+                        </select>
+                    </div>
+                    <div class="form-field" x-show="pkg !== '' && duration !== 0">
+                        <label>Bitiş Tarihi</label>
+                        <input type="date" name="LicenseExpires" x-model="expires" x-bind:disabled="pkg === '' || duration === 0" />
+                    </div>
                 </div>
             </div>
             <div class="hint" style="margin-bottom:var(--sp-4);">

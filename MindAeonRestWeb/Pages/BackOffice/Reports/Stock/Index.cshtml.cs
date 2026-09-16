@@ -49,7 +49,7 @@ public class IndexModel : PageModel
     public decimal Net => Giris + Cikis;
 
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.AdvancedReports);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.AdvancedReports);
 
     /// <summary>Web'de Session.CurrentCompany.Id dolu değildir; Company.Id'yi koddan çözeriz (Fiche/Branches deseni).</summary>
     private static int? ResolveCompanyId()

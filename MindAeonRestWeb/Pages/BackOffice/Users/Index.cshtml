@@ -10,6 +10,11 @@
     <a class="btn btn-primary" href="/BackOffice/Users/Edit">+ Yeni Kullanıcı</a>
 </div>
 
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
 <form method="get" class="bo-filter">
     <input type="text" name="Q" value="@Model.Q" placeholder="Kullanıcı adı, ad soyad veya rol ara..." class="field" />
     <label class="chk"><input type="checkbox" name="ShowDeleted" value="true" @(Model.ShowDeleted ? "checked" : "") /> Silinenleri göster</label>

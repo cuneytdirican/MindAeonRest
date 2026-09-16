@@ -19,7 +19,7 @@ public class IndexModel : PageModel
     // mode = role bazlı açılış ekranı (patron/kasiyer/mutfak/garson) — yönetici yine 🔀 ile değiştirebilir.
     public string PosUrl => "/PosHandoff?mode=" + PosMode;
     private string PosMode =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) ? "patron"
+        Session.IsTenantAdmin ? "patron"
         : Session.HasRole("Mutfak") ? "kitchen"
         : Session.HasRole("Kasiyer") ? "cashier"
         : "waiter";
@@ -40,7 +40,7 @@ public class IndexModel : PageModel
 
     public void OnGet()
     {
-        ShowDashboard = Session.IsSysAdmin || Session.HasRole("Patron");
+        ShowDashboard = Session.IsTenantAdmin;
         if (!ShowDashboard) return;
 
         int companyId = ResolveCompanyId();

@@ -44,7 +44,7 @@ public class IndexModel : PageModel
     public string? Error { get; private set; }
 
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.SelfService);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.SelfService);
 
     /// <summary>Web'de Session.CurrentCompany.Id dolu değildir; Company.Id'yi koddan çözeriz (Reports/Tables deseni).</summary>
     private static int? ResolveCompanyId()

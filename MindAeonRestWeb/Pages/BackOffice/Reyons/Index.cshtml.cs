@@ -17,7 +17,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
     // Mutfak/reyon özelliği — yalnız SysAdmin/Patron + Feature.Kitchen.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Kitchen);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Kitchen);
 
     public IActionResult OnGet()
     {

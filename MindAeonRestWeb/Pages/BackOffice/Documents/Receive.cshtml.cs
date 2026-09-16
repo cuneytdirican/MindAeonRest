@@ -22,7 +22,7 @@ public class ReceiveModel : PageModel
     public Document? Doc { get; private set; }
     public string? Error { get; private set; }
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     /// <summary>Bu belge teslim alınabilir mi? (DepoTransfer + Onaylandı/Kısmen Kapandı).</summary>
     public static bool CanReceive(Document d) =>

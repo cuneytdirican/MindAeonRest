@@ -23,7 +23,7 @@ public class IndexModel : PageModel
     public List<LoyaltyMovement> Movements { get; private set; } = new();
 
     // WPF: Admin | Permissions.Cash → burada admin/Patron. Feature gate yok.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet()
     {

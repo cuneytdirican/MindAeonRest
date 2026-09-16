@@ -36,7 +36,7 @@ public class IndexModel : PageModel
     public string? Error { get; private set; }
 
     // Core özellik (lisans kapısı yok) — WPF ZReportListWindow Permissions.Reports.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron") || Permissions.Reports;
+    private static bool CanAccess => Session.IsTenantAdmin || Permissions.Reports;
 
     public IActionResult OnGet()
     {

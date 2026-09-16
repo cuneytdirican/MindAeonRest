@@ -32,7 +32,7 @@ public class IndexModel : PageModel
     public List<SelectListItem> TargetCashOptions { get; private set; } = new();
     public List<SelectListItem> TargetPosOptions { get; private set; } = new();
     public decimal DefaultCashTransfer { get; private set; }
-    public bool CanTakeZ => Session.IsSysAdmin || Permissions.ZReport;
+    public bool CanTakeZ => Session.IsTenantAdmin || Permissions.ZReport;
 
     public string? Error { get; private set; }
     public string? Info { get; private set; }
@@ -48,7 +48,7 @@ public class IndexModel : PageModel
     public decimal OpenTablesRemaining => OpenTables.Sum(t => t.Remaining);
 
     // Core özellik (lisans kapısı yok) — WPF RaporWindow Permissions.Reports.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron") || Permissions.Reports;
+    private static bool CanAccess => Session.IsTenantAdmin || Permissions.Reports;
 
     public IActionResult OnGet()
     {

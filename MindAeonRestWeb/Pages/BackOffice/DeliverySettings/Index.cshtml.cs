@@ -35,7 +35,7 @@ public class IndexModel : PageModel
     public string? Saved { get; private set; }
 
     // WPF: eklenti modül. Web'de gate: admin/Patron + Feature.Delivery (Couriers ile aynı).
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Delivery);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Delivery);
 
     public IActionResult OnGet(bool saved = false)
     {

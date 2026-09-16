@@ -16,7 +16,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
     // Birimler sistem DB'sinde (ortak) tutulur, lisans-feature yok — sadece rol denetimi.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    // Kiracı yöneticisi LİSTEYİ görür (ürün formları bu birimleri kullanır); ekle/düzenle/sil TÜM kiracıları
+    // etkilediğinden yalnız SysAdmin (CanManage).
+    private static bool CanAccess => Session.IsTenantAdmin;
+    public bool CanManage => Session.IsSysAdmin;
 
     public IActionResult OnGet()
     {
@@ -35,7 +38,7 @@ public class IndexModel : PageModel
     /// <summary>Soft-delete / geri al — sistem DB (OpenConnection), jenerik Schema.SetDeleted.</summary>
     public IActionResult OnPostToggleDelete(int id, bool deleted)
     {
-        if (!CanAccess) return Forbid();
+        if (!CanManage) return Forbid();   // ortak (global) veri → yalnız SysAdmin
         using var c = Database.OpenConnection();
         Schema.SetDeleted(c, "MainUnits", id, deleted, Session.CurrentUserId);
         return RedirectToPage(new { Q, ShowDeleted });

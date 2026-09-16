@@ -54,7 +54,7 @@ public class EditModel : PageModel
     public List<SelectListItem> ProductOptions { get; private set; } = new();
     public List<BranchSel> Branches { get; private set; } = new();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Campaign);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Campaign);
 
     public IActionResult OnGet(int? id)
     {

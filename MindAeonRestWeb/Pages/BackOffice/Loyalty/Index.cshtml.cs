@@ -25,7 +25,7 @@ public class IndexModel : PageModel
     public decimal TotalLiability { get; private set; }
 
     // WPF: Admin | Permissions.Cash — burada admin/Patron yeterli. Feature gate yok.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet(bool saved = false)
     {

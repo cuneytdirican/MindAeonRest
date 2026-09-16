@@ -23,7 +23,7 @@ public class IndexModel(PublicTokenService tokens, IConfiguration config) : Page
     public List<(int Id, string Name)> Branches { get; private set; } = new();
     [BindProperty(SupportsGet = true)] public int? BranchId { get; set; }
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.LocationTables);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.LocationTables);
 
     public IActionResult OnGet()
     {

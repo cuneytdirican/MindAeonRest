@@ -18,7 +18,7 @@ public class EditModel : PageModel
     public bool IsNew => Id == 0;
     public string? Error { get; private set; }
 
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet(int? id)
     {

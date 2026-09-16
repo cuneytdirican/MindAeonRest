@@ -38,7 +38,7 @@ public class EditModel : PageModel
     public List<SelectListItem> BankOptions { get; private set; } = new();
     public List<SelectListItem> StatusOptions { get; private set; } = new();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet(int? id)
     {

@@ -17,7 +17,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
     // Personel = Ön Muhasebe kapsamı — yalnız SysAdmin/Patron + PreAccounting lisansı.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet()
     {

@@ -10,6 +10,9 @@ public record LoginRequest(string CompanyCode, string Username, string Password,
 // ===== Provisioning (GÜVENLİ tenant kurulum; X-Provision-Key ile korunur) =====
 public record ProvisionTenantRequest(string Code, string Name, string AdminEmail, string AdminFullName);
 
+/// <summary>POST /api/provision/tenant/{code}/license gövdesi: Licence API'nin imzaladığı MAR-LIC token.</summary>
+public record ProvisionLicenseRequest(string Token);
+
 // ===== Menü =====
 public record CategoryDto(int Id, string Name, bool HasImage);
 public record MenuProductDto(int Id, string Code, string Name, string? Description, decimal Price, decimal TaxRate,

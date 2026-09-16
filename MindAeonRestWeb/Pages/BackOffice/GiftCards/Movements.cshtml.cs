@@ -13,7 +13,7 @@ public class MovementsModel : PageModel
     public GiftCard? Card { get; private set; }
     public List<GiftCardMovement> Movements { get; private set; } = new();
 
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet(int id)
     {

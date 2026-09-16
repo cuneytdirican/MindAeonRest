@@ -40,7 +40,7 @@ public class EditModel : PageModel
     public bool IsNew => Id == 0;
     public string? Error { get; private set; }
 
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     /// <summary>
     /// Web'de Session.CurrentCompany.Id dolu değildir; koddan çözülür (AuthController.MyBranches deseni).
@@ -59,7 +59,8 @@ public class EditModel : PageModel
         if (id is int i && i > 0)
         {
             var b = _svc.GetById(i);
-            if (b is null) return RedirectToPage("Index");
+            // KİRACI İZOLASYONU: başka şirketin şubesi id ile açılamaz (bilgi sızıntısı/IDOR).
+            if (b is null || b.CompanyId != ResolveCompanyId()) return RedirectToPage("Index");
             Id = b.Id;
             Code = b.Code;
             Name = b.Name;
@@ -94,6 +95,9 @@ public class EditModel : PageModel
             Error = "Aktif şirket çözümlenemedi.";
             return Page();
         }
+
+        // KİRACI İZOLASYONU: Update "WHERE Id=@Id" ile çalışır (CompanyId süzmez) → güncellenecek şube AKTİF şirkete ait olmalı.
+        if (!IsNew && _svc.GetById(Id)?.CompanyId != companyId.Value) return Forbid();
 
         var branch = new CompanyBranch
         {

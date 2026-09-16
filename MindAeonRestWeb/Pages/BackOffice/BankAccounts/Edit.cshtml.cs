@@ -28,7 +28,7 @@ public class EditModel : PageModel
     public List<SelectListItem> Banks { get; private set; } = new();
     public List<SelectListItem> Currencies { get; private set; } = new();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     private void LoadLookups()
     {

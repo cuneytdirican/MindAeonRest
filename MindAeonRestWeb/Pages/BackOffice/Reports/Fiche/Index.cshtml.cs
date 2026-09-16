@@ -43,7 +43,7 @@ public class IndexModel : PageModel
     public bool CancelsTab => string.Equals(Tab, "cancels", StringComparison.OrdinalIgnoreCase);
 
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.AdvancedReports);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.AdvancedReports);
 
     /// <summary>Web'de Session.CurrentCompany.Id dolu değildir; Company.Id'yi koddan çözeriz (Branches deseni).</summary>
     private static int? ResolveCompanyId()

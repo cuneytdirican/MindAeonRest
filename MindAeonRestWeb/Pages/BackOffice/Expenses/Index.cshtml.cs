@@ -20,7 +20,7 @@ public class IndexModel : PageModel
     public decimal Total { get; private set; }
 
     // Ön Muhasebe kapısı — yalnız SysAdmin/Patron + Feature.PreAccounting.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet()
     {

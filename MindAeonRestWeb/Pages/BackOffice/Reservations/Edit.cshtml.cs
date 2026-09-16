@@ -39,7 +39,7 @@ public class EditModel : PageModel
     /// <summary>Lokasyon -> masaları (zone bazlı masa seçimi için JS'e verilir).</summary>
     public Dictionary<int, List<TableOption>> ZoneTables { get; private set; } = new();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Reservation);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Reservation);
 
     public IActionResult OnGet(int? id)
     {

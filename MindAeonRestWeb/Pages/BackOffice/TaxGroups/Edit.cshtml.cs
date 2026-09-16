@@ -23,7 +23,7 @@ public class EditModel : PageModel
     public string? Error { get; private set; }
 
     // Vergi grupları Core kapsamında (Feature yok) — sadece SysAdmin/Patron.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     /// <summary>TİP seçenekleri (VatType enum): (value=int, text).</summary>
     public static IReadOnlyList<(int Value, string Text)> VatTypeOptions { get; } =

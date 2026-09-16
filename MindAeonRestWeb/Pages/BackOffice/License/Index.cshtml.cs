@@ -20,7 +20,8 @@ namespace MindAeonRestWeb.Pages.BackOffice.License;
 ///     Yalnız AppConfig.LicenceApiUrl tanımlıysa (LicenceApiClient.IsConfigured) etkin.
 ///
 /// GÜVENLİK: RSA ÖZEL anahtara dokunulmaz; yalnız gömülü GENEL anahtarla doğrulama (VerifyLicense) yapılır.
-/// Kapı: yalnız Session.IsSysAdmin.
+/// Kapı: Session.IsTenantAdmin (SysAdmin/Patron/Yönetici). Tüm işlemler Session.CurrentCompany.Code ile kapsamlıdır ve
+/// token imzadaki şirket koduyla eşleşmek zorundadır → kiracı yöneticisi yalnız KENDİ şirketinin lisansını görür/etkinleştirir.
 /// </summary>
 public class IndexModel : PageModel
 {
@@ -51,8 +52,8 @@ public class IndexModel : PageModel
 
     public sealed record FeatureRow(string Name, bool Enabled, bool Core);
 
-    // Yalnız sistem yöneticisi (aktivasyon yetkili işlem).
-    private static bool CanAccess => Session.IsSysAdmin;
+    // Kiracı yöneticisi paketini görmeli; aktivasyon da yalnız aktif şirket koduna yazar (PersistLicenseToken şirket eşleşmesi).
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet()
     {

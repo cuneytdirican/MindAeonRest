@@ -30,7 +30,7 @@ public class EditModel : PageModel
     public List<SelectListItem> BranchOptions { get; private set; } = new();
 
     // Mutfak/reyon özelliği — yalnız SysAdmin/Patron + Feature.Kitchen.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Kitchen);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Kitchen);
 
     public IActionResult OnGet(int? id)
     {

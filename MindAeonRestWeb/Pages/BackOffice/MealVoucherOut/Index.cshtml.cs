@@ -29,7 +29,7 @@ public class IndexModel : PageModel
     public List<SelectListItem> CustomerOptions { get; private set; } = new();
 
     // Yemek Çeki = Core özellik (lisans kapısı yok, PreAccounting DEĞİL) — yalnız SysAdmin/Patron.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet()
     {

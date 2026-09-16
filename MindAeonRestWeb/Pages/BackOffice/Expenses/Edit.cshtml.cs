@@ -35,7 +35,7 @@ public class EditModel : PageModel
     // Maaş olan gider tipleri (JS ile personel alanını göstermek için).
     public List<int> SalaryTypeIds { get; private set; } = new();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     // WPF create-only; id rotası nav uyumu için var, mevcut kayıt yüklenmez (ExpenseService güncellemez).
     public IActionResult OnGet(int? id)

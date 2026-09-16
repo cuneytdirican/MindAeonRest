@@ -28,7 +28,7 @@ public class EditModel : PageModel
         ("#00BCD4", "Turkuaz"), ("#FFC107", "Sarı"), ("#607D8B", "Gri")
     };
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Reservation);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Reservation);
 
     public IActionResult OnGet(int? id)
     {

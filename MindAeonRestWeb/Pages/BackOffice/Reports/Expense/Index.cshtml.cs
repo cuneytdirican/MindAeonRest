@@ -45,7 +45,7 @@ public class IndexModel : PageModel
 
     // Ön Muhasebe kapısı — yalnız SysAdmin/Patron + Feature.PreAccounting (Giderler ekranı ile aynı).
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     /// <summary>Web'de Session.CurrentCompany.Id dolu değildir; Company.Id'yi koddan çözeriz (Branches deseni).</summary>
     private static int? ResolveCompanyId()

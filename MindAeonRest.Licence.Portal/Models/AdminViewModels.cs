@@ -261,6 +261,19 @@ public static class AdminLabels
         _ => (s.ToString(), "")
     };
 
+    /// <summary>POS tenant lisans durumu (provisioning tenant listesi; POS LicenseState enum adı metin olarak gelir).</summary>
+    public static (string Text, string Css) PosLicense(string? state) => state switch
+    {
+        "Licensed" => ("Lisanslı", "success"),
+        "Trial" => ("Deneme", "info"),
+        "TrialExpired" => ("Deneme Bitti", "danger"),
+        "Expired" => ("Süresi Doldu", "warning"),
+        "Invalid" => ("Geçersiz", "danger"),
+        "WrongMachine" => ("Yanlış Makine", "danger"),
+        null or "" => ("—", ""),
+        _ => (state, "")
+    };
+
     public static (string Text, string Css) Request(RequestStatus s) => s switch
     {
         RequestStatus.Pending => ("Bekliyor", "warning"),

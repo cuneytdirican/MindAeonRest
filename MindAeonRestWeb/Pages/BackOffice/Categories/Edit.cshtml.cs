@@ -21,7 +21,7 @@ public class EditModel : PageModel
     public bool HasImage { get; private set; }
     public string? Error { get; private set; }
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.ProductBasic);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.ProductBasic);
 
     public IActionResult OnGet(int? id)
     {

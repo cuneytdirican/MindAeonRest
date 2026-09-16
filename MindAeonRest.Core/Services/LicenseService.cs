@@ -79,8 +79,16 @@ public class LicenseService
 
     /// <summary>MERKEZÎ (web/SaaS) lisans durumu: donanım bağı YOK. Şirketin (herhangi terminaldeki) en iyi
     /// geçerli lisansını esas alır → paket/özellik. Web'de tek cloud host tüm kiracılarla aynı HardwareId'yi
-    /// paylaştığından terminal-lisans anlamsız; bu metot yalnız CompanyCode ile paket/özellik çözer.</summary>
-    public LicenseStatus GetStatusByCompany(string companyCode)
+    /// paylaştığından terminal-lisans anlamsız; bu metot yalnız CompanyCode ile paket/özellik çözer.
+    /// Lisans yoksa şirket denemesini BAŞLATIR (ilk çağrıda TrialStartUtc yazılır).</summary>
+    public LicenseStatus GetStatusByCompany(string companyCode) => ResolveByCompany(companyCode, startTrial: true);
+
+    /// <summary><see cref="GetStatusByCompany"/>'nin SALT-OKUMA eşi: lisans yoksa deneme saatini BAŞLATMAZ
+    /// (gözetim listeleri — ör. provisioning tenant listesi — yalnız bakarak denemeyi tetiklemesin).
+    /// Deneme hiç başlamamışsa Trial + tam gün döner.</summary>
+    public LicenseStatus PeekStatusByCompany(string companyCode) => ResolveByCompany(companyCode, startTrial: false);
+
+    private LicenseStatus ResolveByCompany(string companyCode, bool startTrial)
     {
         LicensePayload? best = null;
         using (var c = Database.OpenConnection())
@@ -115,7 +123,11 @@ public class LicenseService
 
         // Lisans yok → şirket denemesi (tüm terminaller paylaşır) / Lite.
         DateTime? trialStart = ReadCompanyTrialStart(companyCode);
-        if (trialStart is null) { trialStart = DateTime.UtcNow; StartCompanyTrial(companyCode, trialStart.Value); }
+        if (trialStart is null)
+        {
+            trialStart = DateTime.UtcNow;
+            if (startTrial) StartCompanyTrial(companyCode, trialStart.Value);
+        }
         int daysLeft = TrialDays - (int)(DateTime.UtcNow - trialStart.Value).TotalDays;
         var trial = new LicenseStatus
         {
@@ -127,6 +139,47 @@ public class LicenseService
         };
         trial.Message = trial.StateText;
         return trial;
+    }
+
+    /// <summary>
+    /// MERKEZÎ lisans token'ını şirkete kurar (provisioning "Lisans Ata"). İmza/şirket doğrulaması ÇAĞIRANDADIR.
+    /// dbo.Licenses (CompanyCode, HardwareId) satırı UPSERT edilir (UpsertKey deseni). Token merkezî ise
+    /// (HardwareId "WEB*"), aynı şirketin DİĞER merkezî/web satırları (ör. eski "WEB-ENTERPRISE" demo, "WEB" web
+    /// sayfası yedeği) AYNI transaction'da SİLİNİR: <see cref="GetStatusByCompany"/> en YÜKSEK paketi seçtiğinden
+    /// eski yüksek paketli web satırı kalsaydı paket düşürme hiç etki etmezdi. Gerçek masaüstü terminal satırları
+    /// (HEX donanım kimlikleri, "WEB" önekiyle çakışmaz) ve deneme satırı (HardwareId='') KORUNUR.
+    /// </summary>
+    public void InstallCentralKey(string companyCode, string hardwareId, string licenseKey)
+    {
+        using var c = Database.OpenConnection();
+        using var tx = c.BeginTransaction();
+        try
+        {
+            if (CentralLicense.IsCentral(hardwareId))
+            {
+                using var del = c.CreateCommand();
+                del.Transaction = tx;
+                del.CommandText = "DELETE FROM dbo.Licenses WHERE CompanyCode=@c AND HardwareId LIKE 'WEB%' AND HardwareId<>@h;";
+                del.Parameters.AddWithValue("@c", companyCode);
+                del.Parameters.AddWithValue("@h", hardwareId);
+                del.ExecuteNonQuery();
+            }
+
+            using var up = c.CreateCommand();
+            up.Transaction = tx;
+            up.CommandText = @"
+IF EXISTS (SELECT 1 FROM dbo.Licenses WHERE CompanyCode=@c AND HardwareId=@h)
+    UPDATE dbo.Licenses SET LicenseKey=@k, UpdatedUtc=SYSUTCDATETIME() WHERE CompanyCode=@c AND HardwareId=@h;
+ELSE
+    INSERT INTO dbo.Licenses (CompanyCode, HardwareId, LicenseKey) VALUES (@c, @h, @k);";
+            up.Parameters.AddWithValue("@c", companyCode);
+            up.Parameters.AddWithValue("@h", hardwareId);
+            up.Parameters.AddWithValue("@k", licenseKey);
+            up.ExecuteNonQuery();
+
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
     }
 
     /// <summary>Bu makineye ait TALEP anahtarı (bayi/portal bunu lisansa çevirir). dealerCode opsiyonel — portal lisansı bu bayiye atfeder.</summary>

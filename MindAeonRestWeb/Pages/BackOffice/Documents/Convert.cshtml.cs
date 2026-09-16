@@ -27,7 +27,7 @@ public class ConvertModel : PageModel
     public string TargetTitle => Type.ToTr();
     public string SourceTitle => SourceType?.ToTr() ?? "";
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet()
     {

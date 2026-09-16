@@ -9,7 +9,7 @@
     <div class="page-head flex items-center justify-between" style="margin-bottom:var(--sp-4);">
         <div>
             <h1 style="margin-bottom:var(--sp-1);">Tenant'lar</h1>
-            <div class="subtitle">POS kümesindeki tüm kiracılar — şube/kullanıcı sayısı ve detay gözetimi.</div>
+            <div class="subtitle">POS kümesindeki tüm kiracılar — lisans paketi, şube/kullanıcı sayısı, lisans atama ve detay gözetimi.</div>
         </div>
         <a class="btn btn-primary" href="/Admin/NewTenant"><i data-lucide="plus"></i> Yeni Tenant</a>
     </div>
@@ -19,48 +19,17 @@
         <div class="alert-error">@Model.LoadError</div>
     }
 
-    <div class="table-wrap">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Kod</th>
-                    <th>Ad</th>
-                    <th>Veritabanı</th>
-                    <th class="num">Şube</th>
-                    <th class="num">Kullanıcı</th>
-                    <th style="text-align:right;">İşlem</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Tenants.Count == 0)
-                {
-                    <tr><td colspan="6" class="text-muted" style="text-align:center; padding:var(--sp-6);">
-                        @(string.IsNullOrEmpty(Model.LoadError) ? "Tenant bulunamadı." : "Liste yüklenemedi.")
-                    </td></tr>
-                }
-                @foreach (var t in Model.Tenants)
-                {
-                    <tr>
-                        <td><code style="font-weight:600;">@t.Code</code></td>
-                        <td style="font-weight:600;">@t.Name</td>
-                        <td><span class="text-sm text-muted">@t.DbName</span></td>
-                        <td class="num">@t.BranchCount</td>
-                        <td class="num">@t.UserCount</td>
-                        <td style="text-align:right; white-space:nowrap;">
-                            <button type="button" class="btn btn-sm"
-                                    hx-get="/Admin/Tenants?handler=Detail&code=@Uri.EscapeDataString(t.Code)&name=@Uri.EscapeDataString(t.Name)"
-                                    hx-target="#tenantDetail" hx-swap="innerHTML"
-                                    x-on:click="$dispatch('tenant-detail')">
-                                <i data-lucide="eye"></i> Detay
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div id="tenantTable">
+        @await Html.PartialAsync("_TenantsTable", Model)
     </div>
 
     <div x-show="detailOpen" x-transition style="margin-top:var(--sp-5);">
         <div id="tenantDetail"></div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+    </script>
+}

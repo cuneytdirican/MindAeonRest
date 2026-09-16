@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using MindAeonRest.Data;
 using MindAeonRest.Helpers;
+using MindAeonRest.Licensing;
 using MindAeonRest.Models;
 
 namespace MindAeonRest.Services;
@@ -18,6 +19,15 @@ public sealed record TenantUserInfo(string Username, string FullName, string Rol
 
 /// <summary>Tenant şube satırı (salt-okuma denetim).</summary>
 public sealed record TenantBranchInfo(int Id, string Name, bool IsActive);
+
+/// <summary>Merkezî lisans kurulum hata türü (çağıran HTTP koduna çevirir).</summary>
+public enum TenantLicenseInstallError { None, EmptyToken, InvalidSignature, CompanyMismatch, Expired, TenantNotFound }
+
+/// <summary>Merkezî lisans kurulum sonucu. Başarıda Status = kurulum SONRASI <c>GetStatusByCompany</c> durumu.</summary>
+public sealed record TenantLicenseInstallResult(TenantLicenseInstallError Error, string? Message, string? Code, LicenseStatus? Status)
+{
+    public bool Ok => Error == TenantLicenseInstallError.None;
+}
 
 /// <summary>Aynı kodlu tenant zaten mevcut → çağıran 409 üretmeli.</summary>
 public sealed class TenantAlreadyExistsException : Exception
@@ -181,6 +191,45 @@ ORDER BY u.Username;";
         return _branches.GetByCompany(company.Id)
             .Select(b => new TenantBranchInfo(b.Id, b.Name, b.IsActive))
             .ToList();
+    }
+
+    /// <summary>
+    /// Portal "Lisans Ata": Licence API'nin imzaladığı MAR-LIC token'ını tenant'a kurar.
+    /// Sıra: token boş/imza geçersiz → payload şirket kodu {code} ile eşleşmeli → tenant mevcut olmalı →
+    /// süresi dolmamış olmalı → <see cref="LicenseService.InstallCentralKey"/> (dbo.Licenses upsert; merkezî token'da
+    /// eski WEB-* satırları temizlenir → paket düşürme de etkili olur) → güncel durum.
+    /// Yalnız GENEL anahtarla doğrular (özel imza anahtarı yalnız Licence API'dedir) → sahte token kurulamaz.
+    /// </summary>
+    public TenantLicenseInstallResult InstallTenantLicense(string code, string? token)
+    {
+        token = (token ?? "").Trim();
+        if (token.Length == 0)
+            return new(TenantLicenseInstallError.EmptyToken, "token zorunludur.", null, null);
+
+        var lic = LicenseCrypto.VerifyLicense(token);
+        if (lic is null)
+            return new(TenantLicenseInstallError.InvalidSignature, "Lisans imzası geçersiz (imza geçersiz).", null, null);
+
+        string normalized = CodeHelper.Normalize(code);
+        if (normalized.Length == 0 || !lic.CompanyCode.Equals(normalized, StringComparison.OrdinalIgnoreCase))
+            return new(TenantLicenseInstallError.CompanyMismatch,
+                $"Lisans bu tenant'a ait değil (lisans şirket kodu: {lic.CompanyCode}).", null, null);
+
+        var company = _companies.GetByCode(normalized);
+        if (company is null)
+            return new(TenantLicenseInstallError.TenantNotFound, "Tenant bulunamadı.", null, null);
+
+        // GetStatusByCompany payload kodunu şirket koduyla birebir (OIC) karşılaştırır → DB'deki kanonik kod kullanılır.
+        if (!lic.CompanyCode.Equals(company.Code, StringComparison.OrdinalIgnoreCase))
+            return new(TenantLicenseInstallError.CompanyMismatch,
+                $"Lisans bu tenant'a ait değil (lisans şirket kodu: {lic.CompanyCode}).", null, null);
+
+        if (lic.IsExpired)
+            return new(TenantLicenseInstallError.Expired, $"Lisansın süresi dolmuş (bitiş: {lic.ExpiresUtc:dd.MM.yyyy}).", null, null);
+
+        var svc = new LicenseService();
+        svc.InstallCentralKey(company.Code, string.IsNullOrWhiteSpace(lic.HardwareId) ? CentralLicense.HardwareId : lic.HardwareId, token);
+        return new(TenantLicenseInstallError.None, null, company.Code, svc.GetStatusByCompany(company.Code));
     }
 
     // ===== iç yardımcılar =====

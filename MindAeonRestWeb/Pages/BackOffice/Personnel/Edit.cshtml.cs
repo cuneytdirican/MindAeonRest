@@ -38,7 +38,7 @@ public class EditModel : PageModel
         Enum.GetValues<LeaveType>().Select(v => ((int)v, v.ToTr())).ToList();
 
     // Personel = Ön Muhasebe kapsamı — yalnız SysAdmin/Patron + PreAccounting lisansı.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet(int? id)
     {

@@ -15,7 +15,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public string? Q { get; set; }
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     /// <summary>
     /// Web'de Session.CurrentCompany.Id dolu değildir (TenantMiddleware yalnızca Code/DatabaseName kurar).
@@ -45,10 +45,15 @@ public class IndexModel : PageModel
         return Page();
     }
 
-    /// <summary>Soft-delete / geri al — Şubeler SİSTEM DB'sindedir (Database.OpenConnection).</summary>
+    /// <summary>Soft-delete / geri al — Şubeler SİSTEM DB'sindedir (Database.OpenConnection).
+    /// KİRACI İZOLASYONU: id POST'tan gelir → şubenin AKTİF şirkete ait olduğu doğrulanmadan işlem yapılmaz
+    /// (aksi halde başka şirketin şubesi id ile silinebilirdi — IDOR). Silinmiş şube de (geri al) kapsanır.</summary>
     public IActionResult OnPostToggleDelete(int id, bool deleted)
     {
         if (!CanAccess) return Forbid();
+        var companyId = ResolveCompanyId();
+        if (companyId is null || !_svc.GetByCompany(companyId.Value, includeDeleted: true).Any(b => b.Id == id))
+            return Forbid();
         using var c = Database.OpenConnection();
         Schema.SetDeleted(c, "CompanyBranches", id, deleted, Session.CurrentUserId);
         return RedirectToPage(new { Q, ShowDeleted });

@@ -4,14 +4,17 @@ using MindAeonRest.Licensing;
 namespace MindAeonRestWeb.Services;
 
 /// <summary>Back-office sol menü ağacı — WPF MainWindow navigasyonunun birebir karşılığı (17 bölüm).
-/// Url null → henüz taşınmadı ("yakında", pasif). Feature → lisans kapısı (null=Core). AdminOnly → yalnız SysAdmin/Patron.
+/// Url null → henüz taşınmadı ("yakında", pasif). Feature → lisans kapısı (null=Core). AdminOnly → yalnız kiracı yöneticisi
+/// (Session.IsTenantAdmin: SysAdmin/Patron/Yönetici). SysAdminOnly → sistem geneli/çapraz-tenant ekran, yalnız SysAdmin.
 /// Form taşındıkça ilgili öğenin Url'i doldurulur.</summary>
 public static class BackOfficeNav
 {
     // Help: opsiyonel kısa Türkçe açıklama (bağlam-farkındalık için). null → çağıran Label'a düşer.
     // /api/ai/ask gibi uçlar path→{Label,Section,Help} çözüp AI'ya "kullanıcı şu ekranda: ..." bağlamı verir.
     // EN SONDA opsiyonel → mevcut tüm new(...) çağrıları değişmeden derlenir.
-    public sealed record Item(string Label, string Icon, string? Url, Feature? Feature = null, bool AdminOnly = true, string? Help = null);
+    // SysAdminOnly: sayfa SİSTEM geneli (tüm kiracıların ortak) veriyi/sunucuyu yönetir → kiracı yöneticisi (Yönetici/Patron) GÖRMEZ.
+    public sealed record Item(string Label, string Icon, string? Url, Feature? Feature = null, bool AdminOnly = true, string? Help = null,
+        bool SysAdminOnly = false);
     public sealed record Section(string Title, string Icon, List<Item> Items);
 
     public static List<Section> All { get; } = new()
@@ -135,19 +138,22 @@ public static class BackOfficeNav
         new("Kullanıcı Yönetimi", "👤", new()
         {
             new("Kullanıcılar", "👤", "/BackOffice/Users"),
-            new("Roller", "🛡", "/BackOffice/Roles"),
+            // Roller sistem DB'sinde GLOBAL (tüm kiracılar ortak) → yalnız SysAdmin.
+            new("Roller", "🛡", "/BackOffice/Roles", SysAdminOnly: true),
             // Self-service: her giriş yapmış kullanıcı KENDİ 2FA'sını yönetir → AdminOnly=false.
             new("Güvenlik / 2FA", "🔐", "/BackOffice/Security/TwoFactor", AdminOnly: false),
         }),
         new("Sistem", "⚙", new()
         {
-            new("Sistem Tanımları", "⚙", "/BackOffice/SystemDefinitions"),
-            new("Denetim İzi", "🕵", "/BackOffice/AuditTrail"),
-            new("e-Fatura Ayarları", "📄", "/BackOffice/EInvoice"),
+            // Sistem Tanımları (ülke/şehir/birim ortak tablolar), Denetim İzi, e-Fatura, Ekran Sürümü, Sistem Yönetimi
+            // (sunucu güncelleme) sayfaları Session.IsSysAdmin kapılı → kiracı yöneticisine menüde de gösterilmez.
+            new("Sistem Tanımları", "⚙", "/BackOffice/SystemDefinitions", SysAdminOnly: true),
+            new("Denetim İzi", "🕵", "/BackOffice/AuditTrail", SysAdminOnly: true),
+            new("e-Fatura Ayarları", "📄", "/BackOffice/EInvoice", SysAdminOnly: true),
             new("Bildirim Ayarları", "🔔", "/BackOffice/Notifications"),
-            new("Ekran Sürümü", "🖥", "/BackOffice/UiVersion"),
+            new("Ekran Sürümü", "🖥", "/BackOffice/UiVersion", SysAdminOnly: true),
             new("Lisans", "🔐", "/BackOffice/License"),
-            new("Sistem Yönetimi", "🛠", "/BackOffice/SystemManagement"),
+            new("Sistem Yönetimi", "🛠", "/BackOffice/SystemManagement", SysAdminOnly: true),
             new("Kurulum Sihirbazı", "🧙", "/BackOffice/SetupWizard"),
             new("AI Hub", "🤖", "/BackOffice/AiHub", Feature.AiHub, Help: "Doğal dille rapor/sorgu ve AI sağlayıcı ayarları"),
         }),
@@ -165,7 +171,9 @@ public static class BackOfficeNav
     /// <summary>Oturumun lisans + rolüne göre görünür öğeler (boş bölümler gizlenir).</summary>
     public static IEnumerable<Section> Visible()
     {
-        bool admin = Session.IsSysAdmin || Session.HasRole("Patron");
+        // Kiracı kapsamlı yönetici (SysAdmin/Patron/Yönetici); sistem geneli öğeler ayrıca SysAdminOnly ile süzülür.
+        bool admin = Session.IsTenantAdmin;
+        bool sysAdmin = Session.IsSysAdmin;
         foreach (var s in All)
         {
             // "Süper Admin" (çok-kiracılı provisioning) YALNIZ SysAdmin — Patron dahi görmez (çapraz-tenant güç).
@@ -174,7 +182,7 @@ public static class BackOfficeNav
                 // AI Hub: admin/Patron yerine rol bazlı Permissions.Ai kapısı (yetkisiz kullanıcı nav'da görmesin — WPF paritesi).
                 i.Feature == Feature.AiHub
                     ? (Permissions.Ai && Session.LicenseHas(Feature.AiHub))
-                    : ((!i.AdminOnly || admin) &&
+                    : ((!i.AdminOnly || admin) && (!i.SysAdminOnly || sysAdmin) &&
                        (i.Feature is null || Session.LicenseHas(i.Feature.Value)))).ToList();
             if (items.Count > 0) yield return s with { Items = items };
         }

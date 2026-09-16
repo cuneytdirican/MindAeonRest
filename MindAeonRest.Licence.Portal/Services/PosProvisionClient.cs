@@ -14,7 +14,9 @@ namespace MindAeonRest.Licence.Portal.Services;
 /// Sözleşme (POS ile birebir):
 ///   POST /api/provision/tenant                 { code, name, adminEmail, adminFullName }
 ///        → 200 { code, name, dbName, adminUsername, tempPassword } | 409 kod zaten var
-///   GET  /api/provision/tenants                → [{ code, name, dbName, branchCount, userCount }]
+///   GET  /api/provision/tenants                → [{ code, name, dbName, branchCount, userCount, package?, licenseState?, expiresUtc? }]
+///   POST /api/provision/tenant/{code}/license  { token }
+///        → 200 { code, package, state, expiresUtc, maxUsers, maxBranches, maxKiosks } | 400 imza/kod/süre | 404 tenant yok
 ///   GET  /api/provision/tenant/{code}/users    → [{ username, fullName, roleName, isActive }]
 ///   GET  /api/provision/tenant/{code}/branches → [{ id, name, isActive }]
 ///
@@ -52,6 +54,11 @@ public sealed class PosProvisionClient(HttpClient http, IConfiguration config)
     /// <summary>Bir tenant'ın şubelerini listeler.</summary>
     public Task<(IReadOnlyList<TenantBranch>? Value, string? Error)> ListTenantBranchesAsync(string code, CancellationToken ct = default)
         => GetListAsync<TenantBranch>($"/api/provision/tenant/{Uri.EscapeDataString(code)}/branches", ct);
+
+    /// <summary>Licence API'nin imzaladığı lisans token'ını POS tenant'ına kurar; kurulum sonrası lisans durumunu döndürür.</summary>
+    public Task<(TenantLicenseStatus? Value, string? Error)> InstallLicenseAsync(string code, string token, CancellationToken ct = default)
+        => SendJsonAsync<TenantLicenseStatus>(HttpMethod.Post,
+            $"/api/provision/tenant/{Uri.EscapeDataString(code)}/license", new { token }, ct);
 
     // ---- alt seviye ----------------------------------------------------------
 
@@ -122,8 +129,14 @@ public sealed record CreateTenantRequest(string Code, string Name, string AdminE
 /// <summary>Yeni tenant oluşturma sonucu. TempPassword yalnız BİR KEZ döner; hiçbir yerde saklanmaz.</summary>
 public sealed record CreateTenantResult(string Code, string Name, string DbName, string AdminUsername, string TempPassword);
 
-/// <summary>Oversight tablosu satırı.</summary>
-public sealed record TenantSummary(string Code, string Name, string DbName, int BranchCount, int UserCount);
+/// <summary>Oversight tablosu satırı. Lisans alanları OPSİYONEL: eski POS yanıtlarında yoksa null kalır
+/// (Package: Lite/Standart/Enterprise; LicenseState: Licensed/Trial/TrialExpired/Expired/...; ExpiresUtc null = süresiz).</summary>
+public sealed record TenantSummary(string Code, string Name, string DbName, int BranchCount, int UserCount,
+    string? Package = null, string? LicenseState = null, DateTime? ExpiresUtc = null);
+
+/// <summary>POS'a lisans kurulumu sonrası durum (POST /api/provision/tenant/{code}/license yanıtı).</summary>
+public sealed record TenantLicenseStatus(string? Code, string? Package, string? State, DateTime? ExpiresUtc,
+    int MaxUsers, int MaxBranches, int MaxKiosks);
 
 /// <summary>Tenant kullanıcı satırı.</summary>
 public sealed record TenantUser(string Username, string FullName, string RoleName, bool IsActive);

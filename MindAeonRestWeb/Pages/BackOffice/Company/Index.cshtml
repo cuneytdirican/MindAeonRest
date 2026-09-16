@@ -95,9 +95,12 @@
             <small class="hint">Boş bırakılırsa baskıda renkli logo otomatik S/B'ye çevrilir.</small>
         </div>
 
-        <div class="frm-row">
-            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Şirket aktif</label>
-        </div>
+        @if (Model.CanChangeActive)
+        {
+            <div class="frm-row">
+                <label class="chk"><input asp-for="IsActive" type="checkbox" /> Şirket aktif</label>
+            </div>
+        }
 
         <div class="frm-actions">
             <button type="submit" class="btn btn-primary">Kaydet</button>

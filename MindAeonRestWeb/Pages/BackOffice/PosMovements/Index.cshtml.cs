@@ -40,7 +40,7 @@ public class IndexModel : PageModel
 
     // WPF PosWindow (ön-muhasebe) — admin/Patron + Feature.PreAccounting.
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     // ── Transfer (WPF PosWindow → transfer karşılığı) ──
     // Aynı döviz iki POS arası; Core PosMovementService.Transfer(fromId,toId,amount,note,userId) çağrılır.

@@ -28,9 +28,82 @@ public class LicensesController(LicenceDbContext db, ILicenseSigner signer) : Co
         if (dupActive)
             return Conflict(new { message = "Bu işletme + donanım için zaten aktif bir lisans var. Önce mevcut lisansı iptal/yükseltin." });
 
+        var (resp, error) = await IssueCoreAsync(biz, biz.HardwareId!, new IssueSpec(
+            req.Package, req.Duration, req.ExpiresUtc, req.Notes,
+            req.AddOnFeatures, req.ExtraUsers, req.ExtraKiosks, req.ExtraBranches), supersede: []);
+        return error ?? Ok(resp);
+    }
+
+    /// <summary>
+    /// ADMIN: MERKEZÎ web tenant'ına lisans ata (Portal "Lisans Ata"). Business CompanyCode ile bulunur, yoksa
+    /// oluşturulur. Lisans sabit <see cref="CentralLicense.HardwareId"/> ("WEB-CENTRAL") için imzalanır —
+    /// işletmenin masaüstü donanım bağı (Business.HardwareId) BOZULMAZ; yalnız boşsa WEB-CENTRAL yazılır.
+    /// TEKRARLANABİLİR: (işletme, WEB-CENTRAL) için mevcut Active/Trial lisans yeni lisansla AYNI kayıtta devre dışı
+    /// bırakılır (yüksek pakete geçişte Upgraded, aynı/düşük pakete geçişte Revoked + geçmiş notu) → yükseltme de
+    /// düşürme de aynı uçla yapılır. Dönen token'ı Portal POS'a kurar (POST /api/provision/tenant/{code}/license).
+    /// </summary>
+    [HttpPost("/api/v1/admin/tenant-licenses")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IssueLicenseResp>> AssignTenantLicense([FromBody] AssignTenantLicenseReq req)
+    {
+        var code = (req.CompanyCode ?? "").Trim().ToUpperInvariant();
+        if (code.Length == 0) return BadRequest(new { message = "Şirket kodu (companyCode) zorunlu." });
+        if (code.Length > 50) return BadRequest(new { message = "Şirket kodu en fazla 50 karakter olabilir." });
+
+        // Admin ucu; yine de global arama için tenant filtresi yok sayılır (silinmemişler, büyük/küçük harf duyarsız).
+        var biz = await db.Businesses.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(b => !b.IsDeleted && b.CompanyCode.ToUpper() == code);
+        if (biz is null)
+        {
+            var title = string.IsNullOrWhiteSpace(req.CompanyName) ? code : req.CompanyName.Trim();
+            biz = new Business
+            {
+                CompanyCode = code,
+                Title = title.Length > 200 ? title[..200] : title,
+                HardwareId = CentralLicense.HardwareId
+            };
+            db.Businesses.Add(biz);
+        }
+        else if (string.IsNullOrWhiteSpace(biz.HardwareId))
+        {
+            // Masaüstü bağı yoksa merkezî kimlik yazılır; VARSA (masaüstü) dokunulmaz — lisans yine WEB-CENTRAL için üretilir.
+            biz.HardwareId = CentralLicense.HardwareId;
+            biz.UpdatedUtc = DateTime.UtcNow;
+        }
+
+        // Aynı (işletme, WEB-CENTRAL) için hâlâ geçerli lisans(lar) → yeni lisansla değiştirilecek (supersede).
+        var previous = biz.Id == 0
+            ? new List<License>()
+            : await db.Licenses.IgnoreQueryFilters()
+                .Where(l => !l.IsDeleted && l.BusinessId == biz.Id && l.HardwareId == CentralLicense.HardwareId
+                            && (l.Status == LicenseStatus.Active || l.Status == LicenseStatus.Trial))
+                .ToListAsync();
+
+        var (resp, error) = await IssueCoreAsync(biz, CentralLicense.HardwareId, new IssueSpec(
+            req.Package, req.Duration, req.ExpiresUtc, req.Notes,
+            req.AddOnFeatures, req.ExtraUsers, req.ExtraKiosks, req.ExtraBranches), previous);
+        return error ?? Ok(resp);
+    }
+
+    /// <summary>İmzalama + kalıcılaştırma girdisi (Issue ve AssignTenantLicense ortak).</summary>
+    private sealed record IssueSpec(int Package, DurationKind Duration, DateTime? ExpiresUtc, string? Notes,
+        long AddOnFeatures, int ExtraUsers, int ExtraKiosks, int ExtraBranches);
+
+    /// <summary>
+    /// ORTAK lisans üretim çekirdeği: doğrulama (paket, süre, terminal limiti) → paket/limit hesabı (PackageMatrix)
+    /// → imza → License + History kaydı. Donanım kimliği AÇIKÇA verilir (masaüstü: Business.HardwareId; merkezî:
+    /// WEB-CENTRAL). <paramref name="supersede"/> lisansları YALNIZ doğrulama geçtikten sonra devre dışı bırakılır ve
+    /// yeni lisansla AYNI SaveChanges'te yazılır (yarım durum kalmaz). Hata → (null, ActionResult).
+    /// </summary>
+    private async Task<(IssueLicenseResp? Resp, ActionResult? Error)> IssueCoreAsync(
+        Business biz, string hardwareId, IssueSpec req, IReadOnlyList<License> supersede)
+    {
+        if (!Enum.IsDefined(typeof(LicensePackage), req.Package))
+            return (null, BadRequest(new { message = "Geçersiz paket." }));
+
         // Süreli (Aylık/Yıllık) lisansta bitiş tarihi zorunlu ve gelecekte olmalı (yanlışlıkla süresiz üretmeyi engelle).
         if (req.Duration != DurationKind.Perpetual && (req.ExpiresUtc is not { } exp || exp <= DateTime.UtcNow))
-            return BadRequest(new { message = "Süreli (Aylık/Yıllık) lisans için gelecekte bir bitiş tarihi (ExpiresUtc) zorunludur." });
+            return (null, BadRequest(new { message = "Süreli (Aylık/Yıllık) lisans için gelecekte bir bitiş tarihi (ExpiresUtc) zorunludur." }));
 
         var pkg = (LicensePackage)req.Package;
         var code = Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
@@ -42,14 +115,15 @@ public class LicensesController(LicenceDbContext db, ILicenseSigner signer) : Co
         int maxBranches = PackageMatrix.BranchesWith(pkg, req.ExtraBranches, multiBranch);
 
         // Terminal (KIOSK) limiti: işletmenin DİĞER donanımlardaki aktif lisansları toplam terminali aşmasın.
+        // (Yeni oluşturulan işletmenin — Id=0 — başka lisansı olamaz.)
         int maxKiosks = PackageMatrix.KiosksWith(pkg, req.ExtraKiosks);
-        if (maxKiosks != int.MaxValue)
+        if (maxKiosks != int.MaxValue && biz.Id != 0)
         {
             int activeOther = await db.Licenses.IgnoreQueryFilters()
-                .Where(l => !l.IsDeleted && l.BusinessId == biz.Id && l.Status == LicenseStatus.Active && l.HardwareId != biz.HardwareId)
+                .Where(l => !l.IsDeleted && l.BusinessId == biz.Id && l.Status == LicenseStatus.Active && l.HardwareId != hardwareId)
                 .Select(l => l.HardwareId).Distinct().CountAsync();
             if (activeOther >= maxKiosks)
-                return BadRequest(new { message = $"Bu paket en fazla {maxKiosks} terminal (KIOSK) içindir; işletmede {activeOther} aktif terminal var. Paketi yükseltin veya bir terminali iptal edin." });
+                return (null, BadRequest(new { message = $"Bu paket en fazla {maxKiosks} terminal (KIOSK) içindir; işletmede {activeOther} aktif terminal var. Paketi yükseltin veya bir terminali iptal edin." }));
         }
 
         string? dealerCode = biz.DealerId is int did ? (await db.Dealers.FindAsync(did))?.Code : null;
@@ -57,7 +131,7 @@ public class LicensesController(LicenceDbContext db, ILicenseSigner signer) : Co
         {
             LicenseId = code,
             CompanyCode = biz.CompanyCode,
-            HardwareId = biz.HardwareId!,
+            HardwareId = hardwareId,
             DealerCode = string.IsNullOrWhiteSpace(dealerCode) ? null : dealerCode,
             Package = pkg,
             MaxBranches = maxBranches,
@@ -68,10 +142,11 @@ public class LicensesController(LicenceDbContext db, ILicenseSigner signer) : Co
             ExpiresUtc = req.Duration == DurationKind.Perpetual ? null : req.ExpiresUtc
         };
         var token = signer.SignLicense(payload);
+        var byUser = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
 
         var lic = new License
         {
-            BusinessId = biz.Id,
+            Business = biz,   // yeni işletmede (Id=0) FK aynı SaveChanges'te çözülür
             DealerId = biz.DealerId,
             LicenseCode = code,
             Package = req.Package,
@@ -83,19 +158,38 @@ public class LicensesController(LicenceDbContext db, ILicenseSigner signer) : Co
             ExtraUsers = req.ExtraUsers,
             ExtraKiosks = req.ExtraKiosks,
             ExtraBranches = req.ExtraBranches,
-            HardwareId = biz.HardwareId!,
+            HardwareId = hardwareId,
             IssuedUtc = payload.IssuedUtc,
             ExpiresUtc = payload.ExpiresUtc,
             Status = LicenseStatus.Active,
             LicenseToken = token,
             Notes = req.Notes,
-            IssuedByUserId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+            IssuedByUserId = byUser
         };
-        lic.History.Add(new LicenseHistory { Action = LicenseAction.Issued, ToPackage = req.Package, ByUserId = lic.IssuedByUserId });
+        lic.History.Add(new LicenseHistory { Action = LicenseAction.Issued, ToPackage = req.Package, ByUserId = byUser });
+
+        // Yerine geçilen lisanslar: yüksek pakete geçiş → Upgraded; aynı/düşük paket (yeniden atama/düşürme) → Revoked.
+        foreach (var old in supersede)
+        {
+            bool up = req.Package > old.Package;
+            old.Status = up ? LicenseStatus.Upgraded : LicenseStatus.Revoked;
+            old.UpdatedUtc = DateTime.UtcNow;
+            var note = $"Merkezî lisans yeniden atandı: {PackageMatrix.Name((LicensePackage)old.Package)} → {PackageMatrix.Name(pkg)} (yeni lisans {code}).";
+            if (!string.IsNullOrWhiteSpace(req.Notes)) note += " " + req.Notes.Trim();
+            old.History.Add(new LicenseHistory
+            {
+                Action = up ? LicenseAction.Upgraded : LicenseAction.Revoked,
+                FromPackage = old.Package,
+                ToPackage = req.Package,
+                ByUserId = byUser,
+                Note = note.Length > 500 ? note[..500] : note
+            });
+        }
+
         db.Licenses.Add(lic);
         await db.SaveChangesAsync();
 
-        return Ok(new IssueLicenseResp(lic.Id, code, token, req.Package, lic.IssuedUtc, lic.ExpiresUtc));
+        return (new IssueLicenseResp(lic.Id, code, token, req.Package, lic.IssuedUtc, lic.ExpiresUtc), null);
     }
 
     /// <summary>Masaüstü: talep anahtarıyla online aktivasyon. Onaylı/aktif lisans varsa imzalı token döner; yoksa talebi kuyruğa alır.</summary>
@@ -105,6 +199,12 @@ public class LicensesController(LicenceDbContext db, ILicenseSigner signer) : Co
     {
         var decoded = signer.DecodeRequest(req.RequestToken);
         if (decoded is null) return BadRequest(new ActivateResp("none", null, "Talep anahtarı çözülemedi."));
+
+        // GÜVENLİK: merkezî (WEB-*) donanım kimliği TAHMİN EDİLEBİLİR sabittir; bu anonim uç aktif lisansı yalnız
+        // HardwareId ile aradığından, "WEB-CENTRAL" talebi başka bir işletmenin merkezî token'ını sızdırırdı.
+        // Merkezî lisanslar yalnız Admin "Lisans Ata" akışıyla (provisioning anahtarlı POS kurulumu) dağıtılır.
+        if (CentralLicense.IsCentral(decoded.HardwareId))
+            return BadRequest(new ActivateResp("none", null, "Bu donanım kimliği ile online aktivasyon yapılamaz."));
 
         // İşletmeyi (yoksa oluştur) + donanımı bağla. ANONİM cihaz ucu → tenant filtresini ATLA.
         var biz = await db.Businesses.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.CompanyCode == decoded.CompanyCode && !x.IsDeleted);

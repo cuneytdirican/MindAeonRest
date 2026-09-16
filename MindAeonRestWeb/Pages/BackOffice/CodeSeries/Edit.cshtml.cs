@@ -25,7 +25,7 @@ public class EditModel : PageModel
     public List<SelectListItem> TypeOptions { get; private set; } = new();
     public List<SelectListItem> BranchOptions { get; private set; } = new();
 
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet(int? id)
     {

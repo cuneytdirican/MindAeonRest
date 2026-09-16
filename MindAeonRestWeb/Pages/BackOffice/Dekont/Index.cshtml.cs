@@ -40,7 +40,7 @@ public class IndexModel : PageModel
     public List<SelectListItem> PosOptions { get; private set; } = new();
 
     // Gate: admin/Patron + PreAccounting (WPF Permissions.Cash; PreAccounting yeterli).
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     private static DekontKind K(int v) => (DekontKind)v;
     private static bool IsIn(DekontKind k) => k is DekontKind.KasaGiris or DekontKind.BankaGiris or DekontKind.KartTahsilat;

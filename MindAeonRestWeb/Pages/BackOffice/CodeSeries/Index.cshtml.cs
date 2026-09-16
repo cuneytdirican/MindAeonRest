@@ -16,7 +16,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
     // Kod serileri firma DB'sinde tutulur, lisans-feature yok — sadece rol denetimi.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet()
     {

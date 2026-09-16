@@ -101,6 +101,22 @@ ORDER BY CompanyId;";
         return ids;
     }
 
+    /// <summary>Şirkete (silinmemiş) erişim kaydı olan kullanıcı Id'leri. Kiracı yöneticisinin kullanıcı listesini
+    /// yalnız KENDİ şirketinin kullanıcılarına süzmek için (web back-office).</summary>
+    public HashSet<int> GetUserIdsForCompany(int companyId)
+    {
+        var ids = new HashSet<int>();
+        using var connection = Database.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+SELECT DISTINCT UserId FROM dbo.UserCompanyAccess
+WHERE IsDeleted = 0 AND CompanyId = @CompanyId;";
+        command.Parameters.AddWithValue("@CompanyId", companyId);
+        using var reader = command.ExecuteReader();
+        while (reader.Read()) ids.Add(reader.GetInt32(0));
+        return ids;
+    }
+
     /// <summary>
     /// Kullanıcıya bir şirkete erişim verir (idempotent UPSERT). BranchId NULL kayıt = "tüm şubeler".
     ///  - allBranches=true → tüm-şubeler (BranchId NULL) kaydı garanti edilir; gereksiz tekil şube

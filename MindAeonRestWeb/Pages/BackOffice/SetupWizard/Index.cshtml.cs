@@ -56,7 +56,7 @@ public class IndexModel : PageModel
     public int KioskCount { get; private set; }
 
     // Nav'daki AdminOnly kuralıyla aynı: SysAdmin ya da Patron. (Aksi halde Patron menüde linki görür ama sayfada Forbid yer.)
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     private int CompanyId => Session.CurrentCompany?.Id ?? 0;
 

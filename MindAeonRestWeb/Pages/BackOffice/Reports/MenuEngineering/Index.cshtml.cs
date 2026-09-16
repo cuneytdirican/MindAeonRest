@@ -27,7 +27,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public DateTime? To { get; set; }
 
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.AdvancedReports);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.AdvancedReports);
 
     private static int? ResolveCompanyId()
     {

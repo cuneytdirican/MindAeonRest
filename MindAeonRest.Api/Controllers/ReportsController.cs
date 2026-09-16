@@ -6,9 +6,10 @@ using MindAeonRest.Services;
 namespace MindAeonRest.Api.Controllers;
 
 /// <summary>Patron raporları. Açılış ekranı "patron" olan kullanıcılar içindir.
-/// Yalnız yönetici (SysAdmin) ve Kasiyer erişebilir (WPF <see cref="Permissions.Reports"/> ile aynı kural).
+/// SysAdmin, Kasiyer ve kiracı yöneticisi (Patron/Yönetici — PWA "Patron Panel" bu uçları çağırır; provisioning ilk yöneticiyi
+/// "Yönetici" rolüyle açar, aksi halde panel 403 alıyordu). Salt-okuma; JWT şirket DB'sine kapsamlı.
 /// branchId şube-aşırı geçersiz kılma SADECE SysAdmin için kabul edilir; aksi halde oturum şubesine zorlanır (IDOR koruması).</summary>
-[Authorize(Roles = "SysAdmin,Kasiyer")]
+[Authorize(Roles = "SysAdmin,Kasiyer,Patron,Yönetici,Yonetici")]
 [Route("api/reports")]
 public class ReportsController : PosControllerBase
 {

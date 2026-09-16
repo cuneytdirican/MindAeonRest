@@ -110,6 +110,22 @@ public class WebLoginService(IMemoryCache cache)
         };
     }
 
+    /// <summary>Pre-auth sonrası (şube seçimi / 2FA) cookie için lisansı yeniden kurar. Pre-auth zarfı yalnız paket+özellik
+    /// taşır; eskiden LicenseStatus varsayılanları (MaxUsers=3, MaxBranches=1, bitiş yok) cookie'ye yazılıyordu →
+    /// çok şubeli/2FA'lı kiracı yöneticisi kullanıcı/şube ekleyemiyordu. Gerçek limitler sistem DB'den okunur;
+    /// okunamazsa eski davranışa düşülür.</summary>
+    public static LicenseStatus ReloadLicense(Pages.LoginModel.PreAuth pre)
+    {
+        try
+        {
+            var lic = new LicenseService().GetStatusByCompany(pre.CompanyCode);
+            if (lic.IsUsable) return lic;
+        }
+        catch { /* sistem DB okunamadı → aşağıdaki geriye-uyumlu kurulum */ }
+        Enum.TryParse<LicensePackage>(pre.Package, out var pkg);
+        return new LicenseStatus { State = LicenseState.Licensed, Package = pkg, Features = (Feature)pre.Features };
+    }
+
     /// <summary>Seçilen şubeye erişimi doğrular (2. aşama güvenliği).</summary>
     public bool VerifyBranch(int userId, int companyId, int branchId, bool isSysAdmin)
     {
@@ -154,11 +170,12 @@ public class WebLoginService(IMemoryCache cache)
         return new ClaimsPrincipal(identity);
     }
 
-    /// <summary>Role göre açılış: yönetim → back-office; POS rolleri → PWA.</summary>
+    /// <summary>Role göre açılış: yönetim (SysAdmin/Patron/Yönetici — Session.IsTenantAdmin ile aynı küme) → back-office;
+    /// POS rolleri → PWA. Provisioning ilk yöneticiyi "Yönetici" rolüyle açar → o da back-office'e düşmeli.</summary>
     public static string Landing(IReadOnlyList<string> roles)
     {
         bool Has(string r) => roles.Any(x => x.Equals(r, StringComparison.OrdinalIgnoreCase));
-        if (Has("SysAdmin") || Has("Patron")) return "backoffice";
+        if (Has("SysAdmin") || Has("Patron") || Has("Yönetici") || Has("Yonetici")) return "backoffice";
         return "pos";
     }
 }

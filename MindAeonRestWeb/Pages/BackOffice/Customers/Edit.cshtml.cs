@@ -53,7 +53,7 @@ public class EditModel : PageModel
     public string CitiesByCountryJson { get; private set; } = "{}";   // { "countryId": [ {v,t} ] }
     public string DistrictsByCityJson { get; private set; } = "{}";   // { "cityId": [ {v,t} ] }
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.BasicCustomer);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.BasicCustomer);
 
     public IActionResult OnGet(int? id)
     {

@@ -43,7 +43,7 @@ public class IndexModel : PageModel
     private int BranchId => Session.CurrentBranch?.Id ?? 0;
 
     // İade yetkisi — WPF Permissions.Refund: SysAdmin veya 'İade' rolü.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("İade");
+    private static bool CanAccess => Session.IsTenantAdmin || Session.HasRole("İade");
 
     // Giriş yapmış herhangi bir kullanıcı (yetkisiz olsa da) sayfaya erişebilir; iade süpervizör onayı ile yapılır.
     private static bool IsLoggedIn => Session.CurrentUserId is not null;

@@ -41,7 +41,7 @@ public class IndexModel : PageModel
     public string? Hint { get; private set; }
 
     // Mutfak/reyon özelliği — yalnız SysAdmin/Patron + Feature.Kitchen (Reyons ekranı ile aynı gate).
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Kitchen);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Kitchen);
 
     public IActionResult OnGet()
     {

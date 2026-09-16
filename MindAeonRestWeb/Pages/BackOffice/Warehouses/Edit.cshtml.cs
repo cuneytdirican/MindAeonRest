@@ -23,7 +23,7 @@ public class EditModel : PageModel
     public List<SelectListItem> BranchOptions { get; private set; } = new();
 
     // Core özellik (lisans kapısı yok) — yalnız SysAdmin/Patron.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet(int? id)
     {

@@ -50,6 +50,34 @@ public sealed class AdminApi(IHttpClientFactory factory, IConfiguration config, 
         return await ReadResultAsync(resp, ct);
     }
 
+    /// <summary>Yetkili POST; başarıda yanıt gövdesini TResp'e çevirir, başarısızlıkta API'nin {message} hatasını döndürür.
+    /// (Gövde gereken admin işlemleri — ör. tenant lisans atama → imzalı token.)</summary>
+    public async Task<(TResp? Value, string? Error)> PostAsync<TResp>(string path, object? body, CancellationToken ct = default)
+    {
+        using var client = Create();
+        HttpResponseMessage resp;
+        try
+        {
+            resp = body is null
+                ? await client.PostAsync(path, null, ct)
+                : await client.PostAsJsonAsync(path, body, JsonOpts, ct);
+        }
+        catch (Exception ex)
+        {
+            return (default, $"Lisans API'ye ulaşılamadı: {ex.Message}");
+        }
+        var (ok, error) = await ReadResultAsync(resp, ct);
+        if (!ok) return (default, error);
+        try
+        {
+            return (await resp.Content.ReadFromJsonAsync<TResp>(JsonOpts, ct), null);
+        }
+        catch (Exception ex)
+        {
+            return (default, $"Lisans API yanıtı okunamadı: {ex.Message}");
+        }
+    }
+
     public async Task<(bool Ok, string? Error)> DeleteAsync(string path, CancellationToken ct = default)
     {
         using var client = Create();

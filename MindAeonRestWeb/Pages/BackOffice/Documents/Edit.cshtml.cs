@@ -91,7 +91,7 @@ public class EditModel : PageModel
     public decimal? FxEur { get; private set; }
     public string CurrencyCodesJson { get; private set; } = "{}";
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet(int? id)
     {

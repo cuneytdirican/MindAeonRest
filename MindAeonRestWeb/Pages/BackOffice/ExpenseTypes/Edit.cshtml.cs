@@ -20,7 +20,7 @@ public class EditModel : PageModel
     public string? Error { get; private set; }
 
     // Gider tipleri şirket DB'sinde tutulur, lisans-feature yok — sadece rol denetimi.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet(int? id)
     {

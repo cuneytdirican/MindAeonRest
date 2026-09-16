@@ -40,7 +40,7 @@ public class IndexModel : PageModel
 
     // WPF BankaWindow (ön-muhasebe) — admin/Patron + Feature.PreAccounting.
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     // ── Transfer (WPF BankaWindow → BankaIslemWindow karşılığı) ──
     // Aynı döviz iki banka hesabı arası; Core BankMovementService.Transfer(fromId,toId,amount,note,userId) çağrılır.

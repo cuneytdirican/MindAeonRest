@@ -29,7 +29,7 @@ public class IndexModel : PageModel
     public string? Info { get; private set; }
     public bool HasZone => ZoneId > 0 && BranchId > 0;
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.LocationTables);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.LocationTables);
 
     public IActionResult OnGet()
     {

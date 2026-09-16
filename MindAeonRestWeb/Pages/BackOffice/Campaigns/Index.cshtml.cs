@@ -17,7 +17,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
     // Yalnız SysAdmin/Patron + Feature.Campaign lisansı.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Campaign);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Campaign);
 
     public IActionResult OnGet()
     {

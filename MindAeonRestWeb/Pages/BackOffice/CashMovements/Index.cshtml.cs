@@ -40,7 +40,7 @@ public class IndexModel : PageModel
 
     // WPF KasaWindow (nakit kasa) — çekirdek özellik (nav "Nakit Kasalar" lisans gerektirmez):
     // yalnızca admin/Patron erişebilir, ayrı lisans şartı yok.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     // Aktif şube (WPF: Session.CurrentBranch?.Id ?? 0) — kasalar şubeye göre süzülür.
     private static int BranchId => Session.CurrentBranch?.Id ?? 0;

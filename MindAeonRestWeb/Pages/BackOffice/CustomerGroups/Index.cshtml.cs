@@ -16,7 +16,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public string? Q { get; set; }
     [BindProperty(SupportsGet = true)] public bool ShowDeleted { get; set; }
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.BasicCustomer);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.BasicCustomer);
 
     public IActionResult OnGet()
     {

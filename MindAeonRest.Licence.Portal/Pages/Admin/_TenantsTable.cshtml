@@ -1,0 +1,169 @@
+@using MindAeonRest.Licence.Portal.Models
+@using MindAeonRest.Licensing
+@model MindAeonRest.Licence.Portal.Pages.Admin.TenantsModel
+
+<div class="table-wrap" x-data="tenantActions()">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Kod</th>
+                <th>Ad</th>
+                <th>Veritabanı</th>
+                <th>Paket</th>
+                <th>Lisans</th>
+                <th>Bitiş</th>
+                <th class="num">Şube</th>
+                <th class="num">Kullanıcı</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Tenants.Count == 0)
+            {
+                <tr><td colspan="9" class="text-muted" style="text-align:center; padding:var(--sp-6);">
+                    @(string.IsNullOrEmpty(Model.LoadError) ? "Tenant bulunamadı." : "Liste yüklenemedi.")
+                </td></tr>
+            }
+            @foreach (var t in Model.Tenants)
+            {
+                var ls = AdminLabels.PosLicense(t.LicenseState);
+                var pkgIndex = Enum.TryParse<LicensePackage>(t.Package, true, out var p) ? (int)p : (int)LicensePackage.Enterprise;
+                <tr>
+                    <td><code style="font-weight:600;">@t.Code</code></td>
+                    <td style="font-weight:600;">@t.Name</td>
+                    <td><span class="text-sm text-muted">@t.DbName</span></td>
+                    <td>
+                        @if (string.IsNullOrEmpty(t.Package))
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                        else
+                        {
+                            <span class="badge primary">@t.Package</span>
+                        }
+                    </td>
+                    <td><span class="badge @ls.Css"><span class="dot"></span> @ls.Text</span></td>
+                    <td>
+                        @if (t.LicenseState == "Licensed" || t.LicenseState == "Expired")
+                        {
+                            @(t.ExpiresUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? "Süresiz")
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td class="num">@t.BranchCount</td>
+                    <td class="num">@t.UserCount</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-sm btn-primary"
+                                data-code="@t.Code" data-name="@t.Name"
+                                x-on:click="openAssign($el.dataset.code, $el.dataset.name, @pkgIndex)" title="Lisans Ata">
+                            <i data-lucide="key-round"></i> Lisans Ata
+                        </button>
+                        <button type="button" class="btn btn-sm"
+                                hx-get="/Admin/Tenants?handler=Detail&code=@Uri.EscapeDataString(t.Code)&name=@Uri.EscapeDataString(t.Name)"
+                                hx-target="#tenantDetail" hx-swap="innerHTML"
+                                x-on:click="$dispatch('tenant-detail')">
+                            <i data-lucide="eye"></i> Detay
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- ===== Lisans Ata ===== -->
+    <template x-if="modal === 'assign'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Lisans Ata — <code x-text="code"></code></h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Tenants?handler=AssignLicense" hx-target="#tenantTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="code" x-bind:value="code" />
+                    <input type="hidden" name="name" x-bind:value="name" />
+                    <div class="modal__body">
+                        <div class="form-field">
+                            <label>Paket</label>
+                            <select name="package" x-model.number="package">
+                                @foreach (var pk in Enum.GetValues<LicensePackage>())
+                                {
+                                    <option value="@((int)pk)">@PackageMatrix.Name(pk)</option>
+                                }
+                            </select>
+                            <div class="hint" x-text="'Tenant: ' + name"></div>
+                            <div class="hint">Merkezî (web) lisans imzalanıp POS'a kurulur. Önceki merkezî lisans otomatik devre dışı kalır (yükseltme/düşürme).</div>
+                        </div>
+                        <div class="grid grid-2">
+                            <div class="form-field">
+                                <label>Süre</label>
+                                <select name="duration" x-model.number="duration" x-on:change="prefillExpiry()">
+                                    <option value="0">Süresiz</option>
+                                    <option value="1">Aylık</option>
+                                    <option value="2">Yıllık</option>
+                                </select>
+                            </div>
+                            <div class="form-field" x-show="duration !== 0">
+                                <label>Bitiş Tarihi</label>
+                                <input type="date" name="expiresUtc" x-model="expires" x-bind:disabled="duration === 0" />
+                                <div class="hint">Seçilen günün sonuna kadar geçerli.</div>
+                            </div>
+                        </div>
+                        @if (Model.AddOns.Count > 0)
+                        {
+                            <div class="form-field">
+                                <label>Ek Modüller (add-on)</label>
+                                <div style="display:flex; flex-wrap:wrap; gap:8px 14px;">
+                                    @foreach (var a in Model.AddOns)
+                                    {
+                                        <label style="display:flex; align-items:center; gap:5px; font-weight:400;">
+                                            <input type="checkbox" name="addOns" value="@a.Bit" /> @a.Name
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <div class="grid grid-3">
+                            <div class="form-field"><label>Ek Kullanıcı</label><input type="number" name="extraUsers" min="0" value="0" /></div>
+                            <div class="form-field"><label>Ek Terminal</label><input type="number" name="extraKiosks" min="0" value="0" /></div>
+                            <div class="form-field"><label>Ek Şube</label><input type="number" name="extraBranches" min="0" value="0" /></div>
+                        </div>
+                        <div class="form-field">
+                            <label>Not</label>
+                            <textarea name="note" rows="2" placeholder="İsteğe bağlı açıklama"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="key-round"></i> Lisans Ata</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    function tenantActions() {
+        return {
+            modal: null, code: null, name: null, package: 2, duration: 0, expires: '',
+            openAssign(code, name, pkg) {
+                this.code = code; this.name = name; this.package = pkg; this.duration = 0; this.expires = '';
+                this.modal = 'assign'; this.$nextTick(() => window.lucide && lucide.createIcons());
+            },
+            // Aylık/Yıllık seçilince bitişi bugünden +1 ay / +1 yıl olarak öner (kullanıcı değiştirebilir).
+            prefillExpiry() {
+                if (this.duration === 0) { this.expires = ''; return; }
+                const d = new Date();
+                if (this.duration === 1) d.setMonth(d.getMonth() + 1); else d.setFullYear(d.getFullYear() + 1);
+                const pad = n => String(n).padStart(2, '0');
+                this.expires = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            },
+            close() { this.modal = null; this.code = null; this.name = null; }
+        };
+    }
+</script>

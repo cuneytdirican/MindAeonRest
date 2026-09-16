@@ -27,8 +27,26 @@ public class EditModel : PageModel
     public List<RoleOption> RoleOptions { get; private set; } = new();
     public List<BranchOption> BranchOptions { get; private set; } = new();
 
-    // Kullanıcı yönetimi SİSTEM DB'dir; yalnız SysAdmin.
-    private static bool CanAccess => Session.IsSysAdmin;
+    // Kullanıcı yönetimi SİSTEM DB'dir. SysAdmin: tam (eski davranış). Kiracı yöneticisi (Patron/Yönetici): yalnız
+    // KENDİ şirketinin kullanıcıları (IsManageableByTenantAdmin) + SysAdmin rolü atanamaz/görünmez.
+    private static bool CanAccess => Session.IsTenantAdmin;
+
+    /// <summary>KİRACI İZOLASYONU: kiracı yöneticisi bu kullanıcıyı yönetebilir mi? Hedef (silinmiş olsa da)
+    /// aktif şirkete erişimli olmalı, SysAdmin OLMAMALI ve BAŞKA hiçbir şirkete erişimi OLMAMALI
+    /// (birden çok kiracıya bağlı ortak kullanıcıları yalnız SysAdmin yönetir). Index (sil/geri al) de kullanır.</summary>
+    internal static bool IsManageableByTenantAdmin(int userId, int companyId)
+    {
+        if (userId <= 0 || companyId <= 0) return false;
+        var companies = new UserAccessService().GetCompanyIdsForUser(userId);
+        if (companies.Count == 0 || companies.Any(c => c != companyId)) return false;
+        return !new UserService().UserHasSysAdminRole(userId);
+    }
+
+    private static bool IsSysAdminRoleName(string name) => string.Equals(name, "SysAdmin", StringComparison.OrdinalIgnoreCase);
+
+    // Kiracı yöneticisi kendi yönetici rolünü/aktifliğini kaldırıp şirketi yöneticisiz bırakamaz.
+    private static bool IsTenantAdminRoleName(string name) =>
+        new[] { "Patron", "Yönetici", "Yonetici" }.Any(x => string.Equals(name, x, StringComparison.OrdinalIgnoreCase));
 
     // WPF ile aynı: birincil/gösterim rolü en yetkili roldür.
     private static int Priority(string name) => name switch
@@ -42,6 +60,7 @@ public class EditModel : PageModel
 
         if (id is int i && i > 0)
         {
+            if (!Session.IsSysAdmin && !IsManageableByTenantAdmin(i, companyId)) return Forbid();
             var u = _userService.GetById(i);
             if (u is null) return RedirectToPage("Index");
             Id = u.Id;
@@ -66,6 +85,16 @@ public class EditModel : PageModel
         if (!CanAccess) return Forbid();
         Id = id ?? 0;
         int companyId = ResolveCompanyId();
+        bool tenantScoped = !Session.IsSysAdmin;
+        if (tenantScoped)
+        {
+            // Şirket bağlamı yoksa kiracı yöneticisi erişimsiz (şirketsiz) kullanıcı üretemez.
+            if (companyId <= 0) return Forbid();
+            if (!IsNew && !IsManageableByTenantAdmin(Id, companyId)) return Forbid();
+            // SysAdmin rol id'si POST'ta gelirse (form dışı) sunucu tarafında reddet.
+            var saIds = _roleService.GetAll().Where(r => IsSysAdminRoleName(r.Name)).Select(r => r.Id).ToHashSet();
+            if (SelectedRoleIds.Any(saIds.Contains)) return Forbid();
+        }
         LoadLookups(companyId);
 
         Username = (Username ?? "").Trim();
@@ -86,6 +115,17 @@ public class EditModel : PageModel
             .Select(r => r.Id)
             .ToList();
 
+        // Yalnız aktif şirketin şubeleri kabul edilir (başka şirketin şube id'si erişim kaydına yazılmaz).
+        if (companyId > 0)
+            SelectedBranchIds = SelectedBranchIds.Where(b => BranchOptions.Any(o => o.Id == b)).Distinct().ToList();
+
+        if (tenantScoped && !IsNew && Id == Session.CurrentUserId
+            && (!IsActive || !selectedNames.Any(IsTenantAdminRoleName)))
+        {
+            Error = "Kendi yönetici rolünüzü veya aktifliğinizi kaldıramazsınız.";
+            return Page();
+        }
+
         if (!AllBranches && SelectedBranchIds.Count == 0)
         {
             Error = "En az bir şube seçin veya 'Tüm şubeler'i işaretleyin.";
@@ -104,6 +144,9 @@ public class EditModel : PageModel
             else
             {
                 userId = Id;
+                // Pasif kullanıcıyı yeniden aktifleştirmek lisans kullanıcı limitine tabidir (kiracı yöneticisi için baypas engeli).
+                if (tenantScoped && IsActive && !_userService.IsActive(userId))
+                    UserService.EnforceUserLimit(companyId);
                 _userService.Update(userId, FullName, orderedRoleIds, IsActive, Session.CurrentUserId);
                 if (!string.IsNullOrEmpty(Password))
                     _userService.SetPassword(userId, Password, Session.CurrentUserId);
@@ -124,6 +167,8 @@ public class EditModel : PageModel
     private void LoadLookups(int companyId)
     {
         RoleOptions = _roleService.GetAll()
+            // SysAdmin (çapraz-tenant) rolünü yalnız SysAdmin atayabilir.
+            .Where(r => Session.IsSysAdmin || !IsSysAdminRoleName(r.Name))
             .Select(r => new RoleOption { Id = r.Id, Name = r.Name })
             .ToList();
 

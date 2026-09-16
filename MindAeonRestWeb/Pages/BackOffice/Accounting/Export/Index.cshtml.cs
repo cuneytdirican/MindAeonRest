@@ -31,7 +31,7 @@ public class IndexModel : PageModel
     public decimal TotalKdv => Rows.Sum(r => r.Kdv);
 
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet()
     {

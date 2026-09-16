@@ -74,8 +74,6 @@ public class TwoFactorChallengeModel(TwoFactorManager twoFactor, IConfiguration 
     {
         var user = new User { Id = pre.UserId, Username = pre.Username, FullName = pre.FullName };
         var company = new Company { Id = pre.CompanyId, Code = pre.CompanyCode, Name = pre.CompanyCode, DatabaseName = pre.DatabaseName };
-        Enum.TryParse<LicensePackage>(pre.Package, out var pkg);
-        var lic = new LicenseStatus { State = LicenseState.Licensed, Package = pkg, Features = (Feature)pre.Features };
-        return (user, company, lic);
+        return (user, company, WebLoginService.ReloadLicense(pre));
     }
 }

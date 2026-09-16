@@ -23,7 +23,7 @@ public class EditModel : PageModel
 
     public List<SelectListItem> BranchOptions { get; private set; } = new();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.LocationTables);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.LocationTables);
 
     public IActionResult OnGet(int? id)
     {

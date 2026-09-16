@@ -16,7 +16,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool ShowInactive { get; set; }
 
     // Core özellik (lisans kapısı yok) — yalnız SysAdmin/Patron (WPF Permissions.Cash alt kümesi).
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet()
     {

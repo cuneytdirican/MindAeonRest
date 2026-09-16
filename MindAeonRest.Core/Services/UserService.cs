@@ -109,8 +109,9 @@ ORDER BY u.FullName;";
 
     /// <summary>LİSANS: aktif kullanıcı sayısı paket limitine ulaştıysa yeni kullanıcı engellenir.
     /// Sayım İLGİLİ ŞİRKETE kapsamlıdır (çok-kiracılı SaaS): o şirkete erişimi olan aktif kullanıcılar
-    /// (UserCompanyAccess üzerinden) + global SysAdmin'ler sayılır. Enterprise (MaxUsers=int.MaxValue) sınırsızdır.</summary>
-    private static void EnforceUserLimit(int companyId)
+    /// (UserCompanyAccess üzerinden) + global SysAdmin'ler sayılır. Enterprise (MaxUsers=int.MaxValue) sınırsızdır.
+    /// Web kiracı yöneticisi pasif/silinmiş kullanıcıyı yeniden etkinleştirirken de çağırır (limit baypası engeli).</summary>
+    public static void EnforceUserLimit(int companyId)
     {
         var lic = Helpers.Session.CurrentLicense;
         if (lic is null || lic.MaxUsers == int.MaxValue) return;

@@ -42,7 +42,7 @@ public class IndexModel : PageModel
     public string? Info { get; private set; }
 
     // Kampanya gönderimi yönetimsel + kampanya lisansı gerektirir.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Campaign);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Campaign);
 
     public IActionResult OnGet()
     {

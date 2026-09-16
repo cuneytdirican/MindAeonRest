@@ -84,7 +84,8 @@ public class AuthController(JwtTokenService jwt, IConfiguration config) : Contro
     private static string Landing(IReadOnlyList<string> roles)
     {
         bool Has(string r) => roles.Any(x => x.Equals(r, StringComparison.OrdinalIgnoreCase));
-        if (Has("SysAdmin")) return "patron";
+        // Kiracı yöneticisi (Patron/Yönetici) de patron paneliyle açılır (PWA isManager ile aynı persona).
+        if (Has("SysAdmin") || Has("Patron") || Has("Yönetici") || Has("Yonetici")) return "patron";
         if (Has("Mutfak")) return "kitchen";
         return "waiter";
     }

@@ -43,7 +43,7 @@ public class IndexModel : PageModel
 
     // Gate: yönetici/Patron + lisans (PreAccounting) — Finans/Ön-muhasebe ekran deseni.
     private static bool CanAccess =>
-        (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+        Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet()
     {

@@ -68,7 +68,7 @@ public class EditModel : PageModel
     public static IReadOnlyList<(int Value, string Text)> TrackingOptions { get; } =
         Enum.GetValues<MindAeonRest.Models.TrackingType>().Select(v => ((int)v, v.ToTr())).ToList();
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.ProductBasic);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.ProductBasic);
 
     public IActionResult OnGet(int? id)
     {
@@ -417,6 +417,9 @@ public class EditModel : PageModel
     public IActionResult OnPostQuickUnit(string code, string name)
     {
         if (!CanAccess) return Forbid();
+        // Birimler sistem DB'sinde TÜM kiracılar için ortak → kiracı yöneticisi global birim ekleyemez.
+        if (!Session.IsSysAdmin)
+            return new JsonResult(new { ok = false, error = "Birimler tüm şirketlerde ortaktır; yeni birimi sistem yöneticisi ekler." });
         try
         {
             int newId = _units.Create(code ?? "", name ?? "", Session.CurrentUserId);

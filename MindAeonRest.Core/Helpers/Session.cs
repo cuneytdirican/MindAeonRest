@@ -69,6 +69,12 @@ public static class Session
 
     public static bool IsSysAdmin => HasRole("SysAdmin");
 
+    /// <summary>KİRACI (şirket) kapsamlı yönetici: SysAdmin + Patron + Yönetici (aksansız "Yonetici" dahil).
+    /// Provisioning ilk yöneticiyi SysAdmin DEĞİL "Yönetici" rolüyle açar → back-office yönetim ekranları bununla açılır.
+    /// YALNIZ aktif şirketin verisini yönetir; çapraz-tenant/sistem geneli güçler (Süper Admin, sistem rolleri,
+    /// sunucu güncelleme, ortak sistem tanımları) <see cref="IsSysAdmin"/> kapısında KALIR.</summary>
+    public static bool IsTenantAdmin => IsSysAdmin || HasRole("Patron") || HasRole("Yönetici") || HasRole("Yonetici");
+
     /// <summary>Aktif şirketin kodu (kısayol). IsSysAdmin/CurrentCompany deseniyle paralel okuma.</summary>
     public static string? CompanyCode => CurrentCompany?.Code;
 

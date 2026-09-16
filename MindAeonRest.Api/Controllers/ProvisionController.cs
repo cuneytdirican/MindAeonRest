@@ -53,14 +53,63 @@ public class ProvisionController(IConfiguration config) : ControllerBase
         }
     }
 
-    /// <summary>GET /api/provision/tenants → tüm tenant'ların özeti (salt-okuma denetim).</summary>
+    /// <summary>
+    /// GET /api/provision/tenants → tüm tenant'ların özeti (salt-okuma denetim).
+    /// Mevcut alanlara EK olarak lisans özeti: <c>package</c> (Lite/Standart/Enterprise), <c>licenseState</c>
+    /// (Licensed/Trial/TrialExpired/Expired/...), <c>expiresUtc</c> (null = süresiz/deneme).
+    /// SALT-OKUMA: <see cref="LicenseService.PeekStatusByCompany"/> kullanılır → listeye bakmak lisanssız tenant'ın
+    /// deneme saatini BAŞLATMAZ. Tek tenant'ın lisans okuması patlarsa liste bozulmaz (alanlar null döner).
+    /// </summary>
     [HttpGet("tenants")]
     public IActionResult ListTenants()
     {
         if (Gate() is { } denied) return denied;
+        var license = new LicenseService();
         var items = _provision.ListTenants()
-            .Select(t => new { code = t.Code, name = t.Name, dbName = t.DbName, branchCount = t.BranchCount, userCount = t.UserCount });
+            .Select(t =>
+            {
+                MindAeonRest.Models.LicenseStatus? st = null;
+                try { st = license.PeekStatusByCompany(t.Code); } catch { /* lisans okunamadı → alanlar null */ }
+                return new
+                {
+                    code = t.Code, name = t.Name, dbName = t.DbName, branchCount = t.BranchCount, userCount = t.UserCount,
+                    package = st?.PackageName,
+                    licenseState = st?.State.ToString(),
+                    expiresUtc = st?.ExpiresUtc
+                };
+            });
         return Ok(items);
+    }
+
+    /// <summary>
+    /// POST /api/provision/tenant/{code}/license  { token } → Licence API'nin imzaladığı lisansı tenant'a kurar.
+    /// 400: token boş / imza geçersiz / şirket kodu uyuşmuyor / süresi dolmuş · 404: tenant yok.
+    /// 200: { code, package, state, expiresUtc, maxUsers, maxBranches, maxKiosks } (kurulum sonrası GetStatusByCompany).
+    /// </summary>
+    [HttpPost("tenant/{code}/license")]
+    public IActionResult InstallTenantLicense(string code, [FromBody] ProvisionLicenseRequest? req)
+    {
+        if (Gate() is { } denied) return denied;
+
+        var result = _provision.InstallTenantLicense(code, req?.Token);
+        if (!result.Ok)
+        {
+            return result.Error == TenantLicenseInstallError.TenantNotFound
+                ? NotFound(new { message = result.Message })
+                : BadRequest(new { message = result.Message });
+        }
+
+        var st = result.Status!;
+        return Ok(new
+        {
+            code = result.Code,
+            package = st.PackageName,
+            state = st.State.ToString(),
+            expiresUtc = st.ExpiresUtc,
+            maxUsers = st.MaxUsers,
+            maxBranches = st.MaxBranches,
+            maxKiosks = st.MaxKiosks
+        });
     }
 
     /// <summary>GET /api/provision/tenant/{code}/users → tenant kullanıcıları (salt-okuma denetim).</summary>

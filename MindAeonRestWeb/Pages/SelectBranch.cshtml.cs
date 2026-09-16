@@ -49,8 +49,7 @@ public class SelectBranchModel(WebLoginService login, IConfiguration config) : P
 
         var user = new User { Id = Pre.UserId, Username = Pre.Username, FullName = Pre.FullName };
         var company = new Company { Id = Pre.CompanyId, Code = Pre.CompanyCode, Name = Pre.CompanyCode, DatabaseName = Pre.DatabaseName };
-        Enum.TryParse<LicensePackage>(Pre.Package, out var pkg);
-        var lic = new LicenseStatus { State = LicenseState.Licensed, Package = pkg, Features = (Feature)Pre.Features };
+        var lic = WebLoginService.ReloadLicense(Pre);
 
         var principal = WebLoginService.BuildPrincipal(user, company, BranchId, Pre.Roles, lic);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,

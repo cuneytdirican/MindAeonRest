@@ -46,8 +46,11 @@ public class IndexModel : PageModel
     public List<SelectListItem> Cities { get; private set; } = new();
     public List<SelectListItem> Districts { get; private set; } = new();
 
-    // Yalnız sistem yöneticisi. Feature (lisans) kapısı YOK.
-    private static bool CanAccess => Session.IsSysAdmin;
+    // Kiracı yöneticisi (SysAdmin/Patron/Yönetici) KENDİ aktif şirketini düzenler — kayıt daima Session.CurrentCompany.Code'dan
+    // çözülür (POST'tan id alınmaz → başka şirkete yazılamaz). Feature (lisans) kapısı YOK.
+    private static bool CanAccess => Session.IsTenantAdmin;
+    /// <summary>Şirketi pasifleştirmek girişi kilitler (pasif şirkete yalnız SysAdmin girer) → aktiflik yalnız SysAdmin.</summary>
+    public bool CanChangeActive => Session.IsSysAdmin;
 
     public IActionResult OnGet()
     {
@@ -103,7 +106,8 @@ public class IndexModel : PageModel
         company.TaxNumber = TaxNumber;
         company.TaxOffice = TaxOffice;
         company.Address = Address;
-        company.IsActive = IsActive;
+        if (CanChangeActive) company.IsActive = IsActive;   // kiracı yöneticisi için mevcut değer korunur
+        IsActive = company.IsActive;
         company.CurrencyId = CurrencyId;
         company.CountryId = CountryId;
         company.CityId = CityId;

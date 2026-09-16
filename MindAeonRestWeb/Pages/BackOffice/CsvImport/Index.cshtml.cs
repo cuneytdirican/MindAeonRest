@@ -47,7 +47,7 @@ public class IndexModel : PageModel
     // Örnek şablon başlığı (bilgi amaçlı gösterim)
     public string SampleHeader => CsvImportService.SampleHeader;
 
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.ProductBasic);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.ProductBasic);
 
     public IActionResult OnGet()
     {

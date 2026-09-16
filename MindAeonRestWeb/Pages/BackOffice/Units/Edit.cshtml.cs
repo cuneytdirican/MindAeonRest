@@ -17,8 +17,9 @@ public class EditModel : PageModel
     public bool IsNew => Id == 0;
     public string? Error { get; private set; }
 
-    // Birimler sistem DB'sinde (ortak) tutulur, lisans-feature yok — sadece rol denetimi.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    // Birimler sistem DB'sinde (ortak, TÜM kiracılar) tutulur → ekle/düzenle yalnız SysAdmin.
+    // Kiracı yöneticisi listeyi Index'te salt-okunur görür.
+    private static bool CanAccess => Session.IsSysAdmin;
 
     public IActionResult OnGet(int? id)
     {

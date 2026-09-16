@@ -28,7 +28,7 @@ public class IssueModel : PageModel
     public List<SelectListItem> CashOptions { get; private set; } = new();
     public List<SelectListItem> PosOptions { get; private set; } = new();
 
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron");
+    private static bool CanAccess => Session.IsTenantAdmin;
 
     public IActionResult OnGet()
     {

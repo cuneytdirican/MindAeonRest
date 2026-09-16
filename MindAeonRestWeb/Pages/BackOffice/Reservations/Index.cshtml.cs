@@ -28,7 +28,7 @@ public class IndexModel : PageModel
     public string? StatusMessage { get; private set; }
 
     // Gate: yalnız SysAdmin/Patron + Rezervasyon lisansı.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.Reservation);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.Reservation);
 
     public IActionResult OnGet()
     {

@@ -7,7 +7,14 @@
 
 <div class="bo-page-head">
     <h1>📏 Birimler</h1>
-    <a class="btn btn-primary" href="/BackOffice/Units/Edit">+ Yeni Birim</a>
+    @if (Model.CanManage)
+    {
+        <a class="btn btn-primary" href="/BackOffice/Units/Edit">+ Yeni Birim</a>
+    }
+    else
+    {
+        <span class="muted">Birimler tüm şirketlerde ortaktır; yalnız sistem yöneticisi düzenler.</span>
+    }
 </div>
 
 <form method="get" class="bo-filter">
@@ -37,7 +44,7 @@
                     else { <span class="badge-off">Pasif</span> }
                 </td>
                 <td class="ar">
-                    @if (!u.IsDeleted)
+                    @if (Model.CanManage && !u.IsDeleted)
                     {
                         <a class="btn btn-sm" href="/BackOffice/Units/Edit/@u.Id">Düzenle</a>
                         <form method="post" asp-page-handler="ToggleDelete" style="display:inline" onsubmit="return confirm('Silinsin (pasifleştirilsin) mi?')">
@@ -46,7 +53,7 @@
                             <button class="btn btn-sm btn-danger" type="submit">Sil</button>
                         </form>
                     }
-                    else
+                    else if (Model.CanManage)
                     {
                         <form method="post" asp-page-handler="ToggleDelete" style="display:inline">
                             <input type="hidden" name="id" value="@u.Id" /><input type="hidden" name="deleted" value="false" />

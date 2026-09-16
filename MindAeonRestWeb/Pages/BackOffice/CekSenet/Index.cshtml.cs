@@ -27,7 +27,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public bool Upcoming { get; set; }      // "vadesi yaklaşan": açık + ≤7 gün
 
     // Ön Muhasebe kapısı — yalnız SysAdmin/Patron + Feature.PreAccounting.
-    private static bool CanAccess => (Session.IsSysAdmin || Session.HasRole("Patron")) && Session.LicenseHas(Feature.PreAccounting);
+    private static bool CanAccess => Session.IsTenantAdmin && Session.LicenseHas(Feature.PreAccounting);
 
     public IActionResult OnGet()
     {

@@ -26,7 +26,7 @@ public class IndexModel : PageModel
     public string? Error { get; private set; }
 
     // Core rapor (lisans kapısı yok) — ZList deseni: Patron/SysAdmin ya da Reports izni.
-    private static bool CanAccess => Session.IsSysAdmin || Session.HasRole("Patron") || Permissions.Reports;
+    private static bool CanAccess => Session.IsTenantAdmin || Permissions.Reports;
 
     public IActionResult OnGet()
     {
