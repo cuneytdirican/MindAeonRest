@@ -1,0 +1,149 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.CampaignSend.IndexModel
+@{
+    ViewData["Title"] = "Kampanya Gönderimi";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📣 Kampanya Gönderimi</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">
+    Hedef segment seçin (tüm müşteriler / müşteri grubu / bugün doğum günü olanlar / uzun süredir gelmeyenler),
+    kanal ve şablon belirleyin. Önce <strong>Önizle</strong> ile alıcıları görün, sonra <strong>Gönder</strong>.
+    <strong>Gerçek gönderim, seçili şubenin kanal ayarına bağlıdır (TEST modu/kapalı kanal → simülasyon).</strong>
+</p>
+
+@if (!string.IsNullOrEmpty(Model.Info))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Info</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<form method="post" id="sendForm">
+    <div class="bo-card bo-form" style="margin-bottom:14px;">
+        <div class="frm-row">
+            <label>Şube</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field"></select>
+            <small class="hint">Gönderim bu şubenin kanal ayarlarını kullanır.</small>
+        </div>
+        <div class="frm-row">
+            <label>Hedef Segment</label>
+            <select asp-for="Segment" asp-items="Model.SegmentOptions" class="field" id="segSel"></select>
+        </div>
+        <div class="frm-row" id="grpRow">
+            <label>Müşteri Grubu</label>
+            <select asp-for="GroupId" asp-items="Model.GroupOptions" class="field"></select>
+        </div>
+        <div class="frm-row" id="recRow">
+            <label>Gelmeyen Gün Sayısı</label>
+            <input asp-for="RecoveryDaysText" class="field" inputmode="numeric" placeholder="30" />
+            <small class="hint">Son siparişi bu kadar günden eski olan müşteriler hedeflenir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Kanal</label>
+            <select asp-for="Channel" asp-items="Model.ChannelOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Kampanya (Opsiyonel)</label>
+            <select asp-for="CampaignId" asp-items="Model.CampaignOptions" class="field"></select>
+            <small class="hint">Seçilirse {kod} ve {tutar} yer-tutucuları bu kampanyadan doldurulur.</small>
+        </div>
+        <div class="frm-row">
+            <label>Hazır Şablon</label>
+            <select asp-for="TemplateKey" asp-items="Model.TemplateOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Mesaj Metni</label>
+            <textarea asp-for="Body" class="field" rows="3" placeholder="Boş bırakılırsa seçili şablon kullanılır. Yer-tutucular: {ad}, {kod}, {tutar}"></textarea>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn" asp-page-handler="Preview">👁 Önizle</button>
+            <button type="button" class="btn btn-primary" onclick="csConfirm()">📣 Gönder</button>
+        </div>
+    </div>
+
+    @* Custom onay popup — native confirm KULLANILMAZ. *@
+    <div id="csModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;">
+        <div class="bo-card" style="max-width:420px;width:90%;padding:22px;">
+            <h3 style="margin:0 0 10px;">Gönderimi Onayla</h3>
+            <p style="margin:0 0 16px;">Seçili segment ve kanala toplu gönderim yapılacak. Devam edilsin mi?</p>
+            <div class="frm-actions" style="justify-content:flex-end;">
+                <button type="button" class="btn" onclick="document.getElementById('csModal').style.display='none'">Vazgeç</button>
+                <button type="submit" class="btn btn-primary" asp-page-handler="Send">Evet, Gönder</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (Model.Preview.Count > 0)
+{
+    <div class="bo-card" style="margin-bottom:14px;">
+        <h3 style="margin:0 0 8px;">Önizleme — @Model.Preview.Count Alıcı</h3>
+        <table class="bo-table">
+            <thead><tr><th>Müşteri</th><th>İletişim</th></tr></thead>
+            <tbody>
+            @foreach (var r in Model.Preview)
+            {
+                <tr><td>@r.Name</td><td>@r.Contact</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.Result is { } res)
+{
+    <div class="bo-card" style="margin-bottom:14px;">
+        <h3 style="margin:0 0 8px;">Gönderim Sonucu</h3>
+        <p class="hint">Toplam @res.Total — Gönderildi: @res.Sent · Simülasyon: @res.Simulated · Başarısız: @res.Failed</p>
+        <table class="bo-table">
+            <thead><tr><th>İletişim</th><th>Durum</th><th>Bilgi</th></tr></thead>
+            <tbody>
+            @foreach (var it in res.Items)
+            {
+                <tr><td>@it.Contact</td><td>@it.Status.ToTr()</td><td>@it.Info</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="bo-card">
+    <h3 style="margin:0 0 8px;">Son Gönderimler</h3>
+    <table class="bo-table">
+        <thead><tr><th>Tarih</th><th>Segment</th><th>Kanal</th><th>Alıcı</th><th>Durum</th></tr></thead>
+        <tbody>
+        @if (Model.RecentLog.Count == 0)
+        {
+            <tr><td colspan="5" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var l in Model.RecentLog)
+        {
+            <tr>
+                <td>@l.SentAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@l.SegmentText</td>
+                <td>@l.ChannelText</td>
+                <td>@l.Recipient</td>
+                <td>@l.StatusText</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function csToggleSeg() {
+        var v = document.getElementById('segSel').value;
+        document.getElementById('grpRow').style.display = (v === '1') ? '' : 'none';
+        document.getElementById('recRow').style.display = (v === '3') ? '' : 'none';
+    }
+    function csConfirm() { document.getElementById('csModal').style.display = 'flex'; }
+    document.getElementById('segSel').addEventListener('change', csToggleSeg);
+    csToggleSeg();
+</script>

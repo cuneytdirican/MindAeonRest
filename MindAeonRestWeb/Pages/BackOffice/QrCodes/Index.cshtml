@@ -1,0 +1,61 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.QrCodes.IndexModel
+@{
+    ViewData["Title"] = "Masa QR Kodları";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📱 Masa QR Kodları</h1>
+    <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+</div>
+
+<p class="bo-hint">
+    Her masaya özel QR: müşteri okutunca yalnız <b>o masanın</b> menüsünü görür ve o masaya sipariş verir
+    (şube+masa QR'a gömülüdür; başka masaya geçilemez). QR'ları basıp masalara yapıştırın.
+</p>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field" onchange="this.form.submit()">
+        <option value="">— Tüm Şubeler —</option>
+        @foreach (var b in Model.Branches)
+        {
+            <option value="@b.Id" selected="@(Model.BranchId == b.Id)">@b.Name</option>
+        }
+    </select>
+    <noscript><button type="submit" class="btn">Göster</button></noscript>
+</form>
+
+@if (Model.Groups.Count == 0)
+{
+    <div class="bo-card"><div class="empty" style="padding:24px;text-align:center">Bu kapsamda masa bulunamadı.</div></div>
+}
+
+@foreach (var g in Model.Groups)
+{
+    <div class="bo-card qr-zone" style="margin-bottom:18px">
+        <h3 style="margin:0 0 12px">📍 @g.ZoneName @(string.IsNullOrEmpty(g.BranchName) ? "" : $"· {g.BranchName}")</h3>
+        <div class="qr-grid">
+            @foreach (var t in g.Tables)
+            {
+                <div class="qr-cell">
+                    <img src="@t.QrDataUri" alt="QR @t.Code" class="qr-img" />
+                    <div class="qr-code">@t.Code</div>
+                    @if (!string.IsNullOrEmpty(t.Name)) { <div class="qr-name">@t.Name</div> }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .qr-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; }
+    .qr-cell { border:1px solid var(--bo-border,#ddd); border-radius:10px; padding:10px; text-align:center; background:#fff; }
+    .qr-img { width:100%; max-width:150px; height:auto; image-rendering:pixelated; }
+    .qr-code { font-weight:700; margin-top:6px; }
+    .qr-name { font-size:12px; opacity:.7; }
+    @@media print {
+        .bo-page-head button, .bo-filter, .bo-hint { display:none; }
+        .qr-cell { break-inside:avoid; }
+    }
+</style>

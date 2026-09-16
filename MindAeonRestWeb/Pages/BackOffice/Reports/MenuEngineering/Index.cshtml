@@ -1,0 +1,141 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.MenuEngineering.IndexModel
+@{
+    ViewData["Title"] = "Menü Analizi";
+    Layout = "_BackOfficeLayout";
+    string CsvUrl()
+    {
+        var pairs = new List<string> { "handler=Csv" };
+        if (Model.BranchId is int b) pairs.Add($"BranchId={b}");
+        if (Model.From is DateTime f) pairs.Add($"From={f:yyyy-MM-dd}");
+        if (Model.To is DateTime t) pairs.Add($"To={t:yyyy-MM-dd}");
+        return "/BackOffice/Reports/MenuEngineering?" + string.Join("&", pairs);
+    }
+}
+
+<div class="bo-page-head">
+    <h1>📈 Menü Analizi</h1>
+    <a class="btn btn-ghost" href="@CsvUrl()">⬇ CSV İndir</a>
+    <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field">
+        <option value="0" selected="@(Model.BranchId == 0)">Tüm Şubeler</option>
+        @foreach (var b in Model.BranchOptions)
+        {
+            <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+        }
+    </select>
+    <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+@{
+    var rep = Model.Report;
+}
+<div class="bo-card" style="display:flex;flex-wrap:wrap;gap:18px;">
+    <div><span style="color:#2E7D32;font-weight:bold;">● Yıldız</span> @rep.StarCount</div>
+    <div><span style="color:#1565C0;font-weight:bold;">● İnek</span> @rep.PlowhorseCount</div>
+    <div><span style="color:#E8A33D;font-weight:bold;">● Bilmece</span> @rep.PuzzleCount</div>
+    <div><span style="color:#C62828;font-weight:bold;">● Köpek</span> @rep.DogCount</div>
+    <div style="margin-left:auto;"><b>Toplam Ciro:</b> @rep.TotalRevenue.ToString("N2") ₺ · <b>Maliyet:</b> @rep.TotalCost.ToString("N2") ₺ · <b>Katkı Marjı:</b> @rep.TotalMargin.ToString("N2") ₺</div>
+</div>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Ürün</th><th class="ar">Adet</th><th class="ar">Ciro</th><th class="ar">Maliyet</th>
+                <th class="ar">Katkı Marjı</th><th class="ar">Marj %</th><th class="ar">Popülerlik %</th><th>Sınıf</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (rep.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Seçili aralıkta satış kaydı yok.</td></tr>
+        }
+        @foreach (var i in rep.Items)
+        {
+            <tr>
+                <td>@i.Name</td>
+                <td class="ar">@i.QtyText</td>
+                <td class="ar">@i.RevenueText</td>
+                <td class="ar">@i.CostText</td>
+                <td class="ar">@i.MarginText</td>
+                <td class="ar">@i.MarginPercentText</td>
+                <td class="ar">%@i.PopularityShare.ToString("N1")</td>
+                <td><span style="display:inline-block;padding:2px 8px;border-radius:10px;color:#fff;font-size:12px;background:@i.ClassColor;">@i.ClassLabel</span></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="bo-hint" style="margin-top:6px;color:var(--muted,#888);font-size:12px;">
+        Eşikler: ort. adet @rep.AvgQty.ToString("0.##"), ort. birim katkı marjı @rep.AvgUnitMargin.ToString("N2") ₺.
+        Popülerlik (adet) × kârlılık (birim katkı marjı) ortalama üstü/altına göre sınıflandırılır.
+    </div>
+</div>
+
+@{
+    var heat = Model.Heatmap;
+    string HeatBg(int wd, int hr)
+    {
+        var it = heat.Intensity(wd, hr);
+        if (it <= 0) return "transparent";
+        // düşük→yüksek: açık→koyu yeşil
+        return $"rgba(46,125,50,{(0.12 + it * 0.78).ToString(System.Globalization.CultureInfo.InvariantCulture)})";
+    }
+}
+<div class="bo-card">
+    <h3 style="margin:0 0 8px;">🗓 Gün × Saat Ciro Isı Haritası</h3>
+    <div style="overflow-x:auto;">
+        <table class="bo-table" style="border-collapse:collapse;font-size:11px;">
+            <thead>
+                <tr>
+                    <th style="position:sticky;left:0;background:inherit;">Gün \ Saat</th>
+                    @for (int h = 0; h < 24; h++)
+                    {
+                        <th class="ar" style="min-width:22px;">@h</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+            @for (int wd = 0; wd < 7; wd++)
+            {
+                <tr>
+                    <td style="font-weight:bold;position:sticky;left:0;background:inherit;">@MindAeonRest.Models.SalesHeatmap.DayNames[wd]</td>
+                    @for (int h = 0; h < 24; h++)
+                    {
+                        var rev = heat.Revenue[wd, h];
+                        <td class="ar" title="@MindAeonRest.Models.SalesHeatmap.DayNames[wd] @h:00 — @rev.ToString("N0") ₺ / @heat.Count[wd, h] adisyon"
+                            style="background:@HeatBg(wd, h);padding:3px 4px;">@(rev > 0 ? rev.ToString("N0") : "")</td>
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-hint" style="margin-top:6px;color:var(--muted,#888);font-size:12px;">Koyu yeşil = yüksek ciro. İş-günü kesimine göre gruplanır.</div>
+</div>
+
+@{
+    var fc = Model.Forecast;
+}
+<div class="bo-card">
+    <h3 style="margin:0 0 8px;">🔮 Talep Tahmini (hareketli ortalama + haftalık mevsimsellik)</h3>
+    <p style="margin:0 0 8px;">Ertesi gün tahmini: <b>@fc.NextDayText</b> · Önümüzdeki 7 gün: <b>@fc.Next7Text</b> <span style="color:var(--muted,#888);">(son @fc.LookbackDays güne göre, ort. günlük @fc.AvgDailyRevenue.ToString("N0") ₺)</span></p>
+    <table class="bo-table">
+        <thead><tr><th>Gün</th><th>Tarih</th><th class="ar">Tahmini Ciro</th></tr></thead>
+        <tbody>
+        @foreach (var p in fc.Next7Days)
+        {
+            <tr><td>@p.DayName</td><td>@p.Date.ToString("dd.MM.yyyy")</td><td class="ar">@p.RevenueText</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Tahmin basit (MVP) bir modeldir — sezon/kampanya etkileri dikkate alınmaz. Excel/PDF dışa aktarım masaüstü (WPF) uygulamasına özeldir; web'de CSV + tarayıcı Yazdır kullanılır.
+</p>

@@ -1,0 +1,68 @@
+<Window x:Class="MindAeonRest.Views.ZReportListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Z Raporları" Height="700" Width="1040"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="22,18,22,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock Text="📅 Z (Gün Sonu) Raporları" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <Button Content="✕" Width="34" Height="34" HorizontalAlignment="Right" Background="Transparent" Foreground="{DynamicResource TextMutedBrush}" BorderThickness="0" Cursor="Hand" Click="Cancel_Click" />
+            </Grid>
+
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="14,10" Margin="0,12,0,0">
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="BAŞLANGIÇ" Style="{StaticResource FieldLabel}" />
+                        <DatePicker x:Name="FromBox" Width="140" Height="36" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="BİTİŞ" Style="{StaticResource FieldLabel}" />
+                        <DatePicker x:Name="ToBox" Width="140" Height="36" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="ŞUBE" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="BranchCombo" Width="200" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="KIOSK NO" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="KioskCombo" Width="130" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <Button Content="🔍 GÖSTER" Style="{StaticResource PrimaryButton}" Height="38" Padding="18,0" VerticalAlignment="Bottom" Click="Show_Click" />
+                </WrapPanel>
+            </Border>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,8">
+                <Button Content="📊 Excel" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="Excel_Click" />
+                <Button Content="📄 PDF" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="Pdf_Click" />
+                <Button Content="CSV" Style="{StaticResource GhostButton}" Click="Csv_Click" />
+            </StackPanel>
+
+            <DataGrid x:Name="ZGrid" Grid.Row="3" Style="{StaticResource DataGridStyle}" AutoGenerateColumns="False" MouseDoubleClick="ZGrid_DoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Tarih" Binding="{Binding DateText}" Width="120" />
+                    <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                    <DataGridTextColumn Header="KIOSK" Binding="{Binding KioskText}" Width="90" />
+                    <DataGridTextColumn Header="Fiş Adedi" Binding="{Binding FisCount}" Width="110" />
+                    <DataGridTextColumn Header="Satış Toplamı" Binding="{Binding SalesText}" Width="160" />
+                    <DataGridTextColumn Header="Alınma Zamanı" Binding="{Binding TakenAtText}" Width="160" />
+                    <DataGridTextColumn Header="Alan" Binding="{Binding TakenByName}" Width="2*" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Row="4" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="14,8" Margin="0,10,0,0">
+                <TextBlock x:Name="SummaryText" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" Text="—" />
+            </Border>
+        </Grid>
+    </Border>
+</Window>

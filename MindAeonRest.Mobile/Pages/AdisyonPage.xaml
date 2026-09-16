@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:p="clr-namespace:MindAeonRest.Mobile.Pages"
+             xmlns:m="clr-namespace:MindAeonRest.Mobile.Models"
+             xmlns:local="clr-namespace:MindAeonRest.Mobile"
+             x:Class="MindAeonRest.Mobile.Pages.AdisyonPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Background}">
+    <ContentPage.Resources>
+        <local:LineStatusConverter x:Key="LineStatus" />
+        <local:LineStatusColorConverter x:Key="LineStatusColor" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Başlık (gradyan) -->
+        <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" StrokeThickness="0" Padding="10,12">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <Button Text="‹ Masalar" Clicked="Back_Clicked" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold" Padding="0" />
+                <Label Grid.Column="1" x:Name="TitleLabel" Text="Masa" FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                <Label Grid.Column="2" x:Name="TotalLabel" Text="₺0,00" FontSize="18" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" Margin="0,0,8,0" />
+                <Button Grid.Column="3" Text="⋯" FontSize="22" FontAttributes="Bold" Clicked="Ops_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="9" Padding="10,0" />
+            </Grid>
+        </Border>
+
+        <!-- Kategori sekmeleri -->
+        <CollectionView Grid.Row="1" x:Name="CatsView" SelectionMode="Single" SelectionChanged="Cat_Selected" Margin="8,8,8,0" HeightRequest="46">
+            <CollectionView.ItemsLayout><LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" /></CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="m:CategoryDto">
+                    <Border StrokeShape="RoundRectangle 9" BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource BorderColor}" Padding="14,7">
+                        <Label Text="{Binding Name}" TextColor="{StaticResource TextColor}" VerticalOptions="Center" />
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Ürün kartları (−adet+) -->
+        <CollectionView Grid.Row="2" x:Name="ProductsView" Margin="8,8,8,0">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="p:ProductVm">
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource BorderColor}" Padding="10" HeightRequest="120">
+                        <Grid RowDefinitions="*,Auto">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" MaxLines="2" />
+                                <Label Text="{Binding PriceText}" TextColor="{StaticResource Accent}" FontSize="13" />
+                            </VerticalStackLayout>
+                            <Grid Grid.Row="1" ColumnDefinitions="44,*,44" HeightRequest="40">
+                                <Button Text="−" FontSize="20" FontAttributes="Bold" Clicked="Minus_Clicked" BackgroundColor="{StaticResource ButtonColor}" TextColor="{StaticResource TextColor}" CornerRadius="8" Padding="0" />
+                                <Label Grid.Column="1" Text="{Binding Qty, StringFormat='{0:0.##}'}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Button Grid.Column="2" Text="+" FontSize="20" FontAttributes="Bold" Clicked="Plus_Clicked" BackgroundColor="{StaticResource Accent}" TextColor="White" CornerRadius="8" Padding="0" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Adisyon paneli -->
+        <Border Grid.Row="3" BackgroundColor="{StaticResource Surface}" StrokeThickness="0" Padding="0">
+            <Grid RowDefinitions="Auto,Auto,Auto">
+                <Label Grid.Row="0" Text="ADİSYON" Style="{StaticResource FieldLabel}" Margin="14,8,0,0" />
+                <CollectionView Grid.Row="1" x:Name="LinesView" HeightRequest="150" Margin="6,0" SelectionMode="Single" SelectionChanged="Line_Selected">
+                    <CollectionView.EmptyView>
+                        <Label Text="Henüz ürün eklenmedi." Style="{StaticResource Muted}" HorizontalOptions="Center" Margin="0,20,0,0" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="m:OrderLineDto">
+                            <Grid Padding="10,7" ColumnDefinitions="*,Auto,Auto" BackgroundColor="{StaticResource Row}">
+                                <VerticalStackLayout>
+                                    <Label Text="{Binding ProductName}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" />
+                                    <Label Text="{Binding LineStatus, Converter={StaticResource LineStatus}}" FontSize="11"
+                                           TextColor="{Binding LineStatus, Converter={StaticResource LineStatusColor}}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding Qty, StringFormat='x{0:0.##}'}" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" Margin="0,0,12,0" />
+                                <Label Grid.Column="2" Text="{Binding LineTotal, StringFormat='₺{0:N2}'}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" VerticalOptions="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+                <Grid Grid.Row="2" ColumnDefinitions="*,*" Padding="10,8,10,12" ColumnSpacing="8">
+                    <Button Text="🍳 Mutfağa Gönder" Clicked="Send_Clicked" BackgroundColor="{StaticResource Purple}" TextColor="White" FontAttributes="Bold" CornerRadius="10" HeightRequest="48" />
+                    <Button Grid.Column="1" Text="💳 Ödeme Al" Clicked="Pay_Clicked" Style="{StaticResource PrimaryButton}" HeightRequest="48" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

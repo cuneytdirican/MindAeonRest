@@ -1,0 +1,123 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.NewTenantModel
+@{
+    ViewData["Title"] = "Yeni Tenant — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetim", "/Admin", "Yeni Tenant"))
+
+<div class="page-head" style="margin-bottom:var(--sp-4);">
+    <h1 style="margin-bottom:var(--sp-1);">Yeni Tenant</h1>
+    <div class="subtitle">POS kümesinde yeni bir kiracı veritabanı + admin kullanıcı oluşturur.</div>
+</div>
+
+@if (!Model.ProvisioningEnabled)
+{
+    <div class="card" style="max-width:640px;">
+        <div class="alert-error" style="margin-bottom:0;">
+            POS provisioning yapılandırılmamış (<code>Pos:ProvisionKey</code> boş). Bu anahtar sunucuda
+            (production'da ortam değişkeni ile) tanımlanmalıdır. Anahtar tanımlanana dek tenant oluşturulamaz.
+        </div>
+    </div>
+}
+else if (Model.Result is not null)
+{
+    var r = Model.Result;
+    <div class="card" style="max-width:640px; border-color:var(--success);"
+         x-data="{ copied: false,
+                   copy() { navigator.clipboard.writeText(this.$refs.pw.textContent.trim())
+                              .then(() => { this.copied = true; setTimeout(() => this.copied = false, 2000); }); } }">
+        <div class="card__head">
+            <h3 class="card__title"><i data-lucide="check-circle-2"></i> Tenant oluşturuldu</h3>
+            <span class="badge success"><span class="dot"></span> Başarılı</span>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:var(--sp-4);">
+            <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                <div class="kpi__label">Kod</div>
+                <div class="kpi__value" style="font-size:var(--fs-lg);"><code>@r.Code</code></div>
+            </div>
+            <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                <div class="kpi__label">Ad</div>
+                <div class="kpi__value" style="font-size:var(--fs-lg);">@r.Name</div>
+            </div>
+            <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                <div class="kpi__label">Veritabanı</div>
+                <div class="kpi__value" style="font-size:var(--fs-md);">@r.DbName</div>
+            </div>
+            <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                <div class="kpi__label">Admin Kullanıcı Adı</div>
+                <div class="kpi__value" style="font-size:var(--fs-md);"><code>@r.AdminUsername</code></div>
+            </div>
+        </div>
+
+        <!-- Geçici parola: BİR KEZ gösterilir -->
+        <div style="background:color-mix(in srgb, var(--warning) 12%, transparent);
+                    border:1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+                    border-radius:var(--radius-sm); padding:var(--sp-4); margin-bottom:var(--sp-4);">
+            <div class="flex items-center gap-2" style="color:var(--warning); font-weight:600; margin-bottom:var(--sp-2);">
+                <i data-lucide="alert-triangle"></i> Geçici admin parolası — bu ekranda yalnız BİR KEZ gösterilir
+            </div>
+            <div class="flex items-center gap-2" style="margin-bottom:var(--sp-2);">
+                <code x-ref="pw" style="font-size:var(--fs-lg); font-weight:700; letter-spacing:.5px; padding:var(--sp-2) var(--sp-3);
+                             background:var(--surface-2); border-radius:var(--radius-sm); flex:1;">@r.TempPassword</code>
+                <button type="button" class="btn btn-sm" x-on:click="copy()">
+                    <i data-lucide="copy"></i>
+                    <span x-text="copied ? 'Kopyalandı' : 'Kopyala'">Kopyala</span>
+                </button>
+            </div>
+            <div class="text-sm text-muted">
+                Bu parolayı güvenli bir kanaldan işletme yöneticisine iletin. Yönetici ilk girişte parolasını
+                değiştirmelidir. Parola hiçbir yerde saklanmaz; sayfayı yenilerseniz tekrar gösterilemez.
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a class="btn btn-primary" href="/Admin/Businesses">
+                <i data-lucide="building-2"></i> Portal'da İşletme + Lisans Oluştur
+            </a>
+            <a class="btn" href="/Admin/Tenants"><i data-lucide="list"></i> Tenant'lar</a>
+            <a class="btn btn-ghost" href="/Admin/NewTenant"><i data-lucide="plus"></i> Yeni bir tane daha</a>
+        </div>
+        <div class="hint" style="margin-top:var(--sp-3);">
+            Sonraki adım: bu tenant için Portal'da Business kaydı ve lisans oluşturarak faturalandırma/lisans
+            akışına bağlayın.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card" style="max-width:640px;">
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert-error">@Model.Error</div>
+        }
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-2">
+                <div class="form-field">
+                    <label>Tenant Kodu *</label>
+                    <input type="text" name="Code" value="@Model.Code" required style="text-transform:uppercase" autocomplete="off" />
+                    <div class="hint">Benzersiz olmalı; POS kümesinde veritabanı adına temel oluşturur.</div>
+                </div>
+                <div class="form-field">
+                    <label>İşletme Adı *</label>
+                    <input type="text" name="Name" value="@Model.Name" required autocomplete="off" />
+                </div>
+            </div>
+            <div class="grid grid-2">
+                <div class="form-field">
+                    <label>Admin E-posta *</label>
+                    <input type="email" name="AdminEmail" value="@Model.AdminEmail" required autocomplete="off" />
+                </div>
+                <div class="form-field">
+                    <label>Admin Ad Soyad *</label>
+                    <input type="text" name="AdminFullName" value="@Model.AdminFullName" required autocomplete="off" />
+                </div>
+            </div>
+            <div class="hint" style="margin-bottom:var(--sp-4);">
+                Oluşturma sonrası admin için geçici bir parola üretilir ve yalnız bir kez gösterilir.
+            </div>
+            <button type="submit" class="btn btn-primary btn-block"><i data-lucide="plus"></i> Tenant Oluştur</button>
+        </form>
+    </div>
+}

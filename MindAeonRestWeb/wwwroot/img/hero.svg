@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" role="img" aria-label="Restoran ambiyansı">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2030"/><stop offset="1" stop-color="#12151d"/>
+    </linearGradient>
+    <linearGradient id="win" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb56b"/><stop offset=".55" stop-color="#ff7a45"/><stop offset="1" stop-color="#7a3b6b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%" r="60%">
+      <stop offset="0" stop-color="#f5a623" stop-opacity=".55"/><stop offset="1" stop-color="#f5a623" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a3a22"/><stop offset="1" stop-color="#3a2416"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffcf87" stop-opacity=".85"/><stop offset="1" stop-color="#ffcf87" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a3242"/><stop offset="1" stop-color="#1b2130"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="760" height="560" rx="24" fill="url(#wall)"/>
+  <!-- arch pencere: akşam ışığı -->
+  <path d="M470 90 h190 a10 10 0 0 1 10 10 v240 h-210 V100 a10 10 0 0 1 10 -10Z" fill="url(#win)" opacity=".9"/>
+  <line x1="565" y1="90" x2="565" y2="340" stroke="#12151d" stroke-width="6"/>
+  <line x1="460" y1="215" x2="670" y2="215" stroke="#12151d" stroke-width="6"/>
+  <ellipse cx="380" cy="150" rx="360" ry="200" fill="url(#glow)"/>
+
+  <!-- sarkıt lamba -->
+  <line x1="250" y1="20" x2="250" y2="150" stroke="#3a4356" stroke-width="4"/>
+  <path d="M210 150 h80 l-14 44 h-52 Z" fill="url(#shade)" stroke="#3a4356" stroke-width="2"/>
+  <ellipse cx="250" cy="196" rx="26" ry="6" fill="#ffcf87"/>
+  <path d="M224 196 L160 340 h180 Z" fill="url(#cone)" opacity=".55"/>
+  <circle cx="250" cy="200" r="10" fill="#ffe3ad"/>
+
+  <!-- masa -->
+  <ellipse cx="380" cy="392" rx="300" ry="46" fill="url(#wood)"/>
+  <rect x="80" y="392" width="600" height="70" rx="8" fill="#2a1a10"/>
+  <ellipse cx="380" cy="392" rx="300" ry="40" fill="#4a3020"/>
+
+  <!-- tabak + çatal bıçak -->
+  <ellipse cx="300" cy="384" rx="70" ry="22" fill="#e9edf3"/>
+  <ellipse cx="300" cy="382" rx="52" ry="15" fill="#cdd4de"/>
+  <ellipse cx="300" cy="380" rx="30" ry="9" fill="#f5a623" opacity=".85"/>
+  <rect x="212" y="372" width="4" height="34" rx="2" fill="#aeb7c4"/>
+  <rect x="392" y="372" width="4" height="34" rx="2" fill="#aeb7c4"/>
+
+  <!-- şarap şişesi + iki kadeh -->
+  <g>
+    <rect x="452" y="300" width="26" height="96" rx="8" fill="#1f6b4a"/>
+    <rect x="459" y="278" width="12" height="30" rx="4" fill="#164e37"/>
+    <rect x="452" y="330" width="26" height="30" fill="#0e3626" opacity=".5"/>
+    <rect x="450" y="336" width="30" height="20" rx="4" fill="#f5a623" opacity=".9"/>
+  </g>
+  <g fill="#dfe6ef" opacity=".92">
+    <path d="M508 330 a16 10 0 0 0 32 0 Z"/><rect x="522" y="340" width="4" height="34"/><ellipse cx="524" cy="376" rx="14" ry="4"/>
+    <path d="M508 330 a16 10 0 0 0 32 0Z" fill="#7a2540" opacity=".6"/>
+  </g>
+  <g fill="#dfe6ef" opacity=".92">
+    <path d="M548 336 a14 9 0 0 0 28 0 Z"/><rect x="560" y="345" width="4" height="30"/><ellipse cx="562" cy="377" rx="12" ry="3.5"/>
+    <path d="M548 336 a14 9 0 0 0 28 0Z" fill="#7a2540" opacity=".6"/>
+  </g>
+
+  <!-- vazo + yeşillik -->
+  <rect x="150" y="356" width="26" height="34" rx="6" fill="#2a3242"/>
+  <g stroke="#17b26a" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M163 356 C150 330 172 322 168 300"/><path d="M163 356 C176 336 158 326 176 312"/>
+  </g>
+  <circle cx="168" cy="300" r="6" fill="#e5484d"/><circle cx="176" cy="312" r="5" fill="#f5a623"/>
+</svg>

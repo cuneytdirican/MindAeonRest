@@ -1,0 +1,93 @@
+@page
+@using MindAeonRest.Licence.Data
+@model MindAeonRest.Licence.Portal.Pages.Musteri.DestekModel
+@{
+    ViewData["Title"] = "Destek — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Müşteri", "/Musteri", "Destek"))
+
+<div class="page-head">
+    <h1>Destek</h1>
+    <div class="subtitle">Talep oluşturun, mesajlaşın ve durumunu takip edin.</div>
+</div>
+
+<div x-data="{ open:false }">
+    <div class="grid" style="grid-template-columns:360px 1fr;align-items:start">
+        <!-- Sol: talep listesi -->
+        <div class="card" style="padding:0;overflow:hidden">
+            <div class="card__head" style="padding:var(--sp-4) var(--sp-4) var(--sp-3)">
+                <h2 class="card__title">Taleplerim</h2>
+                <button class="btn btn-primary btn-sm" type="button" @@click="open=true"><i data-lucide="plus"></i>Yeni</button>
+            </div>
+            <div id="ticketList">
+                @await Html.PartialAsync("_TicketList", Model.Tickets)
+            </div>
+        </div>
+
+        <!-- Sağ: seçili talep -->
+        <div class="card" id="ticketDetail">
+            @if (Model.Selected is not null)
+            {
+                @await Html.PartialAsync("_TicketDetail", Model.Selected)
+            }
+            else
+            {
+                <div class="flex items-center gap-3" style="padding:var(--sp-5);color:var(--text-3)">
+                    <i data-lucide="messages-square"></i>
+                    <div>
+                        <div style="font-weight:600;color:var(--text-2)">Bir talep seçin</div>
+                        <div class="text-sm">Soldaki listeden bir talebe tıklayın veya yeni talep oluşturun.</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Yeni talep modalı -->
+    <template x-if="open">
+        <div class="modal-backdrop" @@click.self="open=false" @@keydown.escape.window="open=false">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Yeni Destek Talebi</h3>
+                    <button class="btn btn-ghost btn-icon" type="button" @@click="open=false" aria-label="Kapat"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Musteri/Destek?handler=Create" hx-target="#ticketList" hx-swap="innerHTML"
+                      hx-on::after-request="if(event.detail.successful){ open=false; if(window.toast) toast('Talebiniz oluşturuldu.','success'); }">
+                    @Html.AntiForgeryToken()
+                    <div class="modal__body">
+                        <div class="form-field">
+                            <label for="subj">Konu</label>
+                            <input id="subj" name="subject" required maxlength="200" placeholder="Örn: Lisans aktivasyonu hakkında" />
+                        </div>
+                        <div class="form-field">
+                            <label for="prio">Öncelik</label>
+                            <select id="prio" name="priority">
+                                <option value="0">Düşük</option>
+                                <option value="1" selected>Normal</option>
+                                <option value="2">Yüksek</option>
+                                <option value="3">Acil</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="msg">Mesaj</label>
+                            <textarea id="msg" name="body" rows="4" required placeholder="Talebinizi ayrıntılı açıklayın…"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button class="btn" type="button" @@click="open=false">Vazgeç</button>
+                        <button class="btn btn-primary" type="submit"><i data-lucide="send"></i>Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <style>[x-cloak]{display:none!important} @@media (max-width:880px){ .card .grid{grid-template-columns:1fr!important} }</style>
+    <script>
+        lucide.createIcons();
+        // API hata mesajını (HX-Trigger=portalToast) kullanıcıya göster (Admin sayfalarıyla aynı desen).
+        document.body.addEventListener('portalToast', e => window.toast && window.toast(e.detail.message, e.detail.kind));
+    </script>
+}

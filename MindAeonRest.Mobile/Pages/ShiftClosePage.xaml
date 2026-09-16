@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:p="clr-namespace:MindAeonRest.Mobile.Pages"
+             x:Class="MindAeonRest.Mobile.Pages.ShiftClosePage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{DynamicResource Background}">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Başlık -->
+        <Border Grid.Row="0" Background="{DynamicResource HeaderBrush}" StrokeThickness="0" Padding="12,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Text="‹ Geri" Clicked="Back_Clicked" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold" Padding="0" />
+                <Label Grid.Column="1" Text="Vardiya Kapanışı" FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                <Button Grid.Column="2" Text="↻" FontSize="18" Clicked="Refresh_Clicked" BackgroundColor="Transparent" TextColor="White" Padding="6,0" />
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="14" Spacing="12">
+
+                <ActivityIndicator x:Name="Busy" IsRunning="False" IsVisible="False" Color="{DynamicResource Accent}" HorizontalOptions="Center" Margin="0,12" />
+
+                <!-- AÇIK VARDİYA YOK → Vardiya Aç -->
+                <Border x:Name="OpenPanel" Style="{StaticResource Card}" IsVisible="False">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Bu terminalde açık vardiya yok." FontAttributes="Bold" TextColor="{DynamicResource TextColor}" />
+                        <Label Text="Vardiya açmak için açılış kasası (terminalde kalan nakit) tutarını girin." Style="{StaticResource Muted}" />
+                        <Label Text="AÇILIŞ KASASI (₺)" Style="{StaticResource FieldLabel}" />
+                        <Border BackgroundColor="{DynamicResource SurfaceAlt}" Stroke="{DynamicResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="10,0">
+                            <Entry x:Name="OpeningFloatEntry" Keyboard="Numeric" Text="0" TextColor="{DynamicResource TextColor}" BackgroundColor="Transparent" FontSize="20" FontAttributes="Bold" />
+                        </Border>
+                        <Button x:Name="OpenBtn" Text="Vardiya Aç" Clicked="OpenShift_Clicked" Style="{StaticResource PrimaryButton}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- AÇIK VARDİYA VAR → Rapor + Kapat -->
+                <VerticalStackLayout x:Name="ReportPanel" Spacing="12" IsVisible="False">
+
+                    <!-- Vardiya bilgisi -->
+                    <Border Style="{StaticResource Card}">
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="8">
+                            <VerticalStackLayout><Label Text="VARDİYA" Style="{StaticResource FieldLabel}" /><Label x:Name="ShiftIdLbl" Text="-" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" /></VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1"><Label Text="AÇILIŞ" Style="{StaticResource FieldLabel}" /><Label x:Name="OpenedAtLbl" Text="-" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" /></VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="1"><Label Text="AÇILIŞ KASASI" Style="{StaticResource FieldLabel}" /><Label x:Name="OpeningFloatLbl" Text="₺0,00" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" /></VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="1"><Label Text="TOPLAM TAHSİLAT" Style="{StaticResource FieldLabel}" /><Label x:Name="TotalLbl" Text="₺0,00" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Accent}" /></VerticalStackLayout>
+                        </Grid>
+                    </Border>
+
+                    <!-- Ödeme yöntemi kırılımı -->
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="ÖDEME YÖNTEMİ KIRILIMI" Style="{StaticResource FieldLabel}" />
+                            <VerticalStackLayout x:Name="PaymentsList" Spacing="2" />
+                            <Label x:Name="NoPayLbl" Text="Bu vardiyada tahsilat yok." Style="{StaticResource Muted}" IsVisible="False" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Tahsil eden kullanıcı kırılımı -->
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="TAHSİL EDEN KULLANICI" Style="{StaticResource FieldLabel}" />
+                            <VerticalStackLayout x:Name="ByUserList" Spacing="2" />
+                            <Label x:Name="NoUserLbl" Text="Kayıt yok." Style="{StaticResource Muted}" IsVisible="False" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Nakit mutabakat -->
+                    <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceAlt}">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,*">
+                                <VerticalStackLayout><Label Text="NAKİT TAHSİLAT" Style="{StaticResource FieldLabel}" /><Label x:Name="CashCollectedLbl" Text="₺0,00" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" /></VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1"><Label Text="BEKLENEN KASA" Style="{StaticResource FieldLabel}" /><Label x:Name="ExpectedCashLbl" Text="₺0,00" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Success}" /></VerticalStackLayout>
+                            </Grid>
+
+                            <Label Text="SAYILAN NAKİT (₺)" Style="{StaticResource FieldLabel}" />
+                            <Border BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="10,0">
+                                <Entry x:Name="CountedCashEntry" Keyboard="Numeric" Text="0" TextChanged="CountedCash_Changed" TextColor="{DynamicResource TextColor}" BackgroundColor="Transparent" FontSize="20" FontAttributes="Bold" />
+                            </Border>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="FARK (sayılan − beklenen)" Style="{StaticResource FieldLabel}" VerticalOptions="Center" />
+                                <Label Grid.Column="1" x:Name="DiffLbl" Text="₺0,00" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" />
+                            </Grid>
+
+                            <Label Text="NOT (opsiyonel)" Style="{StaticResource FieldLabel}" />
+                            <Border BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="10,0">
+                                <Entry x:Name="NoteEntry" Placeholder="Açıklama" TextColor="{DynamicResource TextColor}" PlaceholderColor="{DynamicResource TextMuted}" BackgroundColor="Transparent" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Button x:Name="CloseBtn" Text="✓ Vardiya Kapat" Clicked="CloseShift_Clicked" Style="{StaticResource PrimaryButton}" />
+                </VerticalStackLayout>
+
+                <Label x:Name="ErrorLbl" TextColor="{DynamicResource Danger}" IsVisible="False" FontAttributes="Bold" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

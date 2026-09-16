@@ -1,0 +1,58 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.LoyaltyReport.IndexModel
+@{
+    ViewData["Title"] = "Puan / Sadakat Raporu";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>⭐ Puan / Sadakat Raporu</h1>
+    <div>
+        <span class="bo-count">Toplam Puan Yükümlülüğü: <b>@Model.TotalLiability.ToString("N2") ₺</b></span>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+    </div>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="CustomerId" asp-items="Model.CustomerOptions" class="field"></select>
+    <button type="submit" class="btn btn-primary">Göster</button>
+</form>
+
+@if (!Model.HasCustomer)
+{
+    <div class="bo-card"><p class="hint">Puan bakiyesi ve hareket ekstresi görmek için bir müşteri seçiniz.</p></div>
+}
+else
+{
+    <div class="bo-card">
+        <b>Puan Bakiyesi:</b> @Model.Balance.ToString("N0") puan
+    </div>
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th><th>Tip</th>
+                    <th class="ar">Puan</th><th class="ar">Tutar (₺)</th><th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Movements.Count == 0)
+                {
+                    <tr><td colspan="5" class="empty">Hareket yok.</td></tr>
+                }
+                @foreach (var m in Model.Movements)
+                {
+                    <tr>
+                        <td>@m.MoveDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@m.TypeText</td>
+                        <td class="ar">@m.Points.ToString("N0")</td>
+                        <td class="ar">@m.Amount.ToString("N2")</td>
+                        <td>@(m.Note ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.Movements.Count hareket</div>
+}

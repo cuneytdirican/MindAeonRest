@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MindAeonRestWeb</RootNamespace>
+    <UserSecretsId>mindaeonrestweb</UserSecretsId>
+    <!-- Referans alınan MindAeonRest.Api kendi appsettings'ini de yaymaya çalışır; web'inki geçerli olsun. -->
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+  </PropertyGroup>
+
+  <!-- API projesinin appsettings*.json'unu yayından çıkar (web'in appsettings.json'u kullanılsın). -->
+  <Target Name="_RemoveApiConfigFromPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+        Condition="$([System.String]::Copy('%(ResolvedFileToPublish.FullPath)').Contains('MindAeonRest.Api')) And $([System.String]::Copy('%(ResolvedFileToPublish.Filename)').StartsWith('appsettings'))" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <!-- Core in-process: WPF ile birebir aynı servisler/iş mantığı. -->
+    <ProjectReference Include="..\MindAeonRest.Core\MindAeonRest.Core.csproj" />
+    <!-- POS API'yi (controller'lar + SignalR hub + JWT auth) AYNI uygulamada barındır: tek web app, tek domain.
+         Böylece ayrı süreç/ters-proxy gerekmez; Adisyon/Mutfak/PWA /app altında aynı origin'de çalışır. -->
+    <ProjectReference Include="..\MindAeonRest.Api\MindAeonRest.Api.csproj" />
+    <!-- PWA'ya SSO devri için API ile birebir aynı formatta JWT üretimi. -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
+    <!-- 2FA: enrollment QR'ı SUNUCUDA üretilir (PngByteQRCode, System.Drawing'siz) → inline data URI; harici CDN YOK.
+         DataProtection (secret şifreleme) ASP.NET Core paylaşılan framework'ünden gelir → ek paket gerekmez. -->
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+    <!-- FAZ 0: Yapısal loglama (Serilog). AspNetCore paketi Serilog + Settings.Configuration'ı
+         transitively getirir; File/Console sink'leri açıkça sabitlenir. -->
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+  </ItemGroup>
+
+  <!-- POS PWA statik dosyaları: /app altında servis için bin/publish'e "pwa\" olarak kopyalanır. -->
+  <ItemGroup>
+    <Content Include="..\MindAeonRest.Pwa\wwwroot\**\*">
+      <Link>pwa\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

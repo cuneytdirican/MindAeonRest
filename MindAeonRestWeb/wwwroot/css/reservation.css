@@ -1,0 +1,82 @@
+/* FAZ 5c — Online rezervasyon + bekleme listesi müşteri arayüzü. Mobil-öncelikli, tam ekran, büyük dokunmatik.
+   Standalone (feedback.css / order.css deseni). Koyu tema temel; açık tema @media ile. Native dialog YOK. */
+:root{
+  --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --line:#2a2f3a;
+  --txt:#eef1f6; --mut:#9aa3b2; --brand:#f5a623; --brand-ink:#1a1205;
+  --ok:#2ecc71; --warn:#f5a623; --danger:#ff5b5b;
+  --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f4f5f8; --bg2:#fff; --card:#fff; --line:#e3e6ec;
+    --txt:#1a1d24; --mut:#68707e; --brand:#e8930a; --brand-ink:#fff;
+    --shadow:0 6px 20px rgba(20,30,60,.12);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:16px; line-height:1.45;
+}
+button{font-family:inherit; cursor:pointer; border:0; background:none; color:inherit}
+
+.rz-wrap{
+  min-height:100vh; min-height:100dvh;
+  display:flex; align-items:center; justify-content:center;
+  padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 18px);
+}
+.rz-card{
+  width:100%; max-width:460px; background:var(--card); border:1px solid var(--line);
+  border-radius:18px; box-shadow:var(--shadow); padding:26px 22px 24px; text-align:center;
+}
+.rz-logo{font-size:34px; line-height:1; margin-bottom:8px}
+.rz-title{font-size:21px; font-weight:700; margin:0 0 4px}
+.rz-sub{color:var(--mut); font-size:14px; margin:0 0 18px}
+
+.rz-lbl{display:block; text-align:left; font-size:13px; font-weight:600; color:var(--mut); margin:10px 2px 5px}
+.rz-field{
+  width:100%; background:var(--bg2); color:var(--txt); border:1px solid var(--line);
+  border-radius:12px; padding:12px 14px; font-size:16px; resize:vertical;
+}
+.rz-field:focus{outline:2px solid var(--brand); outline-offset:1px}
+textarea.rz-field{min-height:74px}
+
+/* ===== Kişi sayısı adımlayıcı ===== */
+.rz-stepper{
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:6px 10px;
+}
+.rz-step{
+  width:44px; height:44px; border-radius:10px; background:var(--card); border:1px solid var(--line);
+  font-size:26px; font-weight:700; line-height:1; color:var(--txt);
+}
+.rz-step:active{transform:scale(.94)}
+.rz-party{font-size:22px; font-weight:700; min-width:40px}
+
+/* ===== Müsaitlik göstergesi ===== */
+.rz-avail{min-height:22px; font-size:14px; font-weight:600; margin:12px 0 4px}
+.rz-avail.checking{color:var(--mut); font-weight:500}
+.rz-avail.ok{color:var(--ok)}
+.rz-avail.full{color:var(--warn)}
+
+.rz-btn{
+  width:100%; background:var(--brand); color:var(--brand-ink); font-size:17px; font-weight:700;
+  padding:14px; border-radius:12px; margin-top:14px;
+}
+.rz-btn[disabled]{opacity:.5; cursor:default}
+.rz-btn.rz-ghost{background:var(--bg2); color:var(--txt); border:1px solid var(--line); margin-top:16px}
+
+.rz-hint{color:var(--mut); font-size:12px; margin-top:12px}
+.rz-error{color:var(--danger); font-weight:600; margin-top:10px; min-height:18px}
+
+/* ===== Durum / sonuç (native alert yerine) ===== */
+.rz-done{padding:16px 6px}
+.rz-done .rz-logo{font-size:52px}
+.rz-done .rz-title{font-size:22px; margin-top:6px}
+.rz-code{
+  background:var(--bg2); border:1px solid var(--line); border-radius:12px;
+  padding:12px; margin-top:14px; font-size:15px; color:var(--txt);
+}
+.rz-code b{color:var(--brand); letter-spacing:.5px}

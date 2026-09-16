@@ -1,0 +1,207 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Reservations.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Rezervasyon" : $"Rezervasyon · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📅 @(Model.IsNew ? "Yeni Rezervasyon" : "Rezervasyon Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Reservations">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Müşteri, zaman aralığı ve bir/çok masa seçilir. Masalar seçilen lokasyona bağlıdır; çakışma kontrolü kayıtta yapılır.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Müşteri *</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="field" id="custSel" style="flex:1" required></select>
+                <button type="button" class="btn btn-sm" onclick="toggleCustAdd()" title="Yeni müşteri ekle">+</button>
+            </div>
+            <div id="custAdd" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <input id="newCustCode" class="field up" maxlength="50" placeholder="Kod" autocomplete="off" style="flex:0 0 120px" />
+                    <input id="newCustName" class="field" maxlength="200" placeholder="Ünvan / Ad" autocomplete="off" style="flex:1" />
+                    <input id="newCustPhone" class="field" maxlength="50" placeholder="Telefon" autocomplete="off" style="flex:0 0 140px" />
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveCust()">Ekle</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleCustAdd()">Vazgeç</button>
+                </div>
+                <small class="hint" id="custAddErr" style="color:#c0392b"></small>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>Lokasyon *</label>
+            <select asp-for="ZoneId" asp-items="Model.ZoneOptions" class="field" id="zoneSelect" required></select>
+            <small class="hint">Masalar seçilen lokasyona göre listelenir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Başlangıç *</label>
+            <input asp-for="StartTime" type="datetime-local" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Bitiş *</label>
+            <input asp-for="EndTime" type="datetime-local" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Kişi Sayısı</label>
+            <input asp-for="PartySize" type="number" min="0" class="field" />
+        </div>
+        <div class="frm-row">
+            <label>Etiket</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <select asp-for="TagId" asp-items="Model.TagOptions" class="field" id="tagSel" style="flex:1"></select>
+                <button type="button" class="btn btn-sm" onclick="toggleTagAdd()" title="Yeni etiket ekle">+</button>
+            </div>
+            <div id="tagAdd" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <input id="newTagCode" class="field up" maxlength="50" placeholder="Kod" autocomplete="off" style="flex:0 0 120px" />
+                    <input id="newTagName" class="field" maxlength="150" placeholder="Etiket adı" autocomplete="off" style="flex:1" />
+                    <input id="newTagColor" type="color" class="field" value="#607D8B" title="Renk" style="flex:0 0 60px;padding:2px" />
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveTag()">Ekle</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleTagAdd()">Vazgeç</button>
+                </div>
+                <small class="hint" id="tagAddErr" style="color:#c0392b"></small>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>Durum</label>
+            <select asp-for="Status" asp-items="Model.StatusOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Not</label>
+            <textarea asp-for="Note" class="field" rows="3"></textarea>
+        </div>
+
+        <div class="frm-row">
+            <label>Masalar *</label>
+            <small class="hint">Lokasyon seçin, ardından bir veya daha fazla masa işaretleyin.</small>
+            <div id="tablesHost" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:10px">
+                <span class="hint" id="tablesEmpty">Önce lokasyon seçiniz.</span>
+            </div>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Reservations" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Lokasyon -> masalar haritası (server'dan).
+        const ZONE_TABLES = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ZoneTables));
+        // Kayıtta seçili masalar (düzenleme).
+        const SELECTED = new Set(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TableIds)));
+
+        const host = document.getElementById('tablesHost');
+        const emptyMsg = document.getElementById('tablesEmpty');
+        const zoneSelect = document.getElementById('zoneSelect');
+
+        function renderTables() {
+            const zoneId = zoneSelect.value;
+            host.innerHTML = '';
+            const tables = ZONE_TABLES[zoneId] || [];
+            if (!zoneId || zoneId === '0' || tables.length === 0) {
+                const s = document.createElement('span');
+                s.className = 'hint';
+                s.textContent = (!zoneId || zoneId === '0') ? 'Önce lokasyon seçiniz.' : 'Bu lokasyonda masa yok.';
+                host.appendChild(s);
+                return;
+            }
+            tables.forEach(t => {
+                const lbl = document.createElement('label');
+                lbl.className = 'chk';
+                lbl.style.minWidth = '110px';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.name = 'TableIds';
+                cb.value = t.Id;
+                if (SELECTED.has(t.Id)) cb.checked = true;
+                lbl.appendChild(cb);
+                lbl.appendChild(document.createTextNode(' ' + t.Label));
+                host.appendChild(lbl);
+            });
+        }
+
+        zoneSelect.addEventListener('change', renderTables);
+        renderTables();
+
+        // ---- "+" hızlı ekleme (proje kuralı): fetch ile OnPostAddCustomer / OnPostAddTag → listeye ekle + seç. ----
+        const token = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+        async function quickAdd(handler, params, err) {
+            const res = await fetch('?handler=' + handler, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token() },
+                body: new URLSearchParams(params).toString()
+            });
+            return await res.json();
+        }
+
+        // Müşteri
+        function toggleCustAdd() {
+            const box = document.getElementById('custAdd');
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            document.getElementById('custAddErr').textContent = '';
+            if (show) document.getElementById('newCustCode').focus();
+        }
+        document.getElementById('newCustCode')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+        async function saveCust() {
+            const err = document.getElementById('custAddErr');
+            err.textContent = '';
+            const code = document.getElementById('newCustCode').value.trim();
+            const name = document.getElementById('newCustName').value.trim();
+            const phone = document.getElementById('newCustPhone').value.trim();
+            if (!code || !name) { err.textContent = 'Kod ve ünvan zorunludur.'; return; }
+            try {
+                const data = await quickAdd('AddCustomer', { code, name, phone });
+                if (!data.ok) { err.textContent = data.error || 'Müşteri eklenemedi.'; return; }
+                const sel = document.getElementById('custSel');
+                const o = document.createElement('option');
+                o.value = String(data.id); o.textContent = data.text; o.selected = true;
+                sel.appendChild(o);
+                document.getElementById('newCustCode').value = '';
+                document.getElementById('newCustName').value = '';
+                document.getElementById('newCustPhone').value = '';
+                toggleCustAdd();
+            } catch (ex) { err.textContent = 'Müşteri eklenirken hata oluştu.'; }
+        }
+
+        // Etiket
+        function toggleTagAdd() {
+            const box = document.getElementById('tagAdd');
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            document.getElementById('tagAddErr').textContent = '';
+            if (show) document.getElementById('newTagCode').focus();
+        }
+        document.getElementById('newTagCode')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+        async function saveTag() {
+            const err = document.getElementById('tagAddErr');
+            err.textContent = '';
+            const code = document.getElementById('newTagCode').value.trim();
+            const name = document.getElementById('newTagName').value.trim();
+            const color = document.getElementById('newTagColor').value;
+            if (!code || !name) { err.textContent = 'Kod ve etiket adı zorunludur.'; return; }
+            try {
+                const data = await quickAdd('AddTag', { code, name, color });
+                if (!data.ok) { err.textContent = data.error || 'Etiket eklenemedi.'; return; }
+                const sel = document.getElementById('tagSel');
+                const o = document.createElement('option');
+                o.value = String(data.id); o.textContent = data.text; o.selected = true;
+                sel.appendChild(o);
+                document.getElementById('newTagCode').value = '';
+                document.getElementById('newTagName').value = '';
+                toggleTagAdd();
+            } catch (ex) { err.textContent = 'Etiket eklenirken hata oluştu.'; }
+        }
+    </script>
+}

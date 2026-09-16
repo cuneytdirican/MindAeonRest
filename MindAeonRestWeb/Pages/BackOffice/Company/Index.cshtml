@@ -1,0 +1,106 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Company.IndexModel
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.Code) ? "Şirket Bilgileri" : $"Şirket · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🏢 Şirket Bilgileri</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(48,164,108,.14);border-color:#30a46c;color:#8ce0b4">@Model.Saved</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint">Şirket tanım bilgilerini güncelleyin. Kod ve veritabanı değiştirilemez.</p>
+    <form method="post" enctype="multipart/form-data">
+        <div class="frm-row">
+            <label>Şirket Kodu</label>
+            <input value="@Model.Code" class="field up" readonly disabled />
+            <small class="hint">Veritabanına bağlıdır; değiştirilemez.</small>
+        </div>
+        <div class="frm-row">
+            <label>Veritabanı</label>
+            <input value="@Model.DatabaseName" class="field" readonly disabled />
+        </div>
+        <div class="frm-row">
+            <label>Şirket Adı *</label>
+            <input asp-for="Name" class="field" maxlength="200" required />
+        </div>
+        <div class="frm-row">
+            <label>Telefon</label>
+            <input asp-for="Phone" class="field" maxlength="50" autocomplete="off" />
+        </div>
+        <div class="frm-row">
+            <label>Vergi Numarası</label>
+            <input asp-for="TaxNumber" class="field" maxlength="50" autocomplete="off" />
+        </div>
+        <div class="frm-row">
+            <label>Vergi Dairesi</label>
+            <input asp-for="TaxOffice" class="field" maxlength="150" autocomplete="off" />
+        </div>
+        <div class="frm-row">
+            <label>Döviz</label>
+            <select asp-for="CurrencyId" asp-items="Model.Currencies" class="field">
+                <option value="">— Seçiniz —</option>
+            </select>
+        </div>
+        <div class="frm-row">
+            <label>Ülke</label>
+            <select asp-for="CountryId" asp-items="Model.Countries" class="field">
+                <option value="">— Seçiniz —</option>
+            </select>
+        </div>
+        <div class="frm-row">
+            <label>Şehir</label>
+            <select asp-for="CityId" asp-items="Model.Cities" class="field">
+                <option value="">— Seçiniz —</option>
+            </select>
+        </div>
+        <div class="frm-row">
+            <label>İlçe</label>
+            <select asp-for="DistrictId" asp-items="Model.Districts" class="field">
+                <option value="">— Seçiniz —</option>
+            </select>
+        </div>
+        <div class="frm-row">
+            <label>Adres</label>
+            <textarea asp-for="Address" class="field" rows="3" maxlength="500"></textarea>
+        </div>
+
+        <div class="frm-row">
+            <label>Renkli Logo (ekran / login)</label>
+            @if (Model.HasLogoColor)
+            {
+                <div class="img-prev"><img src="/BackOffice/Company?handler=Logo&kind=color" alt="Renkli logo" /></div>
+                <label class="chk"><input asp-for="RemoveLogoColor" type="checkbox" /> Renkli logoyu kaldır</label>
+            }
+            <input type="file" name="logoColorFile" accept="image/*" class="field" />
+        </div>
+        <div class="frm-row">
+            <label>Mono Logo (termal baskı, S/B)</label>
+            @if (Model.HasLogoMono)
+            {
+                <div class="img-prev"><img src="/BackOffice/Company?handler=Logo&kind=mono" alt="Mono logo" /></div>
+                <label class="chk"><input asp-for="RemoveLogoMono" type="checkbox" /> Mono logoyu kaldır</label>
+            }
+            <input type="file" name="logoMonoFile" accept="image/*" class="field" />
+            <small class="hint">Boş bırakılırsa baskıda renkli logo otomatik S/B'ye çevrilir.</small>
+        </div>
+
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Şirket aktif</label>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </form>
+</div>

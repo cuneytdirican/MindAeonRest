@@ -1,0 +1,76 @@
+<Window x:Class="MindAeonRest.Views.TablePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:MindAeonRest.Views"
+        Title="Masa Seç" Height="560" Width="560"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Window.Resources>
+        <v:StringToBrushConverter x:Key="Brush" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="8"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.86" /></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.72" /></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bd" Property="Opacity" Value="0.45" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="22,18,22,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock x:Name="TitleText" Grid.Row="0" Text="Masa Seç" FontSize="18" FontWeight="Bold"
+                       Foreground="{DynamicResource TextBrush}" MouseLeftButtonDown="Header_MouseLeftButtonDown" />
+            <TextBlock x:Name="SubText" Grid.Row="1" Foreground="{DynamicResource TextMutedBrush}" FontSize="12.5" Margin="0,4,0,10" />
+
+            <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="6">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="TableHost">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Tag="{Binding}" Click="Pick_Click" Margin="5" Padding="10,12" Cursor="Hand"
+                                        Background="{DynamicResource SurfaceAltBrush}" BorderThickness="1.5"
+                                        BorderBrush="{Binding BorderCol, Converter={StaticResource Brush}}" HorizontalContentAlignment="Stretch">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding ZoneText}" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                                        <TextBlock Text="{Binding TableName}" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="17" />
+                                        <TextBlock Text="{Binding SubText}" Foreground="{DynamicResource TextMutedBrush}" FontSize="11.5" Margin="0,2,0,0"
+                                                   Visibility="{Binding HasSub, Converter={StaticResource BoolToVis}}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <TextBlock x:Name="EmptyText" Grid.Row="2" Foreground="{DynamicResource TextMutedBrush}" FontSize="14"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+
+            <Button Grid.Row="3" Content="Vazgeç" Click="Cancel_Click" HorizontalAlignment="Right" Margin="0,14,0,0" Padding="22,9" Cursor="Hand"
+                    Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" FontWeight="SemiBold" />
+        </Grid>
+    </Border>
+</Window>

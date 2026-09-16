@@ -1,0 +1,126 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Dekont.IndexModel
+@{
+    ViewData["Title"] = "Dekont";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 Dekont</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert-success">@Model.Success</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">
+        Kasa / Banka / Kredi Kartı para giriş-çıkışı. Giriş = TAHSİLAT, Çıkış = ÖDEME.
+        Cari (müşteri) seçilirse aynı anda cari hareketi de oluşur. Kredi kartı için cari zorunludur.
+    </p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Dekont Tipi *</label>
+            <select asp-for="Kind" asp-items="Model.KindOptions" class="field" id="kindSelect" required></select>
+        </div>
+
+        <div class="frm-row" id="cashRow">
+            <label>Kasa *</label>
+            <select class="field" id="cashSelect">
+                <option value="0">(Kasa seçiniz)</option>
+                @foreach (var k in Model.CashOptions)
+                {
+                    <option value="@k.Value">@k.Text</option>
+                }
+            </select>
+        </div>
+        <div class="frm-row" id="bankRow" style="display:none">
+            <label>Banka Hesabı *</label>
+            <select class="field" id="bankSelect">
+                <option value="0">(Banka hesabı seçiniz)</option>
+                @foreach (var b in Model.BankOptions)
+                {
+                    <option value="@b.Value">@b.Text</option>
+                }
+            </select>
+        </div>
+        <div class="frm-row" id="posRow" style="display:none">
+            <label>POS *</label>
+            <select class="field" id="posSelect">
+                <option value="0">(POS seçiniz)</option>
+                @foreach (var p in Model.PosOptions)
+                {
+                    <option value="@p.Value">@p.Text</option>
+                }
+            </select>
+        </div>
+        <input type="hidden" asp-for="InstrumentId" id="instrumentHidden" />
+
+        <div class="frm-row">
+            <label id="customerLabel">Cari (Müşteri)</label>
+            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Tutar *</label>
+            <input asp-for="Amount" class="field" autocomplete="off" required placeholder="Örn: 250,00" />
+        </div>
+        <div class="frm-row">
+            <label>Döviz *</label>
+            <select asp-for="CurrencyId" asp-items="Model.CurrencyOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Tarih</label>
+            <input asp-for="Date" type="date" class="field" />
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <input asp-for="Note" class="field" maxlength="250" autocomplete="off" />
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // WPF DekontKind: 0 KasaGiris,1 KasaCikis,2 BankaGiris,3 BankaCikis,4 KartTahsilat,5 KartOdeme
+        const kindSelect = document.getElementById('kindSelect');
+        const cashRow = document.getElementById('cashRow');
+        const bankRow = document.getElementById('bankRow');
+        const posRow = document.getElementById('posRow');
+        const cashSelect = document.getElementById('cashSelect');
+        const bankSelect = document.getElementById('bankSelect');
+        const posSelect = document.getElementById('posSelect');
+        const instrumentHidden = document.getElementById('instrumentHidden');
+        const customerLabel = document.getElementById('customerLabel');
+
+        function group(kind) {
+            if (kind === '0' || kind === '1') return 'cash';
+            if (kind === '2' || kind === '3') return 'bank';
+            return 'card';
+        }
+
+        function sync() {
+            const g = group(kindSelect.value);
+            cashRow.style.display = g === 'cash' ? '' : 'none';
+            bankRow.style.display = g === 'bank' ? '' : 'none';
+            posRow.style.display  = g === 'card' ? '' : 'none';
+            instrumentHidden.value = g === 'cash' ? cashSelect.value : (g === 'bank' ? bankSelect.value : posSelect.value);
+            // Kart için cari zorunlu.
+            customerLabel.textContent = g === 'card' ? 'Cari (Müşteri) *' : 'Cari (Müşteri)';
+        }
+
+        kindSelect.addEventListener('change', sync);
+        cashSelect.addEventListener('change', sync);
+        bankSelect.addEventListener('change', sync);
+        posSelect.addEventListener('change', sync);
+        sync();
+    </script>
+}

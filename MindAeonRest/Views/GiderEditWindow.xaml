@@ -1,0 +1,42 @@
+<Window x:Class="MindAeonRest.Views.GiderEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        Title="Gider" Height="560" Width="520"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="30,26,30,24">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="Yeni Gider" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" MouseLeftButtonDown="Header_MouseLeftButtonDown" />
+            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                <TextBlock Text="GİDER TİPİ" Style="{StaticResource FieldLabel}" />
+                <ComboBox x:Name="TypeCombo" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" SelectionChanged="Type_Changed" />
+                <StackPanel x:Name="PersonnelPanel" Visibility="Collapsed">
+                    <TextBlock Text="PERSONEL (maaş)" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                    <views:EntityPicker x:Name="PersonnelPicker" />
+                </StackPanel>
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0"><TextBlock Text="TUTAR" Style="{StaticResource FieldLabel}" /><TextBox x:Name="AmountBox" Style="{StaticResource InputTextBox}" Text="0" /></StackPanel>
+                    <StackPanel Grid.Column="2"><TextBlock Text="TARİH" Style="{StaticResource FieldLabel}" /><DatePicker x:Name="DateBox" Height="40" /></StackPanel>
+                </Grid>
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="1.6*" /></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0"><TextBlock Text="ÖDEME" Style="{StaticResource FieldLabel}" /><ComboBox x:Name="PayKindCombo" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" SelectionChanged="PayKind_Changed" /></StackPanel>
+                    <StackPanel Grid.Column="2"><TextBlock Text="ARAÇ (kasa/banka)" Style="{StaticResource FieldLabel}" /><ComboBox x:Name="InstrumentCombo" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" /></StackPanel>
+                </Grid>
+                <TextBlock Text="PROJE" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                <ComboBox x:Name="ProjectCombo" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" />
+                <TextBlock Text="AÇIKLAMA" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                <TextBox x:Name="DescBox" Style="{StaticResource InputTextBox}" />
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="2,10,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+            </StackPanel>
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

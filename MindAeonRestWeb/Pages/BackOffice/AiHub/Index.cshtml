@@ -1,0 +1,171 @@
+@page
+@using System.Globalization
+@model MindAeonRestWeb.Pages.BackOffice.AiHub.IndexModel
+@{
+    ViewData["Title"] = "AI Hub";
+    Layout = "_BackOfficeLayout";
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+
+    string Cell(object? v, MindAeonRest.Models.ReportColumn c)
+    {
+        if (v is null) return "";
+        if (c.Numeric && v is IFormattable f) return f.ToString(c.Effective, tr);
+        return v.ToString() ?? "";
+    }
+}
+
+<div class="bo-page-head">
+    <h1>🤖 AI Hub</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">
+    İşletmeniz hakkında doğal dille soru sorun; yanıtlar deterministik, <strong>salt-okuma</strong> araçlarla üretilir
+    (satış özeti, en çok satanlar, cari bakiye, kritik stoklar, nakit pozisyon, faturalanmamış irsaliyeler…).
+    Sağlayıcı ayarlarını aşağıdan yapın.
+</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+@* ---------- (2) Sorgu kutusu ---------- *@
+<div class="bo-card bo-form" style="margin-bottom:14px;">
+    <form method="post">
+        <div class="frm-row">
+            <label>Soru</label>
+            <input asp-for="Question" class="field" autocomplete="off"
+                   placeholder="Örn. bugünün özeti, en çok satanlar, &lt;cari adı&gt; bakiye, kritik stoklar, nakit pozisyon" />
+            <small class="hint">Sesli giriş (mikrofon → metin) masaüstü/bulut STT gerektirir; web arayüzünde yalnızca metin sorgusu desteklenir.</small>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" asp-page-handler="Ask" class="btn btn-primary">💬 Sor</button>
+        </div>
+    </form>
+</div>
+
+@if (Model.AnswerText is not null || Model.AnswerTable is not null)
+{
+    <div class="bo-card" style="margin-bottom:14px;">
+        @if (!string.IsNullOrWhiteSpace(Model.AnswerText))
+        {
+            <div style="white-space:pre-wrap;">@Model.AnswerText</div>
+        }
+        @if (Model.AnswerTable is { Rows.Count: > 0, Columns.Count: > 0 } t)
+        {
+            <table class="bo-table" style="margin-top:10px;">
+                <thead>
+                    <tr>
+                        @foreach (var col in t.Columns)
+                        {
+                            <th class="@(col.Numeric ? "ar" : "")">@col.Header</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in t.Rows)
+                    {
+                        <tr>
+                            @for (int i = 0; i < t.Columns.Count; i++)
+                            {
+                                var col = t.Columns[i];
+                                var v = i < row.Length ? row[i] : null;
+                                <td class="@(col.Numeric ? "ar" : "")">@Cell(v, col)</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+                @if (t.Footer is { } footer)
+                {
+                    <tfoot>
+                        <tr>
+                            @for (int i = 0; i < t.Columns.Count; i++)
+                            {
+                                var col = t.Columns[i];
+                                var v = i < footer.Length ? footer[i] : null;
+                                <td class="@(col.Numeric ? "ar" : "")"><b>@Cell(v, col)</b></td>
+                            }
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        }
+    </div>
+}
+
+@* ---------- (1) AI Ayarları ---------- *@
+<div class="bo-card bo-form">
+    <h2 style="margin-top:0;">⚙ AI Ayarları</h2>
+    <form method="post">
+        <div class="frm-row">
+            <label>Sağlayıcı</label>
+            <select asp-for="Provider" class="field" id="ai-provider">
+                @foreach (var p in Model.ProviderOptions)
+                {
+                    <option value="@p.Value" selected="@(Model.Provider == p.Value)">@p.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="frm-row" id="ai-key-row">
+            <label>API Anahtarı</label>
+            <input asp-for="ApiKey" type="password" class="field" autocomplete="new-password" />
+            <small class="hint">Bulut sağlayıcılar (Claude / OpenAI / Özel) için gereklidir. Yerel sağlayıcıda boş bırakın.</small>
+        </div>
+
+        <div class="frm-row">
+            <label>Model</label>
+            <input asp-for="Model" class="field" autocomplete="off" placeholder="örn. claude-3-5-sonnet, gpt-4o-mini, deepseek-chat" />
+        </div>
+
+        <div class="frm-row" id="ai-url-row">
+            <label>Uç Nokta (BaseUrl) — Özel / OpenAI-uyumlu</label>
+            <input asp-for="BaseUrl" class="field" autocomplete="off" placeholder="https://.../v1/chat/completions" />
+            <small class="hint">Hazır şablonlar (OpenAI-uyumlu):
+                @string.Join(" · ", Model.Presets.Select(p => $"{p.Name} → {p.Model}"))
+            </small>
+        </div>
+
+        <div class="frm-row">
+            <label>Yaratıcılık (temperature): <span id="ai-temp-val">@Model.Temperature.ToString("0.0", tr)</span></label>
+            <input asp-for="Temperature" type="range" min="0" max="1" step="0.1" class="field"
+                   oninput="document.getElementById('ai-temp-val').textContent = this.value" />
+            <small class="hint">0 = tutarlı/kesin … 1 = daha yaratıcı. Öneri: 0,2.</small>
+        </div>
+
+        <div class="frm-row">
+            <label class="chk"><input asp-for="VoiceOutput" type="checkbox" /> Yanıtı sesli oku (TTS)</label>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="VoiceInput" type="checkbox" /> Mikrofonla soru (STT — bulut)</label>
+            <small class="hint">Not: Sesli çıkış/giriş masaüstü (WPF) uygulamasında etkindir; web arayüzünde ayar olarak saklanır ancak tarayıcıda çalışmaz.</small>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" asp-page-handler="Save" class="btn btn-primary">Ayarları Kaydet</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var sel = document.getElementById('ai-provider');
+            var keyRow = document.getElementById('ai-key-row');
+            var urlRow = document.getElementById('ai-url-row');
+            function sync() {
+                var v = parseInt(sel.value, 10);
+                // AiProviderType: Local=0, Claude=1, OpenAI=2, Custom=3
+                var cloud = v === 1 || v === 2 || v === 3;
+                var custom = v === 3;
+                keyRow.style.display = cloud ? '' : 'none';
+                urlRow.style.display = custom ? '' : 'none';
+            }
+            if (sel) { sel.addEventListener('change', sync); sync(); }
+        })();
+    </script>
+}

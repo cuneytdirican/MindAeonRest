@@ -1,0 +1,19 @@
+@page
+@model MindAeonRestWeb.Pages.FeedbackModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#0f1115" />
+    <title>Değerlendirme · MindAeon</title>
+    <link rel="stylesheet" href="~/css/feedback.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="fb-app" aria-live="polite"></div>
+    @* Token yalnız istemciye taşınır; doğrulama FeedbackController'da (sunucuda) yapılır. *@
+    <script>window.FEEDBACK_TOKEN = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Token));</script>
+    <script src="~/js/feedback.js" asp-append-version="true"></script>
+</body>
+</html>

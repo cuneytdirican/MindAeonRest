@@ -1,0 +1,90 @@
+@model MindAeonRest.Licence.Portal.Pages.Admin.TenantsModel
+
+<div class="card" style="border-color:var(--primary);">
+    <div class="card__head">
+        <h3 class="card__title">
+            @Model.DetailName <code style="font-weight:600; margin-left:var(--sp-2);">@Model.DetailCode</code>
+        </h3>
+        <span class="badge primary"><span class="dot"></span> Gözetim</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.DetailError))
+    {
+        <div class="alert-error">@Model.DetailError</div>
+    }
+
+    <div class="grid grid-2">
+        <div>
+            <div class="text-sm text-muted" style="margin-bottom:var(--sp-2); font-weight:600;">
+                Kullanıcılar (@Model.Users.Count)
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Rol</th><th>Durum</th></tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Users.Count == 0)
+                        {
+                            <tr><td colspan="4" class="text-muted" style="text-align:center; padding:var(--sp-5);">Kullanıcı yok.</td></tr>
+                        }
+                        @foreach (var u in Model.Users)
+                        {
+                            <tr>
+                                <td><code>@u.Username</code></td>
+                                <td>@u.FullName</td>
+                                <td>@u.RoleName</td>
+                                <td>
+                                    @if (u.IsActive)
+                                    {
+                                        <span class="badge success"><span class="dot"></span> Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge"><span class="dot"></span> Pasif</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div>
+            <div class="text-sm text-muted" style="margin-bottom:var(--sp-2); font-weight:600;">
+                Şubeler (@Model.Branches.Count)
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr><th class="num">#</th><th>Şube Adı</th><th>Durum</th></tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Branches.Count == 0)
+                        {
+                            <tr><td colspan="3" class="text-muted" style="text-align:center; padding:var(--sp-5);">Şube yok.</td></tr>
+                        }
+                        @foreach (var b in Model.Branches)
+                        {
+                            <tr>
+                                <td class="num">@b.Id</td>
+                                <td style="font-weight:600;">@b.Name</td>
+                                <td>
+                                    @if (b.IsActive)
+                                    {
+                                        <span class="badge success"><span class="dot"></span> Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge"><span class="dot"></span> Pasif</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,132 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.BankMovements.IndexModel
+@{
+    ViewData["Title"] = "Banka Hareketleri";
+    Layout = "_BackOfficeLayout";
+    var cur = Model.CurrencyCode;
+}
+
+<div class="bo-page-head no-print">
+    <h1>🏦 Banka Hareketleri</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert-success no-print">@Model.Success</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+
+<style>
+    .bo-sub { margin:16px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted,#888); }
+    .sum-grid { display:flex; gap:24px; flex-wrap:wrap; margin:6px 0 14px; }
+    .sum-box { min-width:150px; }
+    .sum-box .lbl { font-size:12px; color:var(--muted,#888); }
+    .sum-box .val { font-size:20px; font-weight:bold; }
+    @@media print {
+        .no-print { display:none !important; }
+        .bo-card { box-shadow:none; border:none; }
+    }
+</style>
+
+<form method="get" class="bo-filter no-print">
+    <label>Banka Hesabı
+        <select name="BankAccountId" asp-items="Model.AccountOptions" class="field"></select>
+    </label>
+    <label>Başlangıç
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <label>Bitiş
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    @if (Model.Account != null)
+    {
+        <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+    }
+</form>
+
+@if (Model.AccountOptions.Count > 0)
+{
+    <div class="bo-card no-print">
+        <h3 class="bo-sub" style="margin-top:0">🔁 Hesaplar Arası Transfer</h3>
+        <p class="hint" style="margin-top:0">Aynı döviz iki banka hesabı arasında para aktarır.</p>
+        <form method="post" asp-page-handler="Transfer">
+            <div class="frm-row">
+                <label>Kaynak Hesap *</label>
+                <select asp-for="TransferFromId" class="field" required>
+                    <option value="0">(Kaynak hesap seçiniz)</option>
+                    @foreach (var a in Model.AccountOptions)
+                    {
+                        <option value="@a.Value">@a.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="frm-row">
+                <label>Hedef Hesap *</label>
+                <select asp-for="TransferToId" class="field" required>
+                    <option value="0">(Hedef hesap seçiniz)</option>
+                    @foreach (var a in Model.AccountOptions)
+                    {
+                        <option value="@a.Value">@a.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="frm-row">
+                <label>Tutar *</label>
+                <input asp-for="TransferAmount" class="field" autocomplete="off" required placeholder="Örn: 250,00" />
+            </div>
+            <div class="frm-row">
+                <label>Açıklama</label>
+                <input asp-for="TransferNote" class="field" maxlength="250" autocomplete="off" />
+            </div>
+            <div class="frm-actions">
+                <button type="submit" class="btn btn-primary">Transfer Et</button>
+            </div>
+        </form>
+    </div>
+}
+
+@if (Model.Account != null)
+{
+    <div class="bo-card">
+        <div style="margin-bottom:10px">
+            <h2 style="margin:0">@Model.Account.Name</h2>
+            <div class="hint">@(string.IsNullOrEmpty(Model.Account.BankName) ? "" : Model.Account.BankName + " · ")Döviz: @(string.IsNullOrEmpty(cur) ? "—" : cur)</div>
+        </div>
+
+        <div class="sum-grid">
+            <div class="sum-box"><div class="lbl">Dönem Giriş</div><div class="val">@MindAeonRestWeb.Pages.BackOffice.BankMovements.IndexModel.Money(Model.TotalIn) @cur</div></div>
+            <div class="sum-box"><div class="lbl">Dönem Çıkış</div><div class="val">@MindAeonRestWeb.Pages.BackOffice.BankMovements.IndexModel.Money(Model.TotalOut) @cur</div></div>
+            <div class="sum-box"><div class="lbl">Dönem Net</div><div class="val">@MindAeonRestWeb.Pages.BackOffice.BankMovements.IndexModel.Money(Model.NetPeriod) @cur</div></div>
+            <div class="sum-box"><div class="lbl">Güncel Bakiye</div><div class="val">@MindAeonRestWeb.Pages.BackOffice.BankMovements.IndexModel.Money(Model.ClosingBalance) @cur</div></div>
+        </div>
+
+        <h3 class="bo-sub">Hareketler</h3>
+        <table class="bo-table">
+            <thead>
+                <tr><th>Tarih</th><th>Tip</th><th>Cari</th><th class="ar">Tutar</th><th>Açıklama</th><th class="ar">Bakiye</th></tr>
+            </thead>
+            <tbody>
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="6" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var r in Model.Rows)
+            {
+                <tr>
+                    <td>@r.DateText</td>
+                    <td>@r.TypeText</td>
+                    <td>@(string.IsNullOrEmpty(r.CustomerName) ? "—" : r.CustomerName)</td>
+                    <td class="ar"><b>@r.AmountText</b></td>
+                    <td>@(string.IsNullOrEmpty(r.Note) ? "—" : r.Note)</td>
+                    <td class="ar">@r.RunningText</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count no-print">@Model.Rows.Count hareket</div>
+}

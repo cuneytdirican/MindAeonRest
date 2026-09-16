@@ -1,0 +1,126 @@
+<Window x:Class="MindAeonRest.Views.CompanyEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        Title="Şirket Düzenle" Height="740" Width="780" MinHeight="600" MinWidth="640"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border CornerRadius="14" Background="{StaticResource BackgroundBrush}"
+            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="34,28,34,26">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock x:Name="TitleText" Text="Şirket Düzenle" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                <TextBlock Text="Şirket tanım bilgilerini güncelleyin (kod değiştirilemez)."
+                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,0" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,20,0,0">
+                <StackPanel Margin="0,0,8,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="ŞİRKET KODU" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="CodeBox" Style="{StaticResource InputTextBox}" IsEnabled="False" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="ŞİRKET ADI" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="0.7*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="TELEFON" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="PhoneBox" Style="{StaticResource InputTextBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="VERGİ NUMARASI" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="TaxNumberBox" Style="{StaticResource InputTextBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="DÖVİZ" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="CurrencyCombo" Style="{StaticResource InputComboBox}"
+                                      ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Id" Tag="Döviz">
+                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Code}" /></DataTemplate></ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="VERGİ DAİRESİ" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                    <TextBox x:Name="TaxOfficeBox" Style="{StaticResource InputTextBox}" />
+
+                    <TextBlock Text="LOKASYON" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                    <views:LocationSelector x:Name="Location" />
+
+                    <TextBlock Text="ADRES" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                    <TextBox x:Name="AddressBox" Style="{StaticResource InputTextBox}" Height="70"
+                             TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="14,10" />
+
+                    <TextBlock Text="LOGOLAR (tüm şubelerde aynı)" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="12">
+                            <StackPanel>
+                                <TextBlock Text="Renkli Logo (ekran / login)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+                                <Border Height="90" Margin="0,8" Background="#FFFFFF" CornerRadius="6">
+                                    <Image x:Name="ColorPreview" Stretch="Uniform" Margin="6" />
+                                </Border>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Seç" Style="{StaticResource GhostButton}" Width="70" Click="PickColor_Click" />
+                                    <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="80" Margin="8,0,0,0" Click="ClearColor_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Background="{StaticResource SurfaceBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="12">
+                            <StackPanel>
+                                <TextBlock Text="Mono Logo (termal baskı, S/B)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+                                <Border Height="90" Margin="0,8" Background="#FFFFFF" CornerRadius="6">
+                                    <Image x:Name="MonoPreview" Stretch="Uniform" Margin="6" />
+                                </Border>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Seç" Style="{StaticResource GhostButton}" Width="70" Click="PickMono_Click" />
+                                    <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="80" Margin="8,0,0,0" Click="ClearMono_Click" />
+                                </StackPanel>
+                                <TextBlock Text="Boş bırakılırsa baskıda renkli logo otomatik S/B'ye çevrilir." FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <CheckBox x:Name="ActiveCheck" Content="Şirket aktif" Style="{StaticResource ThemedCheckBox}" Margin="2,18,0,0" />
+
+                    <TextBlock x:Name="ErrorText" Foreground="{StaticResource DangerBrush}" FontSize="12"
+                               Margin="2,14,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2" Margin="0,18,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="1.4*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

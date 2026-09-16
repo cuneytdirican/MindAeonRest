@@ -1,0 +1,804 @@
+<Window x:Class="MindAeonRest.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MindAeonRest"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        xmlns:helpers="clr-namespace:MindAeonRest.Helpers"
+        mc:Ignorable="d"
+        Title="MindAeonRest" Height="900" Width="1440" MinHeight="700" MinWidth="1100"
+        Icon="app.ico"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Window.Resources>
+        <helpers:CategoryColorConverter x:Key="CatColor" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="252" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ SOL MENÜ ============ -->
+        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Logo -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="22,26,0,18">
+                    <Border Width="40" Height="40" CornerRadius="10" Background="{StaticResource AccentGradient}">
+                        <TextBlock Text="M" FontSize="22" FontWeight="Bold" Foreground="#1A1208"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock VerticalAlignment="Center" Margin="12,0,0,0">
+                        <Run Text="MindAeon" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                        <Run Text="REST" FontSize="18" FontWeight="Light" Foreground="{StaticResource AccentBrush}" />
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Aktif şirket / şube -->
+                <Border Grid.Row="1" Background="{StaticResource SurfaceAltBrush}" CornerRadius="8" Margin="14,0,14,4" Padding="12,9">
+                    <StackPanel>
+                        <TextBlock Text="AKTİF ŞİRKET / ŞUBE" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="CompanyContextText" Text="-" FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Gruplu menü (genişlemeye uygun) -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0">
+                    <StackPanel x:Name="NavRoot" Margin="14,0,14,0">
+                        <TextBox x:Name="NavSearchBox" Style="{StaticResource InputTextBox}" Height="40" Margin="0,0,0,8"
+                                 Tag="🔍 Menüde ara…" VerticalContentAlignment="Center" TextChanged="NavSearch_Changed" KeyDown="NavSearch_KeyDown" />
+                        <Popup x:Name="NavSearchPopup" PlacementTarget="{Binding ElementName=NavSearchBox}" Placement="Bottom"
+                               Width="{Binding ActualWidth, ElementName=NavSearchBox}" StaysOpen="False" AllowsTransparency="True" MaxHeight="420">
+                            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
+                                <ListBox x:Name="NavSearchList" Background="Transparent" BorderThickness="0" MaxHeight="400"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" MouseLeftButtonUp="NavSearch_Pick" KeyDown="NavSearchList_KeyDown">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem"><Setter Property="Padding" Value="10,8" /><Setter Property="Foreground" Value="{DynamicResource TextBrush}" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /></Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate><DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Icon}" Margin="0,0,8,0" />
+                                            <TextBlock Text="{Binding Label}" />
+                                            <TextBlock Text="{Binding Group}" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="8,2,0,0" />
+                                        </StackPanel>
+                                    </DataTemplate></ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+                        </Popup>
+                        <!-- ============ RESTORAN İŞLEMLERİ (günlük operasyon — en üstte) ============ -->
+                        <TextBlock Text="🍽 RESTORAN İŞLEMLERİ" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,6" />
+                        <Button x:Name="PosButton" Content="🍽  POS / ADİSYON" Click="Pos_Click"
+                                Style="{StaticResource PrimaryButton}" FontSize="15" FontWeight="Bold" Margin="0,0,0,6" />
+                        <Button x:Name="KdsButton" Content="🍳  MUTFAK (KDS)" Click="Kds_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="KioskButton" Content="🖥  KIOSK" Click="Kiosk_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="PaketButton" Content="📦  PAKET / TAKE AWAY" Click="Paket_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="KasaButton" Content="💰  KASA" Click="Kasa_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="IadeButton" Content="↩  İADE" Click="Iade_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="RaporButton" Content="📊  X / Z RAPORU" Click="Rapor_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="ShiftCloseButton" Content="🧾  VARDİYA KAPANIŞI" Click="ShiftClose_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,6" />
+                        <Button x:Name="OrderHistoryButton" Content="📜  SİPARİŞ İZLEME" Click="OrderHistory_Click"
+                                Style="{StaticResource GhostButton}" FontSize="14" Margin="0,0,0,10" />
+
+                        <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,2,4,8" Opacity="0.5" />
+                        <!-- ============ KURULUM & ÖZET ============ -->
+                        <TextBlock Text="⚙ KURULUM &amp; ÖZET" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,0,0,6" />
+                        <RadioButton x:Name="NavDashboard" Tag="📊" Content="Özet (Dashboard)" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavDashboard_Checked" />
+                        <Button x:Name="RestaurantWizardButton" Content="🚀  KURULUM SİHİRBAZI" Click="RestaurantWizard_Click"
+                                Style="{StaticResource GhostButton}" FontSize="13" Margin="0,6,0,6"
+                                ToolTip="Adım adım hızlı kurulum: her adımda toplu/akıllı ekleme." />
+                        <Button x:Name="SetupWizardButton" Content="📋  RESTORAN TANIMLARI" Click="SetupWizard_Click"
+                                Style="{StaticResource GhostButton}" FontSize="13" Margin="0,0,0,6"
+                                ToolTip="Tüm tanım ekranlarına iş sırasına göre tek listeden ulaşın." />
+                        <Button x:Name="LicenseButton" Content="🔐  LİSANS" Click="License_Click"
+                                Style="{StaticResource GhostButton}" FontSize="13" Margin="0,0,0,6"
+                                ToolTip="Lisans durumu / paket yükseltme / talep anahtarı." />
+                        <Button x:Name="MobileServerButton" Content="📱  MOBİL SUNUCU" Click="MobileServer_Click"
+                                Style="{StaticResource GhostButton}" FontSize="13" Margin="0,0,0,6"
+                                ToolTip="Mobil uygulamaların bağlandığı sunucu: durum, adres ve QR kod." />
+                        <Button x:Name="SystemMgmtButton" Content="🛠  SİSTEM YÖNETİMİ" Click="SystemManagement_Click"
+                                Style="{StaticResource GhostButton}" FontSize="13" Margin="0,0,0,12"
+                                ToolTip="Uygulama güncelleme ve mobil sunucu yönetimi." />
+
+                        <ToggleButton x:Name="GrpProduct" Content="ÜRÜN YÖNETİMİ" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpProductItems">
+                            <RadioButton x:Name="NavProducts" Tag="📦" Content="Ürünler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavProducts_Checked" />
+                            <RadioButton x:Name="NavCategories" Tag="🗂" Content="Kategoriler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCategories_Checked" />
+                            <RadioButton x:Name="NavTax" Tag="🧾" Content="Vergi Grupları" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavTax_Checked" />
+                            <RadioButton x:Name="NavWarehouses" Tag="🏬" Content="Depolar" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavWarehouses_Checked" />
+                            <RadioButton x:Name="NavPriceLists" Tag="🏷" Content="Fiyat Listeleri" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavPriceLists_Checked" />
+                            <RadioButton x:Name="NavSalesStop" Tag="⛔" Content="Satış Durdurma" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavSalesStop_Checked" />
+                            <RadioButton x:Name="NavCodeSeries" Tag="🔢" Content="Kod Serileri" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCodeSeries_Checked" />
+                            <Button x:Name="CsvImportButton" Content="⬆  CSV İçe Aktarım" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,8,0,0" Click="CsvImport_Click" Visibility="Collapsed" />
+                            <Button x:Name="PriceTransferButton" Content="🔁  Şube Fiyat Aktarımı" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PriceTransfer_Click" Visibility="Collapsed" />
+                            <Button x:Name="BulkPriceButton" Content="₺  Toplu Fiyat Düzenleme" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="BulkPrice_Click" Visibility="Collapsed" />
+                            <Button x:Name="QuickProductButton" Content="⚡  Hızlı Ürün Tanımlama" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="QuickProduct_Click" Visibility="Collapsed" />
+                            <Button x:Name="PriceMatrixButton" Content="🔀  Şube·Liste Fiyat Matrisi" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PriceMatrix_Click" Visibility="Collapsed" />
+                            <Button x:Name="CampaignButton" Content="🎁  Kampanyalar" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Campaign_Click" Visibility="Collapsed" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpCustomer" Content="MÜŞTERİ YÖNETİMİ" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpCustomerItems">
+                            <RadioButton x:Name="NavCustomers" Tag="👥" Content="Müşteriler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCustomers_Checked" />
+                            <RadioButton x:Name="NavCustomerGroups" Tag="👪" Content="Müşteri Grupları" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCustomerGroups_Checked" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpLocation" Content="LOKASYON YÖNETİMİ" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpLocationItems">
+                            <RadioButton x:Name="NavZones" Tag="📍" Content="Lokasyonlar" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavZones_Checked" />
+                            <RadioButton x:Name="NavReyons" Tag="🍳" Content="Reyonlar (Mutfak)" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavReyons_Checked" />
+                            <Button x:Name="LayoutButton" Content="🪑  Masa Planı" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,8,0,0" Click="Layout_Click" />
+                            <Button x:Name="ReyonRouteButton" Content="🔀  Reyon Yönlendirme (Mutfak/Bar)" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="ReyonRoute_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpFinance" Content="FİNANS YÖNETİMİ" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpFinanceItems">
+                            <TextBlock Text="TANIMLAR" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <RadioButton x:Name="NavBanks" Tag="🏦" Content="Bankalar" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavBanks_Checked" />
+                            <RadioButton x:Name="NavBankAccounts" Tag="💳" Content="Banka Hesapları" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavBankAccounts_Checked" />
+                            <RadioButton x:Name="NavPos" Tag="💳" Content="Kredi Kartı POS" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavPos_Checked" />
+                            <RadioButton x:Name="NavCashRegisters" Tag="💵" Content="Nakit Kasalar" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCashRegisters_Checked" />
+                            <RadioButton x:Name="NavKiosks" Tag="🖥" Content="KIOSK'lar" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavKiosks_Checked" />
+                            <RadioButton x:Name="NavMealVouchers" Tag="🍽" Content="Yemek Çekleri" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavMealVouchers_Checked" />
+                            <RadioButton x:Name="NavMealVoucherAccounts" Tag="🧾" Content="Yemek Çek Hesapları" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavMealVoucherAccounts_Checked" />
+
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,10,4,4" Opacity="0.5" />
+                            <TextBlock Text="💵 KASA İŞLEMLERİ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <Button Content="⬆  Kasa Giriş Dekontu" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,2,0,0" Click="KasaGirisDekont_Click" />
+                            <Button Content="⬇  Kasa Çıkış Dekontu" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="KasaCikisDekont_Click" />
+                            <Button Content="💰  Kasa Hareketleri" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Kasa_Click" />
+                            <Button x:Name="CashExtractButton" Content="📒  Nakit Kasa Ekstresi" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="CashExtract_Click" />
+
+                            <StackPanel x:Name="FinBankSection">
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,10,4,4" Opacity="0.5" />
+                            <TextBlock Text="🏦 BANKA İŞLEMLERİ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <Button Content="⬆  Banka Giriş Dekontu" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,2,0,0" Click="BankaGirisDekont_Click" />
+                            <Button Content="⬇  Banka Çıkış Dekontu" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="BankaCikisDekont_Click" />
+                            <Button x:Name="BankaButton" Content="🏦  Banka Hareketleri" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Banka_Click" />
+                            <Button x:Name="BankaBakiyeButton" Content="⚖  Banka Bakiye" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="BankaBakiye_Click" />
+                            <Button x:Name="BankExtractButton" Content="📒  Banka Hesap Ekstresi" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="BankExtract_Click" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="FinCardSection">
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,10,4,4" Opacity="0.5" />
+                            <TextBlock Text="💳 KREDİ KARTI İŞLEMLERİ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <Button Content="⬆  Kart Tahsilat Evrağı" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,2,0,0" Click="KartTahsilatDekont_Click" />
+                            <Button Content="⬇  Kart Ödeme Evrağı" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="KartOdemeDekont_Click" />
+                            <Button x:Name="PosHareketButton" Content="💳  POS Hareketleri" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PosHareket_Click" />
+                            <Button x:Name="PosBakiyeButton" Content="📄  POS Bakiye Raporu" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PosBakiye_Click" />
+                            <Button x:Name="PosExtractButton" Content="📒  POS Hareket Ekstresi" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PosExtract_Click" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="FinCheckSection">
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,10,4,4" Opacity="0.5" />
+                            <TextBlock Text="🧾 ÇEK / SENET İŞLEMLERİ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <Button x:Name="CekSenetButton" Content="🧾  Çek / Senet Portföyü" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,2,0,0" Click="CekSenet_Click" />
+                            <Button x:Name="CekVadeButton" Content="📆  Çek/Senet Vade Takibi" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="CekVade_Click" />
+                            <Button x:Name="CekVadeYakinButton" Content="⏰  Vadesi Yaklaşan Çek/Senet" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="CekVadeYakin_Click" />
+                            <Button x:Name="CekSenetRaporButton" Content="📄  Çek/Senet Portföy Raporu" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="CekSenetRapor_Click" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="FinVoucherSection">
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,10,4,4" Opacity="0.5" />
+                            <TextBlock Text="🍽 YEMEK ÇEKİ İŞLEMLERİ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <Button x:Name="YemekCekiCikisButton" Content="🎫  Yemek Çeki Çıkışı (Satış Faturası)" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,2,0,0" Click="YemekCekiCikis_Click" />
+                            <Button x:Name="VoucherExtractButton" Content="📒  Yemek Çeki Ekstresi" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="VoucherExtract_Click" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="FinLoyaltySection">
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,10,4,4" Opacity="0.5" />
+                            <TextBlock Text="🎁 SADAKAT &amp; HEDİYE ÇEKİ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" Margin="6,2,0,3" />
+                            <Button x:Name="GiftCardButton" Content="🎁  Hediye Çekleri (sat / iptal / ekstre)" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,2,0,0" Click="GiftCard_Click" />
+                            <Button x:Name="LoyaltySettingsButton" Content="⭐  Sadakat Ayarları (puan oranları)" Style="{StaticResource GhostButton}" HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="LoyaltySettings_Click" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpReservation" Content="REZERVASYON" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpReservationItems">
+                            <RadioButton x:Name="NavResTags" Tag="🏷" Content="Rezervasyon Etiketleri" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavResTags_Checked" />
+                            <Button x:Name="ReservationButton" Content="🗓  Rezervasyon Ekranı" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,8,0,0" Click="Reservation_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpPaket" Content="PAKET / KURYE" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpPaketItems">
+                            <RadioButton x:Name="NavCouriers" Tag="🛵" Content="Kuryeler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCouriers_Checked" />
+                            <Button x:Name="DeliverySettingsButton" Content="🛍  Yemek Sitesi Ayarları" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,8,0,0" Click="DeliverySettings_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpCompany" Content="ŞİRKET YÖNETİMİ" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpCompanyItems">
+                            <RadioButton x:Name="NavCompanies" Tag="🏢" Content="Şirket Bilgileri" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCompanies_Checked" />
+                            <RadioButton x:Name="NavBranches" Tag="🏪" Content="Şubeler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavBranches_Checked" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpErp" Content="PROJE / PERSONEL" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpErpItems">
+                            <RadioButton x:Name="NavProjects" Tag="📁" Content="Projeler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavProjects_Checked" />
+                            <RadioButton x:Name="NavPersonnel" Tag="🧑" Content="Personel" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavPersonnel_Checked" />
+                            <RadioButton x:Name="NavExpenseTypes" Tag="🧾" Content="Gider Tipleri" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavExpenseTypes_Checked" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpAccounting" Content="ÖN MUHASEBE" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpAccountingItems">
+                            <RadioButton x:Name="NavCariHareket" Tag="📒" Content="Cari Hareketler" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavCariHareket_Checked" />
+                            <Button x:Name="CariEkstreButton" Content="📄  Cari Ekstre" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,8,0,0" Click="CariEkstre_Click" />
+                            <Button x:Name="CariBakiyeButton" Content="⚖  Cari Bakiye" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="CariBakiye_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpOrders" Content="SİPARİŞLER" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpOrdersItems">
+                            <Button x:Name="SalesOrderButton" Content="🧾  Satış Siparişleri" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,4,0,0" Click="SalesOrder_Click" />
+                            <Button x:Name="PurchaseOrderButton" Content="🧾  Alış Siparişleri" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PurchaseOrder_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpWaybills" Content="İRSALİYELER" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpWaybillsItems">
+                            <Button x:Name="SalesWaybillButton" Content="🚚  Satış İrsaliyeleri" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,4,0,0" Click="SalesWaybill_Click" />
+                            <Button x:Name="PurchaseWaybillButton" Content="🚚  Alış İrsaliyeleri" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PurchaseWaybill_Click" />
+                            <Button x:Name="UnbilledButton" Content="📄  Faturalanmamış İrsaliye" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Unbilled_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpDepot" Content="DEPO / GİDER" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpDepotItems">
+                            <Button x:Name="TransferButton" Content="🔁  Depo Transfer" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,4,0,0" Click="Transfer_Click2" />
+                            <Button x:Name="CountButton" Content="📋  Sayım Fişi" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Count_Click" />
+                            <Button x:Name="FireButton" Content="🔥  Fire Fişi" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Fire_Click" />
+                            <Button x:Name="GiderButton" Content="💸  Giderler" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="Gider_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpInvoices" Content="FATURALAR" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpInvoicesItems">
+                            <Button x:Name="SalesInvoiceButton" Content="📄  Satış Faturaları" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,4,0,0" Click="SalesInvoice_Click" />
+                            <Button x:Name="PurchaseInvoiceButton" Content="📄  Alış Faturaları" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PurchaseInvoice_Click" />
+                            <Button x:Name="SalesReturnButton" Content="↩  Satış İade Faturaları" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="SalesReturn_Click" />
+                            <Button x:Name="PurchaseReturnButton" Content="↩  Alış İade Faturaları" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="PurchaseReturn_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpReports" Content="RAPORLAR" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpReportsItems">
+                            <Button x:Name="StockQtyButton" Content="📦  Stok Miktar (birim çevrimli)" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,4,0,0" Click="StockQty_Click" />
+                            <Button x:Name="StockMoveButton" Content="📊  Stok Hareket" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="StockMove_Click" />
+                            <Button x:Name="ExpenseReportButton" Content="💸  Gider Raporu" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="ExpenseReport_Click" />
+                            <Button x:Name="FicheReportButton" Content="📑  Fiş / Adisyon Raporu" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="FicheReport_Click" />
+                            <Button x:Name="ZReportListButton" Content="📅  Z (Gün Sonu) Raporları" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="ZReportList_Click" />
+                            <Button x:Name="MasaRaporButton" Content="🪑  Masa Raporları (anlık + geçmiş)" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="MasaRapor_Click" />
+                            <Button x:Name="KioskDashboardButton" Content="💰  KIOSK Kasa Paneli (canlı)" Style="{StaticResource GhostButton}"
+                                    HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="KioskDashboard_Click" />
+                        </StackPanel>
+
+                        <ToggleButton x:Name="GrpUsers" Content="KULLANICI YÖNETİMİ" Style="{StaticResource NavGroupHeader}" IsChecked="True" Click="Group_Click" />
+                        <StackPanel x:Name="GrpUsersItems">
+                            <RadioButton x:Name="NavUsers" Tag="👤" Content="Kullanıcılar" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavUsers_Checked" />
+                            <RadioButton x:Name="NavRoles" Tag="🛡" Content="Roller" GroupName="Nav" Style="{StaticResource NavItem}" Checked="NavRoles_Checked" />
+                        </StackPanel>
+
+                        <Button x:Name="SysDefButton" Content="⚙  Sistem Tanımları" Style="{StaticResource GhostButton}"
+                                HorizontalContentAlignment="Left" Margin="0,16,0,0" Click="SystemDefs_Click" Visibility="Collapsed" />
+                        <Button x:Name="EInvoiceButton" Content="📄  e-Fatura Ayarları" Style="{StaticResource GhostButton}"
+                                HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="EInvoice_Click" Visibility="Collapsed" />
+                        <Button x:Name="UiVersionButton" Content="🖥  Ekran Sürümü (Adisyon/Mutfak)" Style="{StaticResource GhostButton}"
+                                HorizontalContentAlignment="Left" Margin="0,6,0,0" Click="UiVersion_Click" Visibility="Collapsed" />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Kullanıcı kartı -->
+                <Border Grid.Row="3" Background="{StaticResource SurfaceAltBrush}" CornerRadius="10" Margin="14,12,14,16" Padding="14,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="{StaticResource AccentGradient}">
+                                <TextBlock x:Name="AvatarInitial" Text="?" FontSize="16" FontWeight="Bold" Foreground="#1A1208"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
+                                <TextBlock x:Name="UserNameText" Text="Kullanıcı" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextBrush}" />
+                                <TextBlock x:Name="UserRoleText" Text="Rol" FontSize="11"
+                                           Foreground="{StaticResource AccentBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Row="1" Content="Çıkış Yap" Style="{StaticResource GhostButton}"
+                                Margin="0,12,0,0" Click="Logout_Click" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ============ İÇERİK ============ -->
+        <Grid Grid.Column="1" Margin="32,20,32,28">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ÜST BAR: tema + giriş yapan kullanıcı -->
+            <Grid Grid.Row="0" Margin="0,0,0,14">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="Tema" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0" />
+                    <ComboBox x:Name="ThemeCombo" Width="130" Height="34" Style="{StaticResource InputComboBox}"
+                              ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value" SelectionChanged="Theme_Changed">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Border Width="1" Height="28" Background="{StaticResource BorderBrush}" Margin="18,0,16,0" />
+                    <Border Width="38" Height="38" CornerRadius="19" Background="{StaticResource AccentGradient}">
+                        <TextBlock x:Name="TopAvatarInitial" Text="?" FontSize="16" FontWeight="Bold" Foreground="#1A1208"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
+                        <TextBlock x:Name="TopUserName" Text="" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                        <TextBlock x:Name="TopUserRole" Text="" FontSize="11" Foreground="{StaticResource AccentBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="0,0,0,22">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="PageTitle" Text="" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                    <TextBlock x:Name="PageSubtitle" Text="" FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="AiHubButton" Style="{StaticResource GhostButton}" Width="120" Height="38"
+                            Margin="0,0,10,0" Content="🧠 AI Hub" Visibility="Collapsed" Click="AiHub_Click" />
+                    <TextBox x:Name="ListSearchBox" Width="200" Height="38" Style="{StaticResource InputTextBox}"
+                             Margin="0,0,10,0" VerticalContentAlignment="Center" Visibility="Collapsed" TextChanged="ListSearch_Changed" />
+                    <Button x:Name="ExportButton" Style="{StaticResource GhostButton}" Width="120"
+                            Margin="0,0,10,0" Content="⤓ Dışa Aktar" Visibility="Collapsed" Click="Export_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Excel (.xlsx)" Click="ExportExcel_Click" />
+                                <MenuItem Header="CSV" Click="ExportCsv_Click" />
+                                <MenuItem Header="PDF / Yazdır" Click="ExportPdf_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Button x:Name="DeleteButton" Style="{StaticResource GhostButton}" Width="140"
+                            Margin="0,0,10,0" Content="🗑 Sil / Geri Al" Visibility="Collapsed" Click="DeleteButton_Click" />
+                    <Button x:Name="ActionButton2" Style="{StaticResource GhostButton}" Width="150"
+                            Margin="0,0,10,0" Visibility="Collapsed" Click="ActionButton2_Click" />
+                    <Button x:Name="ActionButton" Style="{StaticResource PrimaryButton}" Width="170"
+                            Visibility="Collapsed" Click="ActionButton_Click" />
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="12"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <Grid Margin="2">
+                    <!-- Özet / Dashboard -->
+                    <Grid x:Name="DashboardPanel" Visibility="Collapsed" Margin="6">
+                        <views:BossDashboardView x:Name="BossDash" />
+                    </Grid>
+
+                    <!-- Şirket Bilgileri (yalnızca aktif şirket) -->
+                    <DataGrid x:Name="CompaniesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="CompaniesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Şirket Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Telefon" Binding="{Binding Phone}" Width="*" />
+                            <DataGridTextColumn Header="Şehir" Binding="{Binding CityName}" Width="*" />
+                            <DataGridTextColumn Header="Döviz" Binding="{Binding CurrencyCode}" Width="80" />
+                            <DataGridTextColumn Header="Veritabanı" Binding="{Binding DatabaseName}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Şubeler (aktif şirket) -->
+                    <DataGrid x:Name="BranchesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="BranchesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Şube Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Telefon" Binding="{Binding Phone}" Width="*" />
+                            <DataGridTextColumn Header="Şehir" Binding="{Binding CityName}" Width="*" />
+                            <DataGridTextColumn Header="İlçe" Binding="{Binding DistrictName}" Width="*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Kullanıcılar (aktif şirkete erişimli) -->
+                    <DataGrid x:Name="UsersGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="UsersGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kullanıcı Adı" Binding="{Binding Username}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Ad Soyad" Binding="{Binding FullName}" Width="2*" />
+                            <DataGridTextColumn Header="Roller" Binding="{Binding RolesText}" Width="*" />
+                            <DataGridTextColumn Header="Şube Erişimi" Binding="{Binding AccessSummary}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Roller -->
+                    <DataGrid x:Name="RolesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60" />
+                            <DataGridTextColumn Header="Rol Adı" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Açıklama" Binding="{Binding Description}" Width="3*" />
+                            <DataGridTextColumn Header="AI Yetkisi" Binding="{Binding AiText}" Width="110" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Vergi Grupları -->
+                    <DataGrid x:Name="TaxGroupsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="TaxGroupsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60" />
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Grup Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Kategoriler -->
+                    <DataGrid x:Name="CategoriesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="CategoriesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="120" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Kategori Adı" Binding="{Binding Name}" Width="*" />
+                            <DataGridTextColumn Header="Resim" Binding="{Binding ImageText}" Width="90" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Ürünler -->
+                    <DataGrid x:Name="ProductsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="ProductsGrid_DoubleClick">
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="6" Padding="0" Margin="0,8,0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Width="6" CornerRadius="6,0,0,6" Background="{Binding Name, Converter={StaticResource CatColor}}" />
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Margin="12,6,8,6"
+                                                           Foreground="{Binding Name, Converter={StaticResource CatColor}}" />
+                                                <TextBlock Text="{Binding ItemCount, StringFormat='({0} ürün)'}" FontSize="13" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="110" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Ürün Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Kategori" Binding="{Binding CategoryNames}" Width="2*" />
+                            <DataGridTextColumn Header="Birim" Binding="{Binding MainUnitName}" Width="*" />
+                            <DataGridTextColumn Header="Satış KDV" Binding="{Binding SalesTaxName}" Width="*" />
+                            <DataGridTextColumn Header="Takip" Binding="{Binding TrackingTypeText}" Width="1.5*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Depolar -->
+                    <DataGrid x:Name="WarehousesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="WarehousesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Depo Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Müşteriler -->
+                    <DataGrid x:Name="CustomersGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="CustomersGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Ünvan / Ad" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Grup" Binding="{Binding CustomerGroupName}" Width="*" />
+                            <DataGridTextColumn Header="Telefon" Binding="{Binding Phone}" Width="*" />
+                            <DataGridTextColumn Header="E-Belge" Binding="{Binding EInvoiceText}" Width="*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Müşteri Grupları -->
+                    <DataGrid x:Name="CustomerGroupsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70" />
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Grup Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Fiyat Listeleri -->
+                    <DataGrid x:Name="PriceListsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70" />
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Liste Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Lokasyonlar -->
+                    <DataGrid x:Name="ZonesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="ZonesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Lokasyon Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Reyonlar -->
+                    <DataGrid x:Name="ReyonsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="ReyonsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Reyon Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Lokasyon" Binding="{Binding ZoneName}" Width="2*" />
+                            <DataGridTextColumn Header="Yazıcı" Binding="{Binding PrinterText}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Kod Serileri -->
+                    <DataGrid x:Name="CodeSeriesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="CodeSeriesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kart/Evrak Tipi" Binding="{Binding EntityTypeText}" Width="2*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchText}" Width="*" />
+                            <DataGridTextColumn Header="Ön Ek" Binding="{Binding Prefix}" Width="*" />
+                            <DataGridTextColumn Header="Basamak" Binding="{Binding Padding}" Width="80" />
+                            <DataGridTextColumn Header="Sıradaki Kod" Binding="{Binding NextCodePreview}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Bankalar -->
+                    <DataGrid x:Name="BanksGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="BanksGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Banka Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- KIOSK'lar -->
+                    <DataGrid x:Name="KiosksGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="KiosksGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="No" Binding="{Binding No}" Width="60" />
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="KIOSK Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Banka Hesapları -->
+                    <DataGrid x:Name="BankAccountsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="BankAccountsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Hesap Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Banka" Binding="{Binding BankName}" Width="2*" />
+                            <DataGridTextColumn Header="Döviz" Binding="{Binding CurrencyCode}" Width="80" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Kredi Kartı POS -->
+                    <DataGrid x:Name="PosGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="PosGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="POS Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                            <DataGridTextColumn Header="Banka" Binding="{Binding BankName}" Width="2*" />
+                            <DataGridTextColumn Header="Döviz" Binding="{Binding CurrencyCode}" Width="80" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Nakit Kasalar -->
+                    <DataGrid x:Name="CashRegistersGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="CashRegistersGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Kasa Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                            <DataGridTextColumn Header="Döviz" Binding="{Binding CurrencyCode}" Width="80" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Yemek Çekleri -->
+                    <DataGrid x:Name="MealVouchersGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="MealVouchersGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Yemek Çeki Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Yemek Çek Hesapları -->
+                    <DataGrid x:Name="MealVoucherAccountsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="MealVoucherAccountsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Hesap Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="2*" />
+                            <DataGridTextColumn Header="Yemek Çeki" Binding="{Binding MealVoucherName}" Width="2*" />
+                            <DataGridTextColumn Header="Döviz" Binding="{Binding CurrencyCode}" Width="80" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Kuryeler -->
+                    <DataGrid x:Name="CouriersGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="CouriersGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Ad Soyad" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Telefon" Binding="{Binding Phone}" Width="*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Projeler -->
+                    <DataGrid x:Name="ProjectsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="ProjectsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Proje Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Personel -->
+                    <DataGrid x:Name="PersonnelGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="PersonnelGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Ad Soyad" Binding="{Binding FullName}" Width="2*" />
+                            <DataGridTextColumn Header="Görev" Binding="{Binding Title}" Width="*" />
+                            <DataGridTextColumn Header="Departman" Binding="{Binding Department}" Width="*" />
+                            <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="*" />
+                            <DataGridTextColumn Header="Maaş" Binding="{Binding SalaryText}" Width="100" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="80" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Gider Tipleri -->
+                    <DataGrid x:Name="ExpenseTypesGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="ExpenseTypesGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Gider Tipi" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTextColumn Header="Maaş Tipi" Binding="{Binding SalaryText}" Width="2*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Cari Hareketler -->
+                    <DataGrid x:Name="CariHareketGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Tarih" Binding="{Binding DateText}" Width="150" />
+                            <DataGridTextColumn Header="Cari" Binding="{Binding CustomerName}" Width="2*" />
+                            <DataGridTextColumn Header="Belge Tipi" Binding="{Binding DocTypeText}" Width="*" />
+                            <DataGridTextColumn Header="Belge No" Binding="{Binding DocNo}" Width="110" />
+                            <DataGridTextColumn Header="Açıklama" Binding="{Binding Description}" Width="2*" />
+                            <DataGridTextColumn Header="Borç" Binding="{Binding Debt, StringFormat=N2}" Width="110" />
+                            <DataGridTextColumn Header="Alacak" Binding="{Binding Credit, StringFormat=N2}" Width="110" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Rezervasyon Etiketleri -->
+                    <DataGrid x:Name="ResTagsGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              MouseDoubleClick="ResTagsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Etiket Adı" Binding="{Binding Name}" Width="2*" />
+                            <DataGridTemplateColumn Header="Renk" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Width="40" Height="16" CornerRadius="4" Background="{Binding ColorOrDefault}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Satış Durdurma (çoklu seçim) -->
+                    <DataGrid x:Name="SalesStopGrid" Visibility="Collapsed" Style="{StaticResource DataGridStyle}"
+                              SelectionMode="Extended"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" ElementStyle="{StaticResource DeletedAwareText}" />
+                            <DataGridTextColumn Header="Ürün Adı" Binding="{Binding Name}" Width="3*" />
+                            <DataGridTextColumn Header="Satış Durumu" Binding="{Binding StatusText}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

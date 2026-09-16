@@ -1,0 +1,60 @@
+@page
+@using MindAeonRest.Licence.Data
+@model MindAeonRest.Licence.Portal.Pages.Admin.LicensesModel
+@{
+    ViewData["Title"] = "Lisanslar — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetim", "/Admin", "Lisanslar"))
+
+<div class="page-head flex items-center justify-between">
+    <div>
+        <h1>Lisanslar</h1>
+        <div class="subtitle">Tüm lisanslar — filtrele, yükselt, yenile veya iptal et.</div>
+    </div>
+</div>
+
+<div class="card" x-data="{ detailOpen: false }" x-on:open-detail="detailOpen = true">
+    <!-- Filtre çubuğu -->
+    <form class="flex items-center gap-3" style="flex-wrap:wrap; margin-bottom:var(--sp-4);"
+          hx-get="/Admin/Licenses?handler=Table" hx-target="#licTable" hx-swap="innerHTML"
+          hx-trigger="change, submit">
+        <div class="form-field" style="margin:0; min-width:180px;">
+            <label>Paket</label>
+            <select name="Package">
+                <option value="">Tümü</option>
+                <option value="0">Lite</option>
+                <option value="1">Standart</option>
+                <option value="2">Enterprise</option>
+            </select>
+        </div>
+        <div class="form-field" style="margin:0; min-width:180px;">
+            <label>Durum</label>
+            <select name="Status">
+                <option value="">Tümü</option>
+                <option value="0">Deneme</option>
+                <option value="1">Aktif</option>
+                <option value="2">Süresi Doldu</option>
+                <option value="3">Yükseltildi</option>
+                <option value="4">İptal</option>
+            </select>
+        </div>
+        <div class="htmx-indicator flex items-center gap-2 text-muted text-sm" style="align-self:flex-end; padding-bottom:10px;">
+            <i data-lucide="loader-circle"></i> Yükleniyor…
+        </div>
+    </form>
+
+    <div id="licTable">
+        @await Html.PartialAsync("_LicensesTable", Model)
+    </div>
+
+    <!-- Detay paneli (htmx ile yüklenir) -->
+    <div x-show="detailOpen" x-transition style="margin-top:var(--sp-5);">
+        <div id="licDetail"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+    </script>
+}

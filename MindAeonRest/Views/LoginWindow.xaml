@@ -1,0 +1,185 @@
+<Window x:Class="MindAeonRest.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MindAeonRest - Giriş" Height="900" Width="980"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border CornerRadius="14" Background="{StaticResource BackgroundBrush}"
+            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ============ SOL: MARKA PANELİ ============ -->
+            <Border Grid.Column="0" CornerRadius="14,0,0,14" Background="{StaticResource BrandGradient}"
+                    MouseLeftButtonDown="Brand_MouseLeftButtonDown">
+                <Grid Margin="48,44">
+                    <StackPanel VerticalAlignment="Center">
+                        <Border Width="64" Height="64" CornerRadius="16" Background="{StaticResource AccentGradient}"
+                                HorizontalAlignment="Left">
+                            <TextBlock Text="M" FontSize="36" FontWeight="Bold" Foreground="#1A1208"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <TextBlock Margin="0,28,0,0">
+                            <Run Text="MindAeon" FontSize="40" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            <Run Text="REST" FontSize="40" FontWeight="Light" Foreground="{StaticResource AccentBrush}" />
+                        </TextBlock>
+
+                        <Rectangle Width="56" Height="3" Fill="{StaticResource AccentGradient}"
+                                   HorizontalAlignment="Left" Margin="2,18,0,0" RadiusX="2" RadiusY="2" />
+
+                        <TextBlock Text="Restoran Yönetim Sistemi"
+                                   FontSize="16" Foreground="{StaticResource TextMutedBrush}" Margin="2,18,0,0" />
+                        <TextBlock Text="Şirket ve şube bazlı çok kullanıcılı yönetim. Sipariş, masa, kasa ve mutfak operasyonlarını tek noktadan yönetin."
+                                   FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="2,14,40,0"
+                                   TextWrapping="Wrap" LineHeight="20" />
+
+                        <!-- BU TERMİNALİN KIOSK NUMARASI — çok belirgin -->
+                        <Border CornerRadius="16" Background="{StaticResource AccentGradient}" Padding="24,16" HorizontalAlignment="Left" Margin="2,34,0,0">
+                            <Border.Effect><DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="0" Opacity="0.35" /></Border.Effect>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🖥" FontSize="40" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="BU TERMİNAL" FontSize="12" FontWeight="Bold" Foreground="#1A1208" Opacity="0.75" />
+                                    <TextBlock x:Name="KioskBadgeText" Text="KIOSK No 1" FontSize="34" FontWeight="Bold" Foreground="#1A1208" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="Numara appsettings.json'da sabittir, değiştirilemez."
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="4,8,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="© 2026 MindAeon · Tüm hakları saklıdır"
+                               FontSize="11" Foreground="#6A6F78"
+                               VerticalAlignment="Bottom" HorizontalAlignment="Left" />
+                </Grid>
+            </Border>
+
+            <!-- ============ SAĞ: GİRİŞ FORMU ============ -->
+            <Grid Grid.Column="1" Background="{StaticResource SurfaceBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,8,0" VerticalAlignment="Top">
+                        <Border CornerRadius="9" Background="{StaticResource AccentBrush}" Padding="12,5" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock x:Name="KioskChipText" Text="🖥 KIOSK #1" Foreground="#1A1208" FontWeight="Bold" FontSize="13" />
+                        </Border>
+                        <TextBlock Text="Tema:" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0" />
+                        <ComboBox x:Name="ThemeCombo" Width="130" Height="34" Style="{StaticResource InputComboBox}"
+                                  ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value"
+                                  SelectionChanged="Theme_Changed">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Content="✕" Width="38" Height="34" Margin="8,0,0,0"
+                                Background="Transparent" Foreground="{StaticResource TextMutedBrush}"
+                                BorderThickness="0" FontSize="14" Cursor="Hand" Click="Close_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="48,0,48,24">
+                    <Image x:Name="CompanyLogo" Stretch="Uniform" MaxHeight="80" HorizontalAlignment="Left" Margin="0,0,0,14" Visibility="Collapsed" />
+                    <TextBlock Text="Hoş geldiniz" FontSize="25" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Text="Şirket ve şubenizi seçip giriş yapın"
+                               FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,22" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.3*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="ŞİRKET" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="CompanyCombo" Style="{StaticResource InputComboBox}"
+                                      ItemContainerStyle="{StaticResource InputComboBoxItem}"
+                                      Tag="Şirket seçin" SelectionChanged="CompanyCombo_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Display}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="ŞUBE" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="BranchCombo" Style="{StaticResource InputComboBox}"
+                                      ItemContainerStyle="{StaticResource InputComboBoxItem}"
+                                      SelectedValuePath="Id" Tag="Önce şirket"
+                                      SelectionChanged="BranchCombo_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Display}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="1.4*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="ROL" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="RoleCombo" Style="{StaticResource InputComboBox}"
+                                      ItemContainerStyle="{StaticResource InputComboBoxItem}"
+                                      Tag="Rol Seçiniz" SelectionChanged="RoleCombo_SelectionChanged" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="KULLANICI" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="UserCombo" Style="{StaticResource InputComboBox}"
+                                      ItemContainerStyle="{StaticResource InputComboBoxItem}"
+                                      Tag="Kullanıcı seçiniz" SelectionChanged="UserCombo_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FullName}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+                    <!-- Seçilen kullanıcının adı (TryLogin bunu okur); kullanıcı combobox'tan seçilir, elle yazılmaz. -->
+                    <TextBox x:Name="UsernameBox" Visibility="Collapsed" Height="0" />
+
+                    <TextBlock Text="PAROLA" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <PasswordBox x:Name="PasswordBox" Style="{StaticResource InputPasswordBox}" KeyDown="PasswordBox_KeyDown" />
+
+                    <!-- KIOSK numerik tuş takımı (klavyesiz giriş) -->
+                    <UniformGrid Rows="4" Columns="3" Margin="0,12,0,0">
+                        <Button Content="1" Tag="1" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="2" Tag="2" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="3" Tag="3" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="4" Tag="4" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="5" Tag="5" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="6" Tag="6" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="7" Tag="7" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="8" Tag="8" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="9" Tag="9" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="C" Style="{StaticResource KeypadButton}" Foreground="{StaticResource DangerBrush}" Click="KeypadClear_Click" />
+                        <Button Content="0" Tag="0" Style="{StaticResource KeypadButton}" Click="KeypadDigit_Click" />
+                        <Button Content="⌫" Style="{StaticResource KeypadButton}" Foreground="{StaticResource AccentBrush}" Click="KeypadBack_Click" />
+                    </UniformGrid>
+
+                    <TextBlock x:Name="ErrorText" Foreground="{StaticResource DangerBrush}"
+                               FontSize="12" Margin="2,14,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+
+                    <Button x:Name="LoginButton" Content="GİRİŞ YAP" Style="{StaticResource PrimaryButton}"
+                            Margin="0,24,0,0" Click="LoginButton_Click" />
+
+                    <TextBlock Text="Varsayılan: admin / Admin123!  ·  Şirket yoksa SysAdmin kurar"
+                               FontSize="11" Foreground="#6A6F78" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

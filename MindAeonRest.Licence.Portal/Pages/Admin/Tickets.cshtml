@@ -1,0 +1,42 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.TicketsModel
+@{
+    ViewData["Title"] = "Destek — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Destek", "/Admin", "Talepler"))
+
+<div class="page-head">
+    <h1>Destek Talepleri</h1>
+    <div class="subtitle">Bayi ve müşteri destek talepleri — yanıtla, ata, durum değiştir.</div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.3fr 1fr;" x-data="{ detailOpen:false }" x-on:open-detail="detailOpen=true">
+    <div class="card">
+        <div class="flex items-center gap-2" style="margin-bottom:var(--sp-4); flex-wrap:wrap;">
+            <span class="pill active" hx-get="/Admin/Tickets?handler=Table" hx-target="#tkTable" hx-swap="innerHTML"
+                  x-data x-on:click="$el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); $el.classList.add('active')">Tümü</span>
+            <span class="pill" hx-get="/Admin/Tickets?handler=Table&Status=0" hx-target="#tkTable" hx-swap="innerHTML"
+                  x-data x-on:click="$el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); $el.classList.add('active')">Açık</span>
+            <span class="pill" hx-get="/Admin/Tickets?handler=Table&Status=1" hx-target="#tkTable" hx-swap="innerHTML"
+                  x-data x-on:click="$el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); $el.classList.add('active')">İşlemde</span>
+            <span class="pill" hx-get="/Admin/Tickets?handler=Table&Status=2" hx-target="#tkTable" hx-swap="innerHTML"
+                  x-data x-on:click="$el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); $el.classList.add('active')">Yanıtlandı</span>
+            <span class="pill" hx-get="/Admin/Tickets?handler=Table&Status=3" hx-target="#tkTable" hx-swap="innerHTML"
+                  x-data x-on:click="$el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); $el.classList.add('active')">Kapalı</span>
+            <span class="htmx-indicator flex items-center gap-2 text-muted text-sm"><i data-lucide="loader-circle"></i></span>
+        </div>
+        <div id="tkTable">
+            @await Html.PartialAsync("_TicketsTable", Model)
+        </div>
+    </div>
+
+    <div>
+        <div id="tkDetail">
+            <div class="card"><p class="text-muted mb-0">Detay için bir talep seçin.</p></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));</script>
+}

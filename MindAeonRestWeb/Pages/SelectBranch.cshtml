@@ -1,0 +1,31 @@
+@page
+@model SelectBranchModel
+@{
+    ViewData["Title"] = "Şube Seçin";
+    Layout = "_Layout";
+}
+
+<section class="auth">
+    <div class="auth-card">
+        <h1>Şube Seçin</h1>
+        <p class="muted">@(Model.Pre?.CompanyCode) · @(Model.Pre?.FullName)</p>
+
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert-error">@Model.Error</div>
+        }
+
+        <form method="post">
+            <label>Şube</label>
+            <select asp-for="BranchId" class="field">
+                @foreach (var b in Model.Pre?.Branches ?? new())
+                {
+                    <option value="@b.Id">@b.Name</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Devam</button>
+        </form>
+
+        <a class="back-link" href="/Login">← Girişe dön</a>
+    </div>
+</section>

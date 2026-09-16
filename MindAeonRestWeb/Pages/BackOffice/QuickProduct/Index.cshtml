@@ -1,0 +1,142 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.QuickProduct.IndexModel
+@{
+    ViewData["Title"] = "Hızlı Ürün Tanımlama";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>⚡ Hızlı Ürün Tanımlama</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Products">← Ürün Listesi</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert-success">@Model.Message</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        @* ---------------- ORTAK SEÇİMLER (tüm satırlara uygulanır) ---------------- *@
+        <div class="frm-row">
+            <label>Kategori</label>
+            <select asp-for="CategoryId" asp-items="Model.CategoryOptions" class="field"></select>
+            <small class="hint">Girilen tüm ürünlere uygulanır.</small>
+        </div>
+        <div class="frm-row">
+            <label>Birim</label>
+            <select asp-for="MainUnitId" asp-items="Model.MainUnitOptions" class="field"></select>
+            <small class="hint">Fiyat veya barkod girmek için birim seçmelisiniz (ör. Adet).</small>
+        </div>
+        <div class="frm-row">
+            <label>Satış Vergi Grubu</label>
+            <select asp-for="SalesTaxGroupId" asp-items="Model.TaxOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsTaxIncluded" type="checkbox" /> Fiyatlara KDV dahil</label>
+        </div>
+
+        @* ---------------- ÇOK SATIRLI HIZLI GİRİŞ ---------------- *@
+        <div class="frm-row">
+            <label>Ürünler</label>
+            <small class="hint">Her satır bir ürün. Yalnız adı dolu satırlar kaydedilir. Kod zorunludur.</small>
+            <table class="bo-table" id="rowsTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:18%">Kod *</th>
+                        <th style="width:30%">Ürün Adı *</th>
+                        <th style="width:18%">Barkod</th>
+                        <th style="width:14%">Satış Fiyatı</th>
+                        <th style="width:14%">Alış Fiyatı</th>
+                        <th class="ar" style="width:6%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="rowsBody">
+                @for (int i = 0; i < Model.Rows.Count; i++)
+                {
+                    var r = Model.Rows[i];
+                    <tr class="quick-row">
+                        <td><input name="Rows[@i].Code" value="@r.Code" class="field up code-input" maxlength="50" autocomplete="off" placeholder="@Model.NextCode" /></td>
+                        <td><input name="Rows[@i].Name" value="@r.Name" class="field" maxlength="150" /></td>
+                        <td><input name="Rows[@i].Barcode" value="@r.Barcode" class="field" maxlength="60" autocomplete="off" /></td>
+                        <td><input name="Rows[@i].SalePrice" value="@(r.SalePrice?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" min="0" class="field" /></td>
+                        <td><input name="Rows[@i].BuyPrice" value="@(r.BuyPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" min="0" class="field" /></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addRow()" style="margin-top:8px">+ Satır Ekle</button>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Products" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // WPF QuickProductWindow.NextCode(): CodeSeriesService.PeekNext(Product) önerisi.
+        // Kod boş satırlar için placeholder; ilk boş satıra otomatik önerilir (WPF tek-kayıtta
+        // CodeBox'a yazar). Kaydedildikten sonra eşleşen kod için sunucu Advance eder.
+        window.NEXT_CODE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.NextCode ?? ""));
+
+        function suggestFirstCode() {
+            if (!window.NEXT_CODE) return;
+            const first = document.querySelector('#rowsBody input.code-input');
+            if (first && !first.value) first.value = window.NEXT_CODE;
+        }
+
+        // Kod alanları: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        function bindUpper(scope) {
+            (scope || document).querySelectorAll('input.up').forEach(el => {
+                if (el.dataset.upBound) return;
+                el.dataset.upBound = '1';
+                el.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+            });
+        }
+        bindUpper(document);
+        suggestFirstCode();
+
+        function reindex() {
+            let i = 0;
+            document.querySelectorAll('#rowsBody > tr').forEach(row => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/Rows\[\d+\]/, 'Rows[' + i + ']');
+                });
+                i++;
+            });
+        }
+
+        function removeRow(btn) {
+            const body = document.getElementById('rowsBody');
+            btn.closest('tr')?.remove();
+            if (body.querySelectorAll('tr').length === 0) addRow();
+            reindex();
+        }
+
+        function addRow() {
+            const body = document.getElementById('rowsBody');
+            const i = body.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'quick-row';
+            const ph = (window.NEXT_CODE || '');
+            tr.innerHTML =
+                `<td><input name="Rows[${i}].Code" value="" class="field up code-input" maxlength="50" autocomplete="off" placeholder="${ph}" /></td>` +
+                `<td><input name="Rows[${i}].Name" value="" class="field" maxlength="150" /></td>` +
+                `<td><input name="Rows[${i}].Barcode" value="" class="field" maxlength="60" autocomplete="off" /></td>` +
+                `<td><input name="Rows[${i}].SalePrice" value="" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td><input name="Rows[${i}].BuyPrice" value="" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">Sil</button></td>`;
+            body.appendChild(tr);
+            bindUpper(tr);
+            tr.querySelector('input')?.focus();
+        }
+    </script>
+}

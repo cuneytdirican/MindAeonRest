@@ -1,0 +1,37 @@
+<Window x:Class="MindAeonRest.Views.NoteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Açıklama / Not" Height="440" Width="540"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="28,24,28,22">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock x:Name="TitleText" Text="Açıklama / Not" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <TextBlock Text="Hazır seçeneklere dokunun veya elle yazın (mutfakta görünür)." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,5,0,0" />
+            </StackPanel>
+
+            <ItemsControl x:Name="QuickHost" Grid.Row="1" Margin="0,14,0,0">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding Description}" Click="Quick_Click" Tag="{Binding Description}"
+                                Style="{StaticResource GhostButton}" Margin="0,0,6,6" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBox x:Name="NoteBox" Grid.Row="2" Style="{StaticResource InputTextBox}" Margin="0,8,0,0"
+                     TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10" />
+
+            <Grid Grid.Row="3" Margin="0,16,0,0">
+                <Button Content="⌨ Klavye" HorizontalAlignment="Left" Width="120" Style="{StaticResource GhostButton}" Click="Keyboard_Click" ToolTip="Sanal klavye" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Vazgeç" Style="{StaticResource GhostButton}" Width="120" Click="Cancel_Click" />
+                    <Button Content="KAYDET" Style="{StaticResource PrimaryButton}" Width="160" Margin="10,0,0,0" Click="Save_Click" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

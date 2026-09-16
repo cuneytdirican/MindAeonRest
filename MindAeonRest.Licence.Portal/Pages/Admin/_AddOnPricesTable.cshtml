@@ -1,0 +1,59 @@
+@using System.Text.Json
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.AddOnPricesModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tür</th>
+                <th>Ad</th>
+                <th class="num">Birim Fiyat</th>
+                <th>Durum</th>
+                <th>Güncelleme</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-muted" style="text-align:center; padding:var(--sp-6);">Add-on fiyat tanımı yok.</td></tr>
+            }
+            @foreach (var p in Model.Items)
+            {
+                var kind = AdminLabels.AddOnKind(p.Kind);
+                var payload = JsonSerializer.Serialize(new
+                {
+                    id = p.Id,
+                    kind = p.Kind,
+                    featureBit = p.FeatureBit,
+                    name = p.Name,
+                    unitPrice = p.UnitPrice,
+                    currencyCode = p.CurrencyCode,
+                    isActive = p.IsActive
+                });
+                <tr>
+                    <td><span class="badge @kind.Css">@kind.Text</span></td>
+                    <td style="font-weight:600;">@p.Name</td>
+                    <td class="num money">@p.UnitPrice.ToString("N2") <span class="text-muted text-sm">@p.CurrencyCode</span></td>
+                    <td>
+                        @if (p.IsActive)
+                        {
+                            <span class="badge success"><span class="dot"></span> Açık</span>
+                        }
+                        else
+                        {
+                            <span class="badge"><span class="dot"></span> Kapalı</span>
+                        }
+                    </td>
+                    <td class="text-sm">@((p.UpdatedUtc ?? p.CreatedUtc).ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-sm" x-on:click="$dispatch('edit-addon', @Html.Raw(payload))">
+                            <i data-lucide="pencil"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

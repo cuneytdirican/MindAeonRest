@@ -1,0 +1,70 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Security.TwoFactorModel
+@{
+    ViewData["Title"] = "Güvenlik / 2FA";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page">
+    <div class="bo-page-head">
+        <h1>🔐 İki Adımlı Doğrulama (2FA)</h1>
+        <p class="muted">Hesabınızı Google/Microsoft Authenticator gibi bir uygulamayla koruyun.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert-success">@Model.StatusMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert-error">@Model.Error</div>
+    }
+
+    <div class="bo-card" style="max-width:560px">
+        @if (Model.Enrolling)
+        {
+            <h2>Kurulum</h2>
+            <ol class="muted" style="line-height:1.7">
+                <li>Authenticator uygulamanızda "hesap ekle" deyin.</li>
+                <li>Aşağıdaki QR kodu okutun (ya da anahtarı elle girin).</li>
+                <li>Uygulamadaki 6 haneli kodu girip doğrulayın.</li>
+            </ol>
+
+            <div style="text-align:center;margin:1rem 0">
+                <img src="@Model.QrDataUri" alt="2FA QR" width="220" height="220"
+                     style="image-rendering:pixelated;background:#fff;padding:8px;border-radius:8px" />
+            </div>
+
+            <p class="muted">Elle giriş anahtarı:</p>
+            <div class="mono" style="font-size:1.05rem;letter-spacing:1px;word-break:break-all">@Model.ManualKey</div>
+
+            <form method="post" autocomplete="off" style="margin-top:1rem">
+                <label>Doğrulama Kodu</label>
+                <input asp-for="Code" class="field" inputmode="numeric" autocomplete="one-time-code"
+                       pattern="[0-9]*" maxlength="6" spellcheck="false" autofocus required />
+                <button type="submit" asp-page-handler="Confirm" class="btn btn-primary btn-lg">Doğrula ve Etkinleştir</button>
+            </form>
+        }
+        else if (Model.Enabled)
+        {
+            <p><span class="badge-ok">● Etkin</span> Hesabınız iki adımlı doğrulama ile korunuyor.</p>
+            <hr />
+            <h2>Devre Dışı Bırak</h2>
+            <p class="muted">Devre dışı bırakmak için uygulamadaki güncel kodu girin.</p>
+            <form method="post" autocomplete="off">
+                <label>Doğrulama Kodu</label>
+                <input asp-for="Code" class="field" inputmode="numeric" autocomplete="one-time-code"
+                       pattern="[0-9]*" maxlength="6" spellcheck="false" required />
+                <button type="submit" asp-page-handler="Disable" class="btn btn-danger">Devre Dışı Bırak</button>
+            </form>
+        }
+        else
+        {
+            <p><span class="badge-off">○ Kapalı</span> İki adımlı doğrulama şu an devre dışı.</p>
+            <p class="muted">Etkinleştirdiğinizde, girişte parolanızın yanı sıra uygulamanızdaki 6 haneli kod da istenir.</p>
+            <form method="post">
+                <button type="submit" asp-page-handler="Begin" class="btn btn-primary btn-lg">2FA Etkinleştir</button>
+            </form>
+        }
+    </div>
+</div>

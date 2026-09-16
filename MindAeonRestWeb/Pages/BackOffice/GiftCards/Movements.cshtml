@@ -1,0 +1,45 @@
+@page "{id:int}"
+@model MindAeonRestWeb.Pages.BackOffice.GiftCards.MovementsModel
+@{
+    ViewData["Title"] = Model.Card is null ? "Hediye Çeki Ekstresi" : $"Ekstre · {Model.Card.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🎁 Hediye Çeki Ekstresi</h1>
+    <a class="btn btn-ghost" href="/BackOffice/GiftCards">← Liste</a>
+</div>
+
+@if (Model.Card is { } card)
+{
+    <div class="bo-card">
+        <div><b>Kod:</b> @card.Code</div>
+        <div><b>Bakiye:</b> @card.Balance.ToString("N2") @(card.CurrencyCode ?? "₺") · <b>İlk Tutar:</b> @card.InitialAmount.ToString("N2") @(card.CurrencyCode ?? "₺")</div>
+        <div><b>Durum:</b> @card.StatusText · <b>Müşteri:</b> @(card.CustomerName ?? "—")</div>
+    </div>
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr><th>Tarih</th><th>Tip</th><th>Tutar</th><th>Adisyon</th><th>Not</th></tr>
+            </thead>
+            <tbody>
+            @if (Model.Movements.Count == 0)
+            {
+                <tr><td colspan="5" class="empty">Hareket yok.</td></tr>
+            }
+            @foreach (var m in Model.Movements)
+            {
+                <tr>
+                    <td>@m.MoveDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@m.TypeText</td>
+                    <td>@m.AmountText</td>
+                    <td>@(m.OrderId?.ToString() ?? "—")</td>
+                    <td>@(m.Note ?? "—")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.Movements.Count hareket</div>
+}

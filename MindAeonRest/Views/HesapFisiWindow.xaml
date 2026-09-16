@@ -1,0 +1,37 @@
+<Window x:Class="MindAeonRest.Views.HesapFisiWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Hesap Fişi" Height="780" Width="440"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="20,18,20,18">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock Text="Hesap Fişi · Ön İzleme" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <Button Content="✕" Width="32" Height="32" HorizontalAlignment="Right" Background="Transparent" Foreground="{DynamicResource TextMutedBrush}" BorderThickness="0" Cursor="Hand" Click="Cancel_Click" />
+            </Grid>
+
+            <Border Grid.Row="1" Background="#D9DCE3" CornerRadius="8" Margin="0,14,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,12">
+                    <Border x:Name="PreviewHost" HorizontalAlignment="Center" Background="White" CornerRadius="2">
+                        <Border.Effect><DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3" /></Border.Effect>
+                    </Border>
+                </ScrollViewer>
+            </Border>
+
+            <StackPanel Grid.Row="2" Margin="0,14,0,0">
+                <TextBlock Text="YAZICI" Style="{StaticResource FieldLabel}" Margin="2,0,0,6" />
+                <ComboBox x:Name="PrinterCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" />
+                <CheckBox x:Name="DrawerCheck" Content="Yazdırırken kasa çekmecesini aç" Style="{StaticResource ThemedCheckBox}" Margin="2,12,0,0" />
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="1.3*" /></Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Kapat" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                    <Button Grid.Column="2" Content="Çekmece Aç" Style="{StaticResource GhostButton}" Click="Drawer_Click" />
+                    <Button Grid.Column="4" x:Name="PrintButton" Content="🖨  YAZDIR" Style="{StaticResource PrimaryButton}" Click="Print_Click" />
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,66 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Musteri.HesabimModel
+@{
+    ViewData["Title"] = "Hesabım — MindAeon";
+    var initials = string.Concat(Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => char.ToUpper(w[0])));
+    if (string.IsNullOrEmpty(initials)) initials = "M";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Müşteri", "/Musteri", "Hesabım"))
+
+<div class="page-head">
+    <h1>Hesabım</h1>
+    <div class="subtitle">Hesap bilgileriniz ve tercihleriniz.</div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="flex items-center gap-3" style="margin-bottom:var(--sp-5)">
+            <div class="avatar" style="width:56px;height:56px;font-size:var(--fs-xl)">@initials</div>
+            <div>
+                <div style="font-weight:700;font-size:var(--fs-lg)">@Model.FullName</div>
+                <span class="badge primary">@Model.Role</span>
+            </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+            <div class="flex items-center justify-between" style="padding:var(--sp-3);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                <span class="flex items-center gap-2 text-muted text-sm"><i data-lucide="user" style="width:16px;height:16px"></i>Ad Soyad</span>
+                <span style="font-weight:600">@Model.FullName</span>
+            </div>
+            <div class="flex items-center justify-between" style="padding:var(--sp-3);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                <span class="flex items-center gap-2 text-muted text-sm"><i data-lucide="shield" style="width:16px;height:16px"></i>Rol</span>
+                <span style="font-weight:600">@Model.Role</span>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.BusinessId))
+            {
+                <div class="flex items-center justify-between" style="padding:var(--sp-3);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                    <span class="flex items-center gap-2 text-muted text-sm"><i data-lucide="building-2" style="width:16px;height:16px"></i>İşletme No</span>
+                    <span style="font-weight:600" class="tabular">#@Model.BusinessId</span>
+                </div>
+            }
+        </div>
+
+        <div class="text-muted text-sm" style="margin-top:var(--sp-4)">
+            Hesap bilgilerinizde değişiklik için destek talebi oluşturabilirsiniz.
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card__head"><h2 class="card__title">Tercihler & Kısayollar</h2></div>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+            <button class="btn" type="button" onclick="toggleTheme()">
+                <i data-lucide="sun-moon"></i>Açık / Koyu Tema
+            </button>
+            <a class="btn" href="/Musteri/Lisanslarim"><i data-lucide="key-round"></i>Lisansım</a>
+            <a class="btn" href="/Musteri/Kullanimim"><i data-lucide="activity"></i>Kullanımım</a>
+            <a class="btn" href="/Musteri/Odemelerim"><i data-lucide="credit-card"></i>Ödemelerim</a>
+            <a class="btn" href="/Musteri/Destek"><i data-lucide="life-buoy"></i>Destek Talebi</a>
+            <form method="post" action="/Logout">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-danger btn-block" type="submit"><i data-lucide="log-out"></i>Çıkış Yap</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <script>lucide.createIcons();</script> }

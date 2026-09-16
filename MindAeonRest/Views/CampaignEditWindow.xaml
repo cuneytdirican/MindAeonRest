@@ -1,0 +1,175 @@
+<Window x:Class="MindAeonRest.Views.CampaignEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        Title="Kampanya" Height="760" Width="720"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" Margin="14"
+            Effect="{StaticResource DialogShadow}">
+        <Grid Margin="28,24,28,20">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock x:Name="TitleText" Text="Yeni Kampanya" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <TextBlock Text="Tip seçince ilgili alanları doldurun. Geçerlilik tarih/gün/saat ve şube bazlı çalışır."
+                           FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,14,0,0" Padding="0,0,8,0">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0"><TextBlock Text="KOD *" Style="{StaticResource FieldLabel}" /><TextBox x:Name="CodeBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                        <StackPanel Grid.Column="2"><TextBlock Text="AD *" Style="{StaticResource FieldLabel}" /><TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="AÇIKLAMA" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                    <TextBox x:Name="DescBox" Style="{StaticResource InputTextBox}" Height="auto" MinHeight="46" TextWrapping="Wrap" AcceptsReturn="True" />
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="TİP *" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="TypeCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value" SelectionChanged="Type_Changed">
+                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock x:Name="ValueLabel" Text="DEĞER (%)" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="ValueBox" Style="{StaticResource InputTextBox}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Seçilen tipin ne işe yaradığı -->
+                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="12,8" Margin="0,8,0,0">
+                        <TextBlock x:Name="TypeDescText" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Tipe göre alanlar -->
+                    <StackPanel x:Name="CatPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                        <TextBlock Text="HEDEF KATEGORİ" Style="{StaticResource FieldLabel}" />
+                        <views:EntityPicker x:Name="CatPicker" />
+                    </StackPanel>
+                    <StackPanel x:Name="ProdPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                        <TextBlock Text="HEDEF ÜRÜN" Style="{StaticResource FieldLabel}" />
+                        <views:EntityPicker x:Name="ProdPicker" />
+                    </StackPanel>
+                    <StackPanel x:Name="MinPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                        <TextBlock Text="MİN. SİPARİŞ TUTARI (₺)" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="MinBox" Style="{StaticResource InputTextBox}" />
+                    </StackPanel>
+                    <Grid x:Name="XYPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0"><TextBlock Text="KAÇ AL" Style="{StaticResource FieldLabel}" /><TextBox x:Name="BuyBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                        <StackPanel Grid.Column="2"><TextBlock Text="KAÇ ÖDE" Style="{StaticResource FieldLabel}" /><TextBox x:Name="PayBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                    </Grid>
+
+                    <!-- HEDİYE / İKRAM: min tutar (ops.) + koşul ürünler (hepsi) + verilecek ikram ürünler -->
+                    <StackPanel x:Name="HediyePanel" Visibility="Collapsed" Margin="0,12,0,0">
+                        <TextBlock Text="MİN. SİPARİŞ TUTARI (ops., 0 = koşulsuz)" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="GiftMinBox" Style="{StaticResource InputTextBox}" Text="0" />
+
+                        <TextBlock Text="KOŞUL ÜRÜNLER (hepsi sağlanmalı; boş ise yalnız min tutar geçerli)" Style="{StaticResource FieldLabel}" Margin="2,14,0,6" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <views:EntityPicker x:Name="CondProdPicker" Grid.Column="0" />
+                            <TextBox x:Name="CondQtyBox" Grid.Column="2" Style="{StaticResource InputTextBox}" Text="1" ToolTip="En az miktar" />
+                            <Button x:Name="AddCondBtn" Grid.Column="4" Content="+ Koşul" Style="{StaticResource GhostButton}" Width="90" Click="AddCond_Click" />
+                        </Grid>
+                        <ItemsControl x:Name="CondList" Margin="0,6,0,0">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="10,5" Margin="0,2">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="✕" Width="28" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource DangerBrush}" Cursor="Hand" Click="RemoveCond_Click" Tag="{Binding}" />
+                                        <TextBlock Text="{Binding Display}" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="İKRAM ÜRÜNLER (verilecek hediyeler)" Style="{StaticResource FieldLabel}" Margin="2,14,0,6" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <views:EntityPicker x:Name="GiftProdPicker" Grid.Column="0" />
+                            <TextBox x:Name="GiftQtyBox" Grid.Column="2" Style="{StaticResource InputTextBox}" Text="1" ToolTip="İkram miktarı" />
+                            <Button x:Name="AddGiftBtn" Grid.Column="4" Content="+ İkram" Style="{StaticResource GhostButton}" Width="90" Click="AddGift_Click" />
+                        </Grid>
+                        <ItemsControl x:Name="GiftList" Margin="0,6,0,0">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="10,5" Margin="0,2">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="✕" Width="28" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource DangerBrush}" Cursor="Hand" Click="RemoveGift_Click" Tag="{Binding}" />
+                                        <TextBlock Text="{Binding Display}" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0"><TextBlock Text="BAŞLANGIÇ (gg.aa.yyyy SS:dd) *" Style="{StaticResource FieldLabel}" /><TextBox x:Name="StartBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                        <StackPanel Grid.Column="2"><TextBlock Text="BİTİŞ (gg.aa.yyyy SS:dd) *" Style="{StaticResource FieldLabel}" /><TextBox x:Name="EndBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="GÜNLER (boş bırakılırsa her gün)" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                    <WrapPanel x:Name="DaysPanel">
+                        <CheckBox x:Name="D1" Content="Pzt" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                        <CheckBox x:Name="D2" Content="Sal" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                        <CheckBox x:Name="D3" Content="Çar" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                        <CheckBox x:Name="D4" Content="Per" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                        <CheckBox x:Name="D5" Content="Cum" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                        <CheckBox x:Name="D6" Content="Cmt" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                        <CheckBox x:Name="D7" Content="Paz" Foreground="{DynamicResource TextBrush}" Margin="0,0,12,0" />
+                    </WrapPanel>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0"><TextBlock Text="GÜNLÜK BAŞLANGIÇ SAATİ (SS:dd, ops. happy hour)" Style="{StaticResource FieldLabel}" /><TextBox x:Name="DailyStartBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                        <StackPanel Grid.Column="2"><TextBlock Text="GÜNLÜK BİTİŞ SAATİ (SS:dd, ops.)" Style="{StaticResource FieldLabel}" /><TextBox x:Name="DailyEndBox" Style="{StaticResource InputTextBox}" /></StackPanel>
+                    </Grid>
+
+                    <CheckBox x:Name="AllBranchesCheck" Content="Tüm şubelerde geçerli" IsChecked="True" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="2,16,0,0" Checked="AllBranches_Changed" Unchecked="AllBranches_Changed" />
+                    <Border x:Name="BranchPanel" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="12,8" Margin="0,8,0,0">
+                        <StackPanel>
+                            <TextBlock x:Name="BranchHint" Text="GEÇERLİ ŞUBELER (kısıtlamak için yukarıdaki 'Tüm şubeler'in işaretini kaldırın)" Style="{StaticResource FieldLabel}" TextWrapping="Wrap" />
+                            <ItemsControl x:Name="BranchList">
+                                <ItemsControl.ItemTemplate><DataTemplate>
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Foreground="{DynamicResource TextBrush}" Margin="0,3" />
+                                </DataTemplate></ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock x:Name="NoBranchText" Text="Bu şirkette tanımlı şube yok. Önce Lokasyon/Şube ekleyin." FontSize="12" Foreground="{DynamicResource DangerBrush}" Visibility="Collapsed" />
+                        </StackPanel>
+                    </Border>
+
+                    <CheckBox x:Name="ActiveCheck" Content="Kampanya aktif" IsChecked="True" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="2,16,0,0" />
+                    <CheckBox x:Name="StackableCheck" Content="Başka kampanyalarla BİRLEŞTİRİLEBİLİR (aynı adisyonda birden çok kampanya)" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="2,8,0,0" />
+                    <CheckBox x:Name="MandatoryCheck" Content="ZORUNLU UYGULANSIN (kriter karşılanınca adisyonda otomatik uygulanır)" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Margin="2,8,0,0" />
+
+                    <!-- Tanımın insan-okur özeti: kullanıcı istediğini tanımlamış mı görür -->
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,14,0,0">
+                        <StackPanel>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="🔄 Önizle" Style="{StaticResource GhostButton}" Width="100" Click="Preview_Click" />
+                                <TextBlock Text="TANIM ÖZETİ" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <TextBlock x:Name="SummaryText" FontSize="13" Foreground="{DynamicResource TextBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="13" FontWeight="SemiBold" Margin="2,12,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

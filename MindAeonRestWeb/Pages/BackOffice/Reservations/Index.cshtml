@@ -1,0 +1,149 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reservations.IndexModel
+@{
+    ViewData["Title"] = "Rezervasyonlar";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📅 Rezervasyonlar</h1>
+    <a class="btn btn-primary" href="/BackOffice/Reservations/Edit">+ Yeni Rezervasyon</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert-error">@Model.StatusMessage</div>
+}
+
+@{
+    var resActive = Model.Tab != "waitlist";
+    string TabHref(string tab) => $"/BackOffice/Reservations?Tab={tab}"
+        + (Model.Date.HasValue ? $"&Date={Model.Date:yyyy-MM-dd}" : "")
+        + (Model.ShowDeleted ? "&ShowDeleted=true" : "");
+}
+<div class="bo-tabs" style="margin-bottom:12px">
+    <a class="btn @(resActive ? "btn-primary" : "btn-ghost")" href="@TabHref("reservations")">Rezervasyonlar</a>
+    <a class="btn @(!resActive ? "btn-primary" : "btn-ghost")" href="@TabHref("waitlist")">Bekleme Listesi (@Model.Waitlist.Count)</a>
+</div>
+
+<form method="get" class="bo-filter">
+    <input type="hidden" name="Tab" value="@Model.Tab" />
+    <input type="date" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="time" name="StartTime" value="@Model.StartTime" class="field" title="Başlangıç saati" />
+    <input type="time" name="EndTime" value="@Model.EndTime" class="field" title="Bitiş saati" />
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod, müşteri, masa veya lokasyon ara..." class="field" />
+    <label class="chk"><input type="checkbox" name="ShowDeleted" value="true" @(Model.ShowDeleted ? "checked" : "") /> Silinenleri göster</label>
+    <button type="submit" class="btn">Göster</button>
+    <a class="btn btn-ghost" href="/BackOffice/Reservations">Temizle</a>
+</form>
+
+@if (resActive)
+{
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th>Kod</th><th>Tarih / Saat</th><th>Müşteri</th><th>Kişi</th><th>Masalar</th><th>Etiket</th><th>Durum</th><th class="ar">İşlem</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var r in Model.Items)
+        {
+            <tr class="@(r.IsDeleted ? "row-deleted" : "")">
+                <td><b>@r.Code</b></td>
+                <td>@r.TimeRangeText</td>
+                <td>@(r.CustomerName ?? "—")</td>
+                <td>@r.PartySize</td>
+                <td>@(string.IsNullOrWhiteSpace(r.TableCodes) ? "—" : r.TableCodes)</td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(r.TagName))
+                    {
+                        <span class="badge-ok" style="background:@r.TagColorOrDefault">@r.TagName</span>
+                    }
+                    else { <text>—</text> }
+                </td>
+                <td>@r.StatusText</td>
+                <td class="ar">
+                    @if (!r.IsDeleted)
+                    {
+                        <a class="btn btn-sm" href="/BackOffice/Reservations/Edit/@r.Id">Düzenle</a>
+                        @if (r.Status != ReservationStatus.Iptal && r.Status != ReservationStatus.Gelmedi && r.Status != ReservationStatus.Tamamlandi)
+                        {
+                            <form method="post" asp-page-handler="OpenOrder" style="display:inline" onsubmit="return confirm('Bu rezervasyonun masa(lar)ına adisyon açılsın mı?')">
+                                <input type="hidden" name="id" value="@r.Id" />
+                                <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" /><input type="hidden" name="StartTime" value="@Model.StartTime" /><input type="hidden" name="EndTime" value="@Model.EndTime" /><input type="hidden" name="ShowDeleted" value="@Model.ShowDeleted" />
+                                <button class="btn btn-sm btn-primary" type="submit">Adisyon Aç</button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="ToggleDelete" style="display:inline" onsubmit="return confirm('Silinsin mi?')">
+                            <input type="hidden" name="id" value="@r.Id" /><input type="hidden" name="deleted" value="true" />
+                            <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" /><input type="hidden" name="StartTime" value="@Model.StartTime" /><input type="hidden" name="EndTime" value="@Model.EndTime" /><input type="hidden" name="ShowDeleted" value="@Model.ShowDeleted" />
+                            <button class="btn btn-sm btn-danger" type="submit">Sil</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="ToggleDelete" style="display:inline">
+                            <input type="hidden" name="id" value="@r.Id" /><input type="hidden" name="deleted" value="false" />
+                            <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" /><input type="hidden" name="StartTime" value="@Model.StartTime" /><input type="hidden" name="EndTime" value="@Model.EndTime" /><input type="hidden" name="ShowDeleted" value="@Model.ShowDeleted" />
+                            <button class="btn btn-sm" type="submit">Geri Al</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count kayıt</div>
+}
+else
+{
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th>Talep</th><th>Ad Soyad</th><th>Telefon</th><th>Kişi</th><th>Durum</th><th>Not</th><th class="ar">İşlem</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Waitlist.Count == 0)
+        {
+            <tr><td colspan="7" class="empty">Bekleme listesi boş.</td></tr>
+        }
+        @foreach (var w in Model.Waitlist)
+        {
+            <tr class="@(w.IsDeleted ? "row-deleted" : "")">
+                <td>@w.RequestedAtText</td>
+                <td><b>@w.Name</b></td>
+                <td>@(string.IsNullOrWhiteSpace(w.Phone) ? "—" : w.Phone)</td>
+                <td>@w.PartySize</td>
+                <td>@w.StatusText</td>
+                <td>@(string.IsNullOrWhiteSpace(w.Note) ? "—" : w.Note)</td>
+                <td class="ar">
+                    @if (!w.IsDeleted && w.Status == WaitlistStatus.Bekliyor)
+                    {
+                        <form method="post" asp-page-handler="WaitlistStatus" style="display:inline">
+                            <input type="hidden" name="id" value="@w.Id" /><input type="hidden" name="status" value="@((int)WaitlistStatus.Cagrildi)" />
+                            <button class="btn btn-sm btn-primary" type="submit">Çağır</button>
+                        </form>
+                    }
+                    @if (!w.IsDeleted && (w.Status == WaitlistStatus.Bekliyor || w.Status == WaitlistStatus.Cagrildi))
+                    {
+                        <form method="post" asp-page-handler="WaitlistStatus" style="display:inline">
+                            <input type="hidden" name="id" value="@w.Id" /><input type="hidden" name="status" value="@((int)WaitlistStatus.Geldi)" />
+                            <button class="btn btn-sm" type="submit">Geldi</button>
+                        </form>
+                        <form method="post" asp-page-handler="WaitlistStatus" style="display:inline" onsubmit="return confirm('İptal edilsin mi?')">
+                            <input type="hidden" name="id" value="@w.Id" /><input type="hidden" name="status" value="@((int)WaitlistStatus.Iptal)" />
+                            <button class="btn btn-sm btn-danger" type="submit">İptal</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Waitlist.Count kayıt</div>
+}

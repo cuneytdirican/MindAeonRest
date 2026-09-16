@@ -1,0 +1,319 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Customers.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Müşteri" : $"Müşteri · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>👥 @(Model.IsNew ? "Yeni Müşteri" : "Müşteri Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Customers">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Cari kartı. Grup ve fiyat listesi FK olarak seçilir; elle giriş yoktur.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Ünvan / Ad *</label>
+            <input asp-for="Name" class="field" maxlength="200" required />
+        </div>
+        <div class="frm-row">
+            <label>Müşteri Grubu</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <select asp-for="CustomerGroupId" asp-items="Model.GroupOptions" class="field" id="groupSel" style="flex:1"></select>
+                <button type="button" class="btn btn-sm" onclick="toggleGroupAdd()" title="Yeni grup ekle">+</button>
+            </div>
+            <div id="groupAdd" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <input id="newGroupCode" class="field up" maxlength="50" placeholder="Kod" autocomplete="off" style="flex:0 0 120px" />
+                    <input id="newGroupName" class="field" maxlength="150" placeholder="Grup adı" autocomplete="off" style="flex:1" />
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveGroup()">Ekle</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleGroupAdd()">Vazgeç</button>
+                </div>
+                <small class="hint" id="groupAddErr" style="color:#c0392b"></small>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>Cari Tipi *</label>
+            <select asp-for="CustomerType" asp-items="Model.CustomerTypeOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>E-Belge Tipi *</label>
+            <select asp-for="EInvoiceType" asp-items="Model.EInvoiceOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Fiyat Listesi</label>
+            <select asp-for="PriceListId" asp-items="Model.PriceListOptions" class="field"></select>
+            <small class="hint">Adisyonda otomatik uygulanır.</small>
+        </div>
+        <div class="frm-row">
+            <label>Telefon</label>
+            <input asp-for="Phone" class="field" maxlength="50" />
+        </div>
+        <div class="frm-row">
+            <label>Vergi Numarası</label>
+            <input asp-for="TaxNumber" class="field" maxlength="50" />
+        </div>
+        <div class="frm-row">
+            <label>Vergi Dairesi</label>
+            <input asp-for="TaxOffice" class="field" maxlength="150" />
+        </div>
+        @* Lokasyon: WPF LocationSelector cascade karşılığı (Ülke→Şehir→İlçe). *@
+        <div class="frm-row">
+            <label>Ülke</label>
+            <select asp-for="CountryId" asp-items="Model.CountryOptions" class="field loc-country"
+                    data-city="mainCity" data-district="mainDistrict"></select>
+        </div>
+        <div class="frm-row">
+            <label>Şehir</label>
+            <select asp-for="CityId" id="mainCity" class="field loc-city"
+                    data-district="mainDistrict" data-selected="@(Model.CityId?.ToString())"></select>
+        </div>
+        <div class="frm-row">
+            <label>İlçe</label>
+            <select asp-for="DistrictId" id="mainDistrict" class="field loc-district"
+                    data-selected="@(Model.DistrictId?.ToString())"></select>
+        </div>
+
+        <div class="frm-row">
+            <label>Adres</label>
+            <textarea asp-for="Address" class="field" rows="3"></textarea>
+            <small class="hint">Ülke/şehir/ilçe yukarıda seçilir; bu alan serbest metin adrestir.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+
+        <div class="frm-row">
+            <label>Adresler</label>
+            <small class="hint">Birden fazla adres tanımlanabilir. Yalnızca bir tanesi varsayılan olabilir.</small>
+            <table class="bo-table" id="addrTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:14%">Başlık</th>
+                        <th style="width:22%">Adres</th>
+                        <th style="width:12%">Telefon</th>
+                        <th style="width:13%">Ülke</th>
+                        <th style="width:13%">Şehir</th>
+                        <th style="width:13%">İlçe</th>
+                        <th style="width:7%">Vars.</th>
+                        <th class="ar" style="width:6%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="addrBody">
+                @for (int i = 0; i < Model.Addresses.Count; i++)
+                {
+                    <tr class="addr-row">
+                        <td><input name="Addresses[@i].Title" value="@Model.Addresses[i].Title" class="field" maxlength="150" /></td>
+                        <td><input name="Addresses[@i].Address" value="@Model.Addresses[i].Address" class="field" /></td>
+                        <td><input name="Addresses[@i].Phone" value="@Model.Addresses[i].Phone" class="field" maxlength="50" /></td>
+                        <td>
+                            <select name="Addresses[@i].CountryId" asp-items="Model.CountryOptions" class="field loc-country" data-selected="@(Model.Addresses[i].CountryId?.ToString())"></select>
+                        </td>
+                        <td>
+                            <select name="Addresses[@i].CityId" class="field loc-city" data-selected="@(Model.Addresses[i].CityId?.ToString())"></select>
+                        </td>
+                        <td>
+                            <select name="Addresses[@i].DistrictId" class="field loc-district" data-selected="@(Model.Addresses[i].DistrictId?.ToString())"></select>
+                        </td>
+                        <td class="ac"><input type="radio" name="defaultAddr" class="addr-def" @(Model.Addresses[i].IsDefault ? "checked" : "") /></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeAddr(this)">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addAddr()" style="margin-top:8px">+ Adres Ekle</button>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Customers" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // ---- Lokasyon kademeli (Ülke→Şehir→İlçe): tüm veri sayfaya gömülü JSON, JS ile doldurulur (WPF LocationSelector karşılığı). ----
+        const CITIES = @Html.Raw(Model.CitiesByCountryJson);       // { "countryId": [ {v,t}, ... ] }
+        const DISTRICTS = @Html.Raw(Model.DistrictsByCityJson);    // { "cityId":   [ {v,t}, ... ] }
+
+        // Bir <select>'i (v,t) verisiyle doldur; placeholder ilk seçenek; selected id varsa işaretle.
+        function fillSelect(sel, items, placeholder, selectedVal) {
+            if (!sel) return;
+            sel.innerHTML = '';
+            const opt0 = document.createElement('option');
+            opt0.value = ''; opt0.textContent = placeholder;
+            sel.appendChild(opt0);
+            (items || []).forEach(it => {
+                const o = document.createElement('option');
+                o.value = String(it.v); o.textContent = it.t;
+                if (selectedVal != null && String(it.v) === String(selectedVal)) o.selected = true;
+                sel.appendChild(o);
+            });
+        }
+
+        // Ülke select için ilgili şehir/ilçe select'lerini bul (main: data-city/data-district id; adres satırı: aynı satır).
+        function resolveTargets(countrySel) {
+            let citySel, districtSel;
+            const cityId = countrySel.getAttribute('data-city');
+            const distId = countrySel.getAttribute('data-district');
+            if (cityId) citySel = document.getElementById(cityId);
+            if (distId) districtSel = document.getElementById(distId);
+            const row = countrySel.closest('.addr-row');
+            if (row) {
+                citySel = citySel || row.querySelector('.loc-city');
+                districtSel = districtSel || row.querySelector('.loc-district');
+            }
+            return { citySel, districtSel };
+        }
+
+        // Ülke → şehir doldur; şehir → ilçe doldur. init=true iken kayıtlı data-selected korunur.
+        function cascade(countrySel, init) {
+            const { citySel, districtSel } = resolveTargets(countrySel);
+            const cid = countrySel.value;
+            const citySelected = init && citySel ? citySel.getAttribute('data-selected') : null;
+            fillSelect(citySel, cid ? CITIES[cid] : [], '(Şehir seçiniz)', citySelected);
+            cascadeDistrict(citySel, districtSel, init);
+        }
+
+        function cascadeDistrict(citySel, districtSel, init) {
+            if (!districtSel) return;
+            const ci = citySel ? citySel.value : '';
+            const distSelected = init ? districtSel.getAttribute('data-selected') : null;
+            fillSelect(districtSel, ci ? DISTRICTS[ci] : [], '(İlçe seçiniz)', distSelected);
+        }
+
+        // Bir ülke select'ini olaylara bağla + ilk doldurma.
+        function wireLocation(countrySel, init) {
+            const { citySel, districtSel } = resolveTargets(countrySel);
+            // Adres satırı ülkesi asp-for ile seçilmediğinden data-selected varsa uygula.
+            if (init) {
+                const cSel = countrySel.getAttribute('data-selected');
+                if (cSel && !countrySel.value) countrySel.value = cSel;
+            }
+            cascade(countrySel, init);
+            countrySel.addEventListener('change', () => cascade(countrySel, false));
+            if (citySel) citySel.addEventListener('change', () => cascadeDistrict(citySel, districtSel, false));
+        }
+
+        // Sayfa yüklenince mevcut tüm ülke select'lerini bağla (main form + kayıtlı adres satırları).
+        document.querySelectorAll('.loc-country').forEach(cs => wireLocation(cs, true));
+
+        // Adresler: satır ekle/sil, tek varsayılan (radio) — POST öncesi indeksli IsDefault hidden'a çevrilir.
+        function reindex() {
+            document.querySelectorAll('#addrBody .addr-row').forEach((row, i) => {
+                row.querySelector('[name$=".Title"]').name = 'Addresses[' + i + '].Title';
+                row.querySelector('[name$=".Address"]').name = 'Addresses[' + i + '].Address';
+                row.querySelector('[name$=".Phone"]').name = 'Addresses[' + i + '].Phone';
+                row.querySelector('.loc-country').name = 'Addresses[' + i + '].CountryId';
+                row.querySelector('.loc-city').name = 'Addresses[' + i + '].CityId';
+                row.querySelector('.loc-district').name = 'Addresses[' + i + '].DistrictId';
+            });
+        }
+
+        // Ülke option'larını (id/ad) main form ülke select'inden kopyalayarak yeni satır HTML'i üret.
+        function countryOptionsHtml() {
+            const src = document.querySelector('.frm-row .loc-country') || document.querySelector('.loc-country');
+            let html = '';
+            if (src) src.querySelectorAll('option').forEach(o => { html += `<option value="${o.value}">${o.textContent}</option>`; });
+            else html = '<option value="">(Ülke seçiniz)</option>';
+            return html;
+        }
+
+        function addAddr() {
+            const body = document.getElementById('addrBody');
+            const i = body.querySelectorAll('.addr-row').length;
+            const tr = document.createElement('tr');
+            tr.className = 'addr-row';
+            tr.innerHTML =
+                `<td><input name="Addresses[${i}].Title" class="field" maxlength="150" /></td>` +
+                `<td><input name="Addresses[${i}].Address" class="field" /></td>` +
+                `<td><input name="Addresses[${i}].Phone" class="field" maxlength="50" /></td>` +
+                `<td><select name="Addresses[${i}].CountryId" class="field loc-country">${countryOptionsHtml()}</select></td>` +
+                `<td><select name="Addresses[${i}].CityId" class="field loc-city"></select></td>` +
+                `<td><select name="Addresses[${i}].DistrictId" class="field loc-district"></select></td>` +
+                `<td class="ac"><input type="radio" name="defaultAddr" class="addr-def" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeAddr(this)">Sil</button></td>`;
+            body.appendChild(tr);
+            wireLocation(tr.querySelector('.loc-country'), false);
+            // İlk satır otomatik varsayılan olsun.
+            if (i === 0) tr.querySelector('.addr-def').checked = true;
+        }
+
+        function removeAddr(btn) {
+            const wasDefault = btn.closest('.addr-row')?.querySelector('.addr-def')?.checked;
+            btn.closest('.addr-row')?.remove();
+            reindex();
+            // Varsayılan silindiyse ilk satırı varsayılan yap.
+            const rows = document.querySelectorAll('#addrBody .addr-row');
+            if (wasDefault && rows.length) rows[0].querySelector('.addr-def').checked = true;
+        }
+
+        // ---- "+" hızlı grup ekleme (proje kuralı): fetch ile OnPostAddGroup → listeye ekle + seç. ----
+        function toggleGroupAdd() {
+            const box = document.getElementById('groupAdd');
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            document.getElementById('groupAddErr').textContent = '';
+            if (show) document.getElementById('newGroupCode').focus();
+        }
+
+        document.getElementById('newGroupCode')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        async function saveGroup() {
+            const err = document.getElementById('groupAddErr');
+            err.textContent = '';
+            const code = document.getElementById('newGroupCode').value.trim();
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!code || !name) { err.textContent = 'Kod ve grup adı zorunludur.'; return; }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            try {
+                const params = new URLSearchParams({ code, name });
+                const res = await fetch('?handler=AddGroup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                    body: params.toString()
+                });
+                const data = await res.json();
+                if (!data.ok) { err.textContent = data.error || 'Grup eklenemedi.'; return; }
+                const sel = document.getElementById('groupSel');
+                const o = document.createElement('option');
+                o.value = String(data.id); o.textContent = data.text; o.selected = true;
+                sel.appendChild(o);
+                document.getElementById('newGroupCode').value = '';
+                document.getElementById('newGroupName').value = '';
+                toggleGroupAdd();
+            } catch (ex) {
+                err.textContent = 'Grup eklenirken hata oluştu.';
+            }
+        }
+
+        // POST öncesi: seçili varsayılan radio'yu, ilgili satırda Addresses[i].IsDefault=true hidden'ına dönüştür.
+        document.querySelector('form')?.addEventListener('submit', () => {
+            document.querySelectorAll('#addrBody .addr-def-hidden').forEach(h => h.remove());
+            document.querySelectorAll('#addrBody .addr-row').forEach((row, i) => {
+                const checked = row.querySelector('.addr-def')?.checked;
+                const h = document.createElement('input');
+                h.type = 'hidden';
+                h.className = 'addr-def-hidden';
+                h.name = 'Addresses[' + i + '].IsDefault';
+                h.value = checked ? 'true' : 'false';
+                row.appendChild(h);
+            });
+        });
+    </script>
+}

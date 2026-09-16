@@ -1,0 +1,176 @@
+@page
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Dealer.BusinessesModel
+@{
+    ViewData["Title"] = "İşletmelerim — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Bayi", "/Dealer", "İşletmelerim"))
+
+<div class="page-head flex items-center justify-between" style="gap:var(--sp-4); flex-wrap:wrap;">
+    <div>
+        <h1>İşletmelerim</h1>
+        <div class="subtitle">Portföyünüzdeki müşteri işletmeleri ve portal hesapları.</div>
+    </div>
+    <div class="flex gap-2">
+        <button class="btn" type="button" onclick="window.dispatchEvent(new CustomEvent('open-cust'))">
+            <i data-lucide="user-plus"></i> Müşteri Hesabı Oluştur
+        </button>
+        <button class="btn btn-primary" type="button" onclick="window.dispatchEvent(new CustomEvent('open-biz'))">
+            <i data-lucide="plus"></i> İşletme Ekle
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Flash))
+{
+    <div class="toast @(Model.FlashKind ?? "info")" style="margin-bottom:var(--sp-4); max-width:none;">
+        <i data-lucide="info"></i><div>@Model.Flash</div>
+    </div>
+}
+
+<div class="card">
+    <div class="card__head">
+        <h3 class="card__title">İşletmeler (@Model.Businesses.Count)</h3>
+        <div class="pill"><i data-lucide="search"></i>
+            <input type="text" placeholder="Filtrele…" style="border:none; background:transparent; outline:none; color:var(--text-1);"
+                   oninput="filterRows(this.value)" />
+        </div>
+    </div>
+
+    @if (Model.Businesses.Count == 0)
+    {
+        <div class="text-muted text-sm" style="padding:var(--sp-4) 0;">
+            Henüz işletme yok. Sağ üstten "İşletme Ekle" ile başlayın.
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table" id="bizTable">
+                <thead>
+                    <tr>
+                        <th>Unvan</th><th>Şirket Kodu</th><th>Şehir</th><th>İletişim</th>
+                        <th class="num">Aktif Lisans</th><th>Oluşturma</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.Businesses)
+                    {
+                        <tr>
+                            <td style="font-weight:600;">@b.Title</td>
+                            <td><span class="badge primary">@b.CompanyCode</span></td>
+                            <td>@(b.City ?? "—")</td>
+                            <td class="text-sm text-muted">@(b.Phone ?? b.Email ?? "—")</td>
+                            <td class="num">
+                                @if (b.ActiveLicenseCount > 0)
+                                {
+                                    <span class="badge success">@b.ActiveLicenseCount</span>
+                                }
+                                else
+                                {
+                                    <span class="badge">0</span>
+                                }
+                            </td>
+                            <td class="text-sm text-muted">@b.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <button class="btn btn-sm" type="button"
+                                        onclick="openCust(@b.Id, '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(b.Title))')">
+                                    <i data-lucide="user-plus"></i> Hesap
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- ============ İşletme Ekle modalı (Alpine) ============ -->
+<div id="bizModal" x-data="{open:false}" x-show="open" x-cloak @@open-biz.window="open=true" class="modal-backdrop" @@keydown.escape.window="open=false" style="display:none;">
+    <div class="modal" @@click.outside="open=false">
+        <form method="post" asp-page-handler="CreateBusiness">
+            @Html.AntiForgeryToken()
+            <div class="modal__head">
+                <h3 class="modal__title">Yeni İşletme</h3>
+                <button class="btn btn-ghost btn-icon" type="button" @@click="open=false"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal__body">
+                <p class="text-sm text-muted" style="margin-bottom:var(--sp-4);">
+                    <i data-lucide="info" style="width:14px;height:14px;vertical-align:-2px;"></i>
+                    Şirket kodu otomatik üretilir (elle giriş yok). İşletme bayinize bağlanır.
+                </p>
+                <div class="form-field">
+                    <label>Unvan *</label>
+                    <input name="Title" required placeholder="Örn. Lezzet Durağı Restoran" />
+                </div>
+                <div class="grid grid-2" style="gap:var(--sp-3);">
+                    <div class="form-field"><label>Şehir</label><input name="City" /></div>
+                    <div class="form-field"><label>Telefon</label><input name="Phone" /></div>
+                </div>
+                <div class="form-field"><label>E-posta</label><input name="Email" type="email" /></div>
+                <div class="grid grid-2" style="gap:var(--sp-3);">
+                    <div class="form-field"><label>Vergi Dairesi</label><input name="TaxOffice" /></div>
+                    <div class="form-field"><label>Vergi No</label><input name="TaxNumber" /></div>
+                </div>
+                <div class="form-field"><label>Adres</label><textarea name="Address" rows="2"></textarea></div>
+            </div>
+            <div class="modal__foot">
+                <button class="btn" type="button" @@click="open=false">Vazgeç</button>
+                <button class="btn btn-primary" type="submit"><i data-lucide="check"></i> Oluştur</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============ Müşteri Hesabı modalı (Alpine) ============ -->
+<div id="custModal" x-data="{open:false}" x-show="open" x-cloak @@open-cust.window="open=true" class="modal-backdrop" @@keydown.escape.window="open=false" style="display:none;">
+    <div class="modal" @@click.outside="open=false">
+        <form method="post" asp-page-handler="CreateCustomer">
+            @Html.AntiForgeryToken()
+            <div class="modal__head">
+                <h3 class="modal__title">Müşteri Portal Hesabı</h3>
+                <button class="btn btn-ghost btn-icon" type="button" @@click="open=false"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal__body">
+                <div class="form-field">
+                    <label>İşletme *</label>
+                    <select name="CustBusinessId" id="custBizSelect" required>
+                        <option value="">— Seçiniz —</option>
+                        @foreach (var b in Model.Businesses)
+                        {
+                            <option value="@b.Id">@b.Title (@b.CompanyCode)</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-field"><label>Ad Soyad</label><input name="CustFullName" placeholder="Yetkili adı" /></div>
+                <div class="form-field"><label>E-posta *</label><input name="CustEmail" type="email" required /></div>
+                <div class="form-field"><label>Parola *</label><input name="CustPassword" type="password" required minlength="6" /></div>
+                <p class="text-sm text-muted mb-0">
+                    Bu hesap "Müşteri" rolüyle açılır; yalnızca kendi lisansını/ödemesini görür.
+                </p>
+            </div>
+            <div class="modal__foot">
+                <button class="btn" type="button" @@click="open=false">Vazgeç</button>
+                <button class="btn btn-primary" type="submit"><i data-lucide="user-check"></i> Hesap Oluştur</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        lucide.createIcons();
+        function filterRows(v) {
+            v = (v || "").toLocaleLowerCase("tr");
+            document.querySelectorAll("#bizTable tbody tr").forEach(tr => {
+                tr.style.display = tr.innerText.toLocaleLowerCase("tr").includes(v) ? "" : "none";
+            });
+        }
+        function openCust(id, title) {
+            var sel = document.getElementById("custBizSelect");
+            if (sel) sel.value = id;
+            window.dispatchEvent(new CustomEvent('open-cust'));
+        }
+    </script>
+}

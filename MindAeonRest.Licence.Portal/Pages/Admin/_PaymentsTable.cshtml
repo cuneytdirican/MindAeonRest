@@ -1,0 +1,53 @@
+@using MindAeonRest.Licence.Data
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.PaymentsModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Sağlayıcı</th>
+                <th>Tahsilat</th>
+                <th class="num">Brüt</th>
+                <th class="num">Marj</th>
+                <th class="num">Net</th>
+                <th>Durum</th>
+                <th>Tarih</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="9" class="text-muted" style="text-align:center; padding:var(--sp-6);">Ödeme kaydı yok.</td></tr>
+            }
+            @foreach (var p in Model.Items)
+            {
+                var st = AdminLabels.Payment(p.Status);
+                <tr>
+                    <td style="font-variant-numeric:tabular-nums;">@p.Id</td>
+                    <td>@AdminLabels.Provider(p.Provider)</td>
+                    <td class="text-sm">@AdminLabels.Billing(p.BillingMode)</td>
+                    <td class="num money gross">@p.Amount.ToString("N2")</td>
+                    <td class="num money margin">@p.MarginAmount.ToString("N2")</td>
+                    <td class="num money net">@p.NetAmount.ToString("N2")</td>
+                    <td><span class="badge @st.Css"><span class="dot"></span> @st.Text</span></td>
+                    <td class="text-sm">@((p.PaidUtc ?? p.CreatedUtc).ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        @if (p.Status == PaymentStatus.Pending && p.Provider == PaymentProviderKind.BankTransfer)
+                        {
+                            <button type="button" class="btn btn-sm btn-primary" x-on:click="openApprove(@p.Id)">
+                                <i data-lucide="check"></i> Onayla
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted text-sm">@(string.IsNullOrWhiteSpace(p.ProviderRef) ? "—" : p.ProviderRef)</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

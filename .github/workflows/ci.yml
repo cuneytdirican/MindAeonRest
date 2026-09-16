@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    # net9.0-windows (WPF/Web/Api) hedefleri Windows gerektirir.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      # NOT: MindAeonRest.sln, MAUI mobil projesini (MindAeonRest.Mobile) İÇERMEZ.
+      # MAUI, CI'da ayrıca 'dotnet workload install maui' gerektirir; kapsam dışı bırakıldı.
+      # Full.sln (MAUI + lisans portalı dahil) bilinçli olarak CI'da derlenmez.
+      - name: Restore
+        run: dotnet restore MindAeonRest.sln
+
+      - name: Build (Release)
+        run: dotnet build MindAeonRest.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test MindAeonRest.Core.Tests/MindAeonRest.Core.Tests.csproj -c Release --no-build --verbosity normal

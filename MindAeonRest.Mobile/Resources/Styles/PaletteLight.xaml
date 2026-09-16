@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- AÇIK (MENULUX) paleti — açık zemin + pembe/magenta accent. V2 tema-bağımsız; bu paletlerden biri aktif olur. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="MindAeonRest.Mobile.Resources.Styles.PaletteLight">
+
+    <Color x:Key="Background">#EEF0F4</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="SurfaceAlt">#F2F3F6</Color>
+    <Color x:Key="Accent">#E91E63</Color>
+    <Color x:Key="AccentDark">#C2185B</Color>
+    <Color x:Key="AccentDeep">#D81B60</Color>
+    <Color x:Key="Purple">#6A1B9A</Color>
+    <Color x:Key="PurpleDeep">#4A148C</Color>
+    <Color x:Key="TextColor">#2B2B3A</Color>
+    <Color x:Key="TextMuted">#9AA0AB</Color>
+    <Color x:Key="BorderColor">#E6E8EE</Color>
+    <Color x:Key="Danger">#E5484D</Color>
+    <Color x:Key="Success">#17B26A</Color>
+    <Color x:Key="Warning">#E9A23B</Color>
+    <Color x:Key="RailText">#F4E9F2</Color>
+    <Color x:Key="ButtonColor">#EAECF1</Color>
+    <Color x:Key="Row">#F7F8FA</Color>
+    <Color x:Key="RowAlt">#FFFFFF</Color>
+
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource Background}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAlt}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Accent}" />
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="{StaticResource AccentDark}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMuted}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource Danger}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}" />
+    <SolidColorBrush x:Key="ButtonBrush" Color="{StaticResource ButtonColor}" />
+    <SolidColorBrush x:Key="RowBrush" Color="{StaticResource Row}" />
+    <SolidColorBrush x:Key="RowAltBrush" Color="{StaticResource RowAlt}" />
+
+    <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#C2185B" Offset="0" />
+        <GradientStop Color="#4A148C" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BrandBrush" StartPoint="0,0" EndPoint="0.5,1">
+        <GradientStop Color="#D81B60" Offset="0" />
+        <GradientStop Color="#6A1B9A" Offset="1" />
+    </LinearGradientBrush>
+
+    <Color x:Key="Primary">#E91E63</Color>
+    <Color x:Key="PrimaryDark">#C2185B</Color>
+    <Color x:Key="PrimaryDarkText">#FFFFFF</Color>
+</ResourceDictionary>

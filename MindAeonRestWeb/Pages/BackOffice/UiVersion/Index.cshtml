@@ -1,0 +1,51 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.UiVersion.IndexModel
+@{
+    ViewData["Title"] = "Ekran Sürümü";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🖥 Ekran Sürümü</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">Adisyon ve Mutfak (KDS) ekranlarının görünümünü seçin. Değişiklik ekranlar bir sonraki açılışta geçerli olur.</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Adisyon Ekranı</label>
+            <select asp-for="AdisyonVersion" class="field">
+                <option value="@UiVersions.Default">Varsayılan (mevcut ekran)</option>
+                <option value="@UiVersions.V2">V2 (yeni ekran)</option>
+            </select>
+        </div>
+        <div class="frm-row">
+            <label>Mutfak (KDS) Ekranı</label>
+            <select asp-for="MutfakVersion" class="field">
+                <option value="@UiVersions.Default">Varsayılan (mevcut ekran)</option>
+                <option value="@UiVersions.V2">V2 (yeni ekran)</option>
+            </select>
+        </div>
+        <div class="bo-card" style="margin:4px 0 14px;">
+            <small class="hint">
+                • Varsayılan: şu an kullandığınız ekranlar çalışır.<br />
+                • V2: yeni tasarlanan ekranlar çalışır (mevcut temalarla uyumlu).<br />
+                Yeni kurulumlar V2 ile başlar. Değişiklik ekranlar bir sonraki açılışta geçerli olur.
+            </small>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </form>
+</div>

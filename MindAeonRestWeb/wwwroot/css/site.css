@@ -1,0 +1,178 @@
+:root{
+  --bg:#0f1115; --bg2:#151922; --card:#1b2130; --card2:#212838;
+  --ink:#eef2f7; --muted:#9aa6b8; --line:#2a3141;
+  --accent:#f5a623; --accent2:#ff7a45; --accent-ink:#20140a;
+  --green:#17b26a; --danger:#e5484d; --radius:16px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --wrap:1140px;
+}
+/* ===== TEMA ALTYAPISI (WPF Koyu/Açık/Okyanus karşılığı) — data-theme ile geçiş =====
+   :root = Koyu (varsayılan). Aşağıdaki bloklar yalnız renk değişkenlerini ezer;
+   tüm yapısal CSS var(--x) kullandığı için tema tek noktadan değişir. */
+[data-theme="dark"]{
+  --bg:#0f1115; --bg2:#151922; --card:#1b2130; --card2:#212838;
+  --ink:#eef2f7; --muted:#9aa6b8; --line:#2a3141;
+  --accent:#f5a623; --accent2:#ff7a45; --accent-ink:#20140a;
+  --green:#17b26a; --danger:#e5484d;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --bg:#f6f7f9; --bg2:#eceff4; --card:#ffffff; --card2:#f3f5f8;
+  --ink:#1a2230; --muted:#5b6675; --line:#e2e6ee;
+  --accent:#f5a623; --accent2:#ff7a45; --accent-ink:#2a1a0a;
+  --green:#12a150; --danger:#e5484d;
+  --shadow:0 10px 30px rgba(20,30,50,.12);
+}
+[data-theme="ocean"]{
+  --bg:#0b1c2c; --bg2:#0f2436; --card:#153349; --card2:#1b405b;
+  --ink:#e9f3fb; --muted:#93aec7; --line:#244b66;
+  --accent:#2bc4d6; --accent2:#3b82f6; --accent-ink:#04212b;
+  --green:#17b26a; --danger:#ff6b6b;
+  --shadow:0 10px 30px rgba(0,0,0,.4);
+}
+/* Tema değiştirici (header) */
+.theme-switch{display:inline-flex;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:3px}
+.theme-switch button{border:none;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:999px;cursor:pointer;font-size:15px;line-height:1;transition:.15s}
+.theme-switch button:hover{color:var(--ink)}
+.theme-switch button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,system-ui,Arial,sans-serif;line-height:1.55}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 22px}
+.wrap.narrow{max-width:760px}
+.center{text-align:center}
+.muted{color:var(--muted)}
+
+/* Header */
+.site-header{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:66px}
+.brand{font-weight:800;font-size:20px;letter-spacing:.2px}
+.brand span{color:var(--accent)}
+.brand small{color:var(--muted);font-weight:600;font-size:12px}
+.site-nav{display:flex;align-items:center;gap:22px}
+.site-nav a{color:var(--muted);font-weight:600}
+.site-nav a:hover{color:var(--ink)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);padding:10px 18px;border-radius:12px;font-weight:700;cursor:pointer;transition:.15s}
+.btn:hover{transform:translateY(-1px)}
+.btn-lg{padding:14px 26px;font-size:16px}
+.btn-block{width:100%}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);border:none}
+.btn-ghost{background:transparent}
+.btn-login{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);border:none;padding:9px 18px;border-radius:12px}
+
+/* Hero */
+.hero{background:radial-gradient(1200px 500px at 70% -10%,rgba(245,166,35,.18),transparent),var(--bg)}
+.hero-inner{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:70px 22px 60px}
+.pill-badge{display:inline-block;background:var(--card2);border:1px solid var(--line);color:var(--accent);
+  padding:6px 14px;border-radius:999px;font-weight:700;font-size:13px;margin-bottom:18px}
+.hero h1{font-size:52px;line-height:1.05;margin:0 0 16px;font-weight:800}
+.hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:18px;color:var(--muted);max-width:560px}
+.hero-cta{display:flex;gap:14px;margin:26px 0 16px;flex-wrap:wrap}
+.hero-cta.center{justify-content:center}
+.hero-trust{color:var(--muted);font-size:13px;font-weight:600}
+.hero-shot{display:flex;justify-content:center}
+.shot-placeholder{width:100%;min-height:320px;border-radius:var(--radius);border:1px dashed var(--line);
+  background:linear-gradient(180deg,var(--card),var(--bg2));display:flex;align-items:center;justify-content:center;
+  color:var(--muted);font-size:20px;box-shadow:var(--shadow)}
+.shot-placeholder.small{min-height:170px;font-size:15px}
+.hero-img{width:100%;max-width:540px;border-radius:var(--radius);box-shadow:var(--shadow);display:block}
+.screen img{width:100%;height:auto;display:block;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--line)}
+
+/* Sections */
+.section{padding:64px 0}
+.section-alt{background:var(--bg2)}
+.section-title{font-size:32px;text-align:center;margin:0 0 8px;font-weight:800}
+.section-sub{text-align:center;color:var(--muted);margin:0 0 36px}
+
+/* Features */
+.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.feature-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.feature-ico{font-size:30px;margin-bottom:10px}
+.feature-card h3{margin:0 0 6px;font-size:17px}
+.feature-card p{margin:0;color:var(--muted);font-size:14px}
+
+/* Screens */
+.screens{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.screen{margin:0}
+.screen figcaption{text-align:center;color:var(--muted);margin-top:8px;font-weight:600}
+
+/* Pricing */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.price-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;display:flex;flex-direction:column}
+.price-card.highlight{border-color:var(--accent);box-shadow:0 0 0 2px rgba(245,166,35,.25),var(--shadow)}
+.price-tag{position:absolute;top:-12px;right:20px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:var(--accent-ink);font-weight:800;font-size:12px;padding:5px 12px;border-radius:999px}
+.price-card h3{margin:0 0 8px;font-size:22px}
+.price .amount{font-size:30px;font-weight:800}
+.price .per{color:var(--muted)}
+.limits{list-style:none;padding:0;margin:16px 0;color:var(--ink);display:flex;flex-direction:column;gap:6px}
+.feature-list{list-style:none;padding:0;margin:0 0 20px;color:var(--muted);display:flex;flex-direction:column;gap:6px;flex:1}
+.feature-list li{font-size:14px}
+.addon-title{text-align:center;margin:44px 0 18px}
+.addon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.addon-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center}
+
+/* FAQ */
+.faq{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 18px;margin-bottom:12px}
+.faq summary{cursor:pointer;font-weight:700;padding:12px 0}
+.faq p{color:var(--muted);margin:0 0 12px}
+
+/* Footer */
+.site-footer{border-top:1px solid var(--line);background:var(--bg2)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;height:70px;color:var(--muted)}
+
+/* Auth */
+.auth{min-height:calc(100vh - 136px);display:flex;align-items:center;justify-content:center;padding:40px 22px;
+  background:radial-gradient(900px 400px at 50% -10%,rgba(245,166,35,.15),transparent)}
+.auth-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:34px;box-shadow:var(--shadow)}
+.auth-card h1{margin:0 0 6px;font-size:26px}
+.auth-card label{display:block;margin:16px 0 6px;font-weight:700;font-size:14px}
+.field{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:15px}
+.field:focus{outline:none;border-color:var(--accent)}
+.auth-card .btn{margin-top:22px}
+.back-link{display:inline-block;margin-top:18px;color:var(--muted)}
+.alert-error{background:rgba(229,72,77,.12);border:1px solid var(--danger);color:#ffb4b6;padding:12px 14px;border-radius:10px;margin-top:8px;font-weight:600}
+
+/* Back office */
+body.bo{background:var(--bg)}
+.bo-header{background:var(--bg2);border-bottom:1px solid var(--line)}
+.bo-header-inner{max-width:1240px;margin:0 auto;padding:0 22px;height:62px;display:flex;align-items:center;justify-content:space-between}
+.bo-user{display:flex;align-items:center;gap:16px}
+.bo-body{padding:30px 22px}
+.bo-hero{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.bo-hero h1{margin:0}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.module-card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;transition:.15s}
+.module-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.module-card.locked{opacity:.5}
+.module-ico{font-size:30px}
+.module-name{font-weight:700;margin:8px 0}
+.badge-lock{color:var(--danger);font-size:12px;font-weight:700}
+.badge-soon{color:var(--muted);font-size:12px;font-weight:700}
+
+/* Responsive */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr;padding:44px 22px}
+  .hero h1{font-size:38px}
+  .feature-grid,.screens,.addon-grid{grid-template-columns:repeat(2,1fr)}
+  .price-grid{grid-template-columns:1fr}
+  .site-nav a:not(.btn-login){display:none}
+}
+@media(max-width:520px){
+  .feature-grid,.screens,.addon-grid{grid-template-columns:1fr}
+}
+
+/* İletişim kartları (#iletisim) */
+.contact-grid{grid-template-columns:repeat(3,1fr)}
+.contact-card{padding:24px}
+.contact-card p{margin:0 0 10px;line-height:1.55;font-size:14px}
+.contact-card p:last-child{margin-bottom:0}
+.contact-card a{color:var(--accent);text-decoration:none}
+.contact-card a:hover{text-decoration:underline}
+@media(max-width:860px){.contact-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.contact-grid{grid-template-columns:1fr}}

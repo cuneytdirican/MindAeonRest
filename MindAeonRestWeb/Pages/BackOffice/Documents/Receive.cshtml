@@ -1,0 +1,62 @@
+@page
+@using System.Globalization
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Documents.ReceiveModel
+@{
+    ViewData["Title"] = $"Teslim Al · {Model.Doc?.FisNo}";
+    Layout = "_BackOfficeLayout";
+    CultureInfo inv = CultureInfo.InvariantCulture;
+}
+
+<div class="bo-page-head">
+    <h1>📥 Teslim Al · @Model.Doc?.FisNo</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Documents?type=@((int)DocType.DepoTransfer)">← Liste</a>
+</div>
+
+<div class="bo-count">Teslim alınan miktar kadar hedef depoya giriş yapılır. Sevk miktarını aşamaz.</div>
+
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error">@Model.Error</div> }
+
+<form method="post" asp-page-handler="Receive">
+    <input type="hidden" name="Id" value="@Model.Id" />
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Ürün</th>
+                    <th class="ar">Sevk</th>
+                    <th class="ar">Önceki Teslim</th>
+                    <th class="ar">Kalan</th>
+                    <th class="ar" style="width:14%">Bu Teslim</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for (int i = 0; i < Model.Lines.Count; i++)
+            {
+                var l = Model.Lines[i];
+                <tr>
+                    <td>
+                        @l.ProductName
+                        <input type="hidden" name="Lines[@i].LineId" value="@l.LineId" />
+                    </td>
+                    <td class="ar">@l.Qty.ToString("N2")</td>
+                    <td class="ar">@l.AlreadyReceived.ToString("N2")</td>
+                    <td class="ar">@l.Remaining.ToString("N2")</td>
+                    <td class="ar">
+                        <input name="Lines[@i].ThisReceipt" value="@l.ThisReceipt.ToString(inv)"
+                               type="number" step="0.001" min="0" max="@l.Remaining.ToString(inv)" class="field" />
+                    </td>
+                </tr>
+            }
+            @if (Model.Lines.Count == 0)
+            {
+                <tr><td colspan="5" class="empty">Satır yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="frm-actions">
+        <button type="submit" class="btn btn-primary">📥 Teslim Al</button>
+        <a href="/BackOffice/Documents?type=@((int)DocType.DepoTransfer)" class="btn btn-ghost">Vazgeç</a>
+    </div>
+</form>

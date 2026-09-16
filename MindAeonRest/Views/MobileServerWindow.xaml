@@ -1,0 +1,98 @@
+<Window x:Class="MindAeonRest.Views.MobileServerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mobil Sunucu" Height="860" Width="720"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="16" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="{DynamicResource AccentBrush}" CornerRadius="16,16,0,0" Padding="24,16" MouseLeftButtonDown="Header_Drag">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock Text="📱 Mobil Sunucu" FontSize="20" FontWeight="Bold" Foreground="White" />
+                        <TextBlock Text="Garson / Mutfak / Patron uygulamalarının bağlandığı yerel sunucu" FontSize="12" Foreground="#EAF7FF" Margin="0,3,0,0" />
+                    </StackPanel>
+                    <Button Content="✕" Width="34" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Close_Click" />
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Margin="24,18">
+                <!-- Durum -->
+                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="16,12">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="StatusDot" Text="●" FontSize="18" Foreground="{DynamicResource DangerBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <TextBlock x:Name="StatusText" Text="Durum kontrol ediliyor…" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock x:Name="VersionText" Text="" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="28,2,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Adres -->
+                <TextBlock Text="SUNUCU ADRESİ (tabletlere)" Style="{StaticResource FieldLabel}" Margin="2,14,0,2" />
+                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="14,10">
+                    <Grid>
+                        <TextBlock x:Name="UrlText" Text="http://..." FontSize="18" FontWeight="Bold" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                        <Button Content="📋 Kopyala" HorizontalAlignment="Right" Style="{StaticResource GhostButton}" Padding="12,4" Click="Copy_Click" />
+                    </Grid>
+                </Border>
+
+                <!-- QR -->
+                <Border Background="White" CornerRadius="12" Padding="14" HorizontalAlignment="Center" Margin="0,16,0,0">
+                    <Image x:Name="QrImage" Width="220" Height="220" />
+                </Border>
+                <TextBlock Text="Tabletten bu kareyi okutun ya da adresi elle girin. Cihazlar aynı WiFi/ağda olmalı."
+                           TextWrapping="Wrap" TextAlignment="Center" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0" />
+
+                <!-- Windows Hizmeti -->
+                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="14,10" Margin="0,14,0,0">
+                    <Grid>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="WINDOWS HİZMETİ" Style="{StaticResource FieldLabel}" />
+                            <TextBlock x:Name="ServiceStatus" Text="Kontrol ediliyor…" FontSize="13" Foreground="{DynamicResource TextBrush}" />
+                            <TextBlock Text="Bilgisayar açılınca otomatik başlar (önerilen)." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Content="🛡 Güvenlik Duvarı" Style="{StaticResource GhostButton}" Padding="12,5" Margin="0,0,8,0" Click="Firewall_Click"
+                                    ToolTip="5000 portunu tüm ağlarda (Public dahil) açar — telefon bağlanamıyorsa." />
+                            <Button x:Name="InstallSvcBtn" Content="Hizmet Kur" Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,0" Click="InstallService_Click" />
+                            <Button x:Name="UninstallSvcBtn" Content="Kaldır" Style="{StaticResource GhostButton}" Padding="14,5" Click="UninstallService_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Garson PWA (tablet/tarayıcı arayüzü) -->
+                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="14,10" Margin="0,12,0,0">
+                    <Grid>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="GARSON PWA (TABLET / TARAYICI)" Style="{StaticResource FieldLabel}" />
+                            <TextBlock x:Name="PwaStatus" Text="Kontrol ediliyor…" FontSize="13" Foreground="{DynamicResource TextBrush}" />
+                            <TextBlock x:Name="PwaUrlText" Text="" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TextMutedBrush}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button x:Name="PwaCopyBtn" Content="📋" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,8,0" Click="CopyPwa_Click" ToolTip="PWA adresini kopyala" />
+                            <Button x:Name="PwaInstallBtn" Content="⬇ PWA İndir &amp; Kur" Style="{StaticResource GhostButton}" Padding="12,5" Click="InstallPwa_Click"
+                                    ToolTip="Garson PWA arayüzünü indirir ve API'nin yanına kurar; tabletler /app adresinden açar." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" CornerRadius="0,0,16,16" Padding="22,12">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="InstallBtn" Content="⬇ İndir &amp; Kur" Style="{StaticResource GhostButton}" Padding="14,6" Margin="0,0,10,0" Click="InstallApi_Click"
+                            ToolTip="API'yi internetten indirir, bu PC'nin SQL ayarlarıyla otomatik kurar." />
+                    <Button x:Name="UpdateBtn" Content="⟳ Güncelle" Style="{StaticResource GhostButton}" Padding="14,6" Margin="0,0,10,0" Click="UpdateApi_Click"
+                            ToolTip="Kurulu API'yi yeni sürüme günceller (mevcut appsettings ayarları korunur)." />
+                    <Button Content="📁 Gözat" Style="{StaticResource GhostButton}" Padding="14,6" Margin="0,0,10,0" Click="Browse_Click"
+                            ToolTip="API zaten varsa MindAeonRest.Api.exe'yi elle seçin (yolu hatırlanır)." />
+                    <Button x:Name="StartBtn" Content="▶ Başlat" Style="{StaticResource PrimaryButton}" Padding="20,6" Margin="0,0,10,0" Click="Start_Click" />
+                    <Button x:Name="StopBtn" Content="■ Durdur" Style="{StaticResource GhostButton}" Padding="20,6" Margin="0,0,10,0" Click="Stop_Click" />
+                    <Button Content="↻ Yenile" Style="{StaticResource GhostButton}" Padding="16,6" Click="Refresh_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

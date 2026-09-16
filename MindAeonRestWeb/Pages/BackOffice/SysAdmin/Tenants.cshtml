@@ -1,0 +1,151 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SysAdmin.TenantsModel
+@{
+    ViewData["Title"] = "Şirketler (Sistem Yönetimi)";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🏢 Şirketler</h1>
+    <a class="btn btn-primary" href="/BackOffice/SysAdmin/NewTenant">➕ Yeni Şirket</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert-success">@Model.Message</div>
+}
+
+<div class="bo-card bo-hint" style="margin-bottom:12px">
+    Bu konsol yalnız <strong>Sistem Yöneticisi (SysAdmin)</strong> içindir. Tüm kiracı şirketleri, veritabanları
+    ve denetim bilgileri burada listelenir. Pasifleştirilen şirkete kullanıcı girişi engellenir.
+</div>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kod</th>
+                <th>Unvan</th>
+                <th>Veritabanı</th>
+                <th class="ar">Şube</th>
+                <th class="ar">Kullanıcı</th>
+                <th>Durum</th>
+                <th>Oluşturma</th>
+                <th class="ar">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıtlı şirket yok.</td></tr>
+        }
+        @foreach (var r in Model.Rows)
+        {
+            <tr class="@(r.IsActive ? "" : "row-deleted")">
+                <td><b>@r.Code</b></td>
+                <td>@r.Name</td>
+                <td><code style="font-size:12px">@r.DbName</code></td>
+                <td class="ar">@r.BranchCount</td>
+                <td class="ar">@r.UserCount</td>
+                <td>
+                    @if (r.IsActive) { <span class="badge-ok">Aktif</span> }
+                    else { <span class="badge-del">Pasif</span> }
+                </td>
+                <td>@(r.CreatedAt?.ToLocalTime().ToString("dd.MM.yyyy") ?? "—")</td>
+                <td class="ar">
+                    <a class="btn btn-sm" href="/BackOffice/SysAdmin/Tenants?detail=@Uri.EscapeDataString(r.Code)">Detay</a>
+                    @* S3 — SysAdmin bu kiracıya oturum-içi geçiş yapar (aktif/pasif fark etmez). Native onay YOK. *@
+                    <form method="post" asp-page-handler="SwitchTo" style="display:inline">
+                        <input type="hidden" name="code" value="@r.Code" />
+                        <button class="btn btn-sm btn-primary" type="submit">Bu şirkete geç</button>
+                    </form>
+                    @if (r.CompanyId is { } cid)
+                    {
+                        <form method="post" asp-page-handler="SetActive" style="display:inline">
+                            <input type="hidden" name="companyId" value="@cid" />
+                            <input type="hidden" name="active" value="@((!r.IsActive).ToString().ToLowerInvariant())" />
+                            @if (r.IsActive)
+                            {
+                                <button class="btn btn-sm btn-danger" type="submit">Pasifleştir</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm" type="submit">Aktifleştir</button>
+                            }
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Rows.Count şirket</div>
+
+@if (Model.DetailCode is { } dcode)
+{
+    <div class="bo-card" style="margin-top:18px">
+        <div class="bo-page-head" style="margin-bottom:12px">
+            <h1 style="font-size:19px">🔎 @(Model.DetailName ?? dcode) <small class="muted">(@dcode)</small></h1>
+            <a class="btn btn-ghost btn-sm" href="/BackOffice/SysAdmin/Tenants">Kapat</a>
+        </div>
+
+        <div class="bo-alert" style="margin-bottom:14px">
+            🔐 Lisans durumu bu kiracı için <strong>Lisans Portalı</strong>'ndan yönetilir.
+            <a href="/BackOffice/License">Lisans ekranı</a> (aktif şirket) &middot; <em>Portal'da yönet (yakında)</em>
+        </div>
+
+        <h3 style="margin:0 0 8px">Kullanıcılar</h3>
+        <table class="bo-table">
+            <thead>
+                <tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Rol</th><th>Durum</th></tr>
+            </thead>
+            <tbody>
+            @if (Model.DetailUsers is null || Model.DetailUsers.Count == 0)
+            {
+                <tr><td colspan="4" class="empty">Kullanıcı bulunamadı.</td></tr>
+            }
+            @foreach (var u in Model.DetailUsers ?? new())
+            {
+                <tr class="@(u.IsActive ? "" : "row-deleted")">
+                    <td><b>@u.Username</b></td>
+                    <td>@u.FullName</td>
+                    <td>@u.RoleName</td>
+                    <td>
+                        @if (u.IsActive) { <span class="badge-ok">Aktif</span> }
+                        else { <span class="badge-off">Pasif</span> }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <h3 style="margin:16px 0 8px">Şubeler</h3>
+        <table class="bo-table">
+            <thead>
+                <tr><th>#</th><th>Ad</th><th>Durum</th></tr>
+            </thead>
+            <tbody>
+            @if (Model.DetailBranches is null || Model.DetailBranches.Count == 0)
+            {
+                <tr><td colspan="3" class="empty">Şube bulunamadı.</td></tr>
+            }
+            @foreach (var b in Model.DetailBranches ?? new())
+            {
+                <tr class="@(b.IsActive ? "" : "row-deleted")">
+                    <td>@b.Id</td>
+                    <td>@b.Name</td>
+                    <td>
+                        @if (b.IsActive) { <span class="badge-ok">Aktif</span> }
+                        else { <span class="badge-off">Pasif</span> }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

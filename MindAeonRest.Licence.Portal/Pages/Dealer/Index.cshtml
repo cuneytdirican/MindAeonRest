@@ -1,0 +1,124 @@
+@page
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Dealer.IndexModel
+@{
+    ViewData["Title"] = "Bayi Paneli — MindAeon";
+    string Money(decimal v) => v.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"));
+}
+@await Html.PartialAsync("_Breadcrumb", ("Bayi", "/Dealer", "Panel"))
+
+<div class="page-head">
+    <h1>Bayi Paneli</h1>
+    <div class="subtitle">Portföyünüz, marj kazancınız ve bekleyen işler bir bakışta.</div>
+</div>
+
+<!-- Marj Kazancım — vurgu kartı -->
+<div class="card" style="background:linear-gradient(135deg, var(--primary-700), var(--primary) 60%, var(--accent)); color:#fff; border:none; margin-bottom:var(--sp-4);">
+    <div class="flex items-center justify-between" style="flex-wrap:wrap; gap:var(--sp-4);">
+        <div>
+            <div style="font-size:var(--fs-sm); opacity:.85; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="trending-up"></i> Marj Kazancım (tahsil edilen)
+            </div>
+            <div class="money" style="font-size:var(--fs-3xl); font-weight:700; margin-top:6px;">
+                @Money(Model.MarginPaid) <span style="font-size:var(--fs-lg); opacity:.8;">@Model.Currency</span>
+            </div>
+            <div style="font-size:var(--fs-sm); opacity:.85; margin-top:4px;">
+                Bekleyen marj: <span class="money">@Money(Model.MarginPending) @Model.Currency</span>
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:var(--fs-sm); opacity:.85;">Brüt ciro (tahsil edilen)</div>
+            <div class="money" style="font-size:var(--fs-xl); font-weight:600;">@Money(Model.GrossPaid) @Model.Currency</div>
+            <a href="/Dealer/Payments" class="btn btn-sm" style="margin-top:10px; background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.3); color:#fff;">
+                <i data-lucide="arrow-right"></i> Kazançlarım
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Metrik KPI'lar -->
+<div class="grid grid-4">
+    <div class="kpi">
+        <div class="kpi__label">İşletmelerim</div>
+        <div class="kpi__value">@Model.BusinessCount</div>
+        <a class="kpi__delta" href="/Dealer/Businesses" style="color:var(--primary);"><i data-lucide="building-2"></i> Yönet</a>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Aktif Lisans</div>
+        <div class="kpi__value">@Model.ActiveLicenseTotal</div>
+        <a class="kpi__delta" href="/Dealer/Licenses" style="color:var(--primary);"><i data-lucide="key-round"></i> Görüntüle</a>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bekleyen Talep</div>
+        <div class="kpi__value">@Model.PendingRequests</div>
+        <a class="kpi__delta" href="/Dealer/Requests" style="color:var(--primary);"><i data-lucide="arrow-up-circle"></i> Talepler</a>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Açık Demo</div>
+        <div class="kpi__value">@Model.OpenDemos</div>
+        <a class="kpi__delta" href="/Dealer/Demos" style="color:var(--primary);"><i data-lucide="flask-conical"></i> Demolar</a>
+    </div>
+</div>
+
+<div class="grid grid-2 mt-4">
+    <!-- Son işletmeler -->
+    <div class="card">
+        <div class="card__head">
+            <h3 class="card__title">Son İşletmeler</h3>
+            <a class="btn btn-sm" href="/Dealer/Businesses"><i data-lucide="plus"></i> Müşteri Hesabı</a>
+        </div>
+        @if (Model.Businesses.Count == 0)
+        {
+            <div class="text-muted text-sm">Henüz işletme yok. İlk müşterinizi ekleyin.</div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th>Unvan</th><th>Kod</th><th>Şehir</th><th class="num">Aktif Lisans</th></tr></thead>
+                    <tbody>
+                        @foreach (var b in Model.Businesses.Take(6))
+                        {
+                            <tr>
+                                <td>@b.Title</td>
+                                <td><span class="badge">@b.CompanyCode</span></td>
+                                <td>@(b.City ?? "—")</td>
+                                <td class="num">@b.ActiveLicenseCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Son talepler -->
+    <div class="card">
+        <div class="card__head">
+            <h3 class="card__title">Son Yükseltme Talepleri</h3>
+            <a class="btn btn-sm" href="/Dealer/Requests"><i data-lucide="arrow-up-circle"></i> Tümü</a>
+        </div>
+        @if (Model.Requests.Count == 0)
+        {
+            <div class="text-muted text-sm">Henüz talep gönderilmedi.</div>
+        }
+        else
+        {
+            <div class="timeline">
+                @foreach (var r in Model.Requests.Take(5))
+                {
+                    var st = DealerLabels.RequestStatus(r.Status);
+                    <div class="timeline__item">
+                        <div class="timeline__time">@r.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                        <div class="timeline__title">@r.CompanyCode — @r.RequestedPackageName</div>
+                        <span class="badge @st.Css"><span class="dot"></span>@st.Text</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>lucide.createIcons();</script>
+}

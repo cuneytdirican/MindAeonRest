@@ -1,0 +1,76 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Pos.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Kredi Kartı POS" : $"POS · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>💳 @(Model.IsNew ? "Yeni Kredi Kartı POS" : "Kredi Kartı POS Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Pos">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Şube + banka + döviz zorunludur.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>POS Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Şube *</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Banka *</label>
+            <select asp-for="BankId" asp-items="Model.BankOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Döviz Tipi *</label>
+            <select asp-for="CurrencyId" asp-items="Model.CurrencyOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Kapsam *</label>
+            <select asp-for="Scope" asp-items="Model.ScopeOptions" class="field" id="scopeSelect" required></select>
+        </div>
+        <div class="frm-row" id="kioskRow">
+            <label>KIOSK</label>
+            <select asp-for="KioskId" asp-items="Model.KioskOptions" class="field"></select>
+            <small class="hint">KIOSK POS kapsamında zorunlu; liste seçili şubeye göredir (şubeyi değiştirdiyseniz kaydedip yeniden açın).</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Pos" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // Kapsam KIOSK olduğunda KIOSK satırını göster.
+        const scopeSel = document.getElementById('scopeSelect');
+        const kioskRow = document.getElementById('kioskRow');
+        function syncKiosk() {
+            const isKiosk = scopeSel && scopeSel.value === '1';
+            if (kioskRow) kioskRow.style.display = isKiosk ? '' : 'none';
+        }
+        scopeSel?.addEventListener('change', syncKiosk);
+        syncKiosk();
+    </script>
+}

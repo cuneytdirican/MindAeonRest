@@ -1,0 +1,63 @@
+@using System.Text.Json
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.PackagesModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Paket</th>
+                <th>Süre</th>
+                <th class="num">Taban Fiyat</th>
+                <th>Durum</th>
+                <th>Güncelleme</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-muted" style="text-align:center; padding:var(--sp-6);">Fiyat tanımı yok.</td></tr>
+            }
+            @foreach (var p in Model.Items)
+            {
+                var payload = JsonSerializer.Serialize(new
+                {
+                    id = p.Id,
+                    package = p.Package,
+                    duration = (int)p.Duration,
+                    basePrice = p.BasePrice,
+                    currencyCode = p.CurrencyCode,
+                    isActive = p.IsActive
+                });
+                <tr>
+                    <td><span class="badge primary">@p.PackageName</span></td>
+                    <td>@AdminLabels.Duration(p.Duration)</td>
+                    <td class="num money">@p.BasePrice.ToString("N2") <span class="text-muted text-sm">@p.CurrencyCode</span></td>
+                    <td>
+                        @if (p.IsActive)
+                        {
+                            <span class="badge success"><span class="dot"></span> Açık</span>
+                        }
+                        else
+                        {
+                            <span class="badge"><span class="dot"></span> Kapalı</span>
+                        }
+                    </td>
+                    <td class="text-sm">@((p.UpdatedUtc ?? p.CreatedUtc).ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-sm" x-on:click="$dispatch('edit-price', @Html.Raw(payload))">
+                            <i data-lucide="pencil"></i>
+                        </button>
+                        <form style="display:inline;" hx-post="/Admin/Packages?handler=Delete&id=@p.Id"
+                              hx-target="#priceTable" hx-swap="innerHTML"
+                              hx-confirm="Bu fiyat satırı silinsin mi?">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger"><i data-lucide="trash-2"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

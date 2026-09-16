@@ -1,0 +1,106 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.CekSenet.IndexModel
+@{
+    ViewData["Title"] = "Çek / Senet Portföyü";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 Çek / Senet Portföyü</h1>
+    <a class="btn btn-primary" href="/BackOffice/CekSenet/Edit">+ Yeni Çek/Senet</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert-success">@Model.Message</div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error">@Model.Error</div> }
+
+<form method="get" class="bo-filter">
+    <input type="text" name="Q" value="@Model.Q" placeholder="Seri/No, banka veya cari ara..." class="field" />
+    <select name="Dir" class="field">
+        <option value="-1" selected="@(Model.Dir == -1)">Yön: Tümü</option>
+        <option value="0" selected="@(Model.Dir == 0)">Alınan</option>
+        <option value="1" selected="@(Model.Dir == 1)">Verilen</option>
+    </select>
+    <select name="Status" class="field">
+        <option value="-1" selected="@(Model.Status == -1)">Durum: Tümü</option>
+        @foreach (var s in Enum.GetValues<CheckStatus>())
+        {
+            <option value="@((int)s)" selected="@(Model.Status == (int)s)">@s.ToTr()</option>
+        }
+    </select>
+    <label class="chk"><input type="checkbox" name="Upcoming" value="true" @(Model.Upcoming ? "checked" : "") /> Vadesi yaklaşan (≤7 gün, açık)</label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Tür</th><th>Yön</th><th>Cari</th><th>Seri/No</th><th>Banka</th>
+                <th class="ar">Tutar</th><th>Vade</th><th>Kalan</th><th>Durum</th><th class="ar">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="10" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var n in Model.Items)
+        {
+            <tr>
+                <td>@n.KindText</td>
+                <td>@n.DirectionText</td>
+                <td>@n.CustomerName</td>
+                <td>@(string.IsNullOrEmpty(n.Serial) ? "—" : n.Serial)</td>
+                <td>@(string.IsNullOrEmpty(n.BankName) ? "—" : n.BankName)</td>
+                <td class="ar"><b>@n.AmountText</b></td>
+                <td>@n.DueText</td>
+                <td>
+                    @if (n.IsClosed) { <span class="badge-off">—</span> }
+                    else if (n.DaysToDue < 0) { <span class="badge-del">@n.DaysToDueText</span> }
+                    else if (n.DaysToDue <= 7) { <span class="badge-del" style="color:#c47f00">@n.DaysToDueText</span> }
+                    else { <span>@n.DaysToDueText</span> }
+                </td>
+                <td>@n.StatusText</td>
+                <td class="ar">
+                    <form method="post" asp-page-handler="ChangeStatus" style="display:inline">
+                        <input type="hidden" name="id" value="@n.Id" />
+                        <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="Dir" value="@Model.Dir" />
+                        <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Upcoming" value="@Model.Upcoming" />
+                        <select name="status" class="field" onchange="this.form.submit()" title="Durum değiştir">
+                            @foreach (var s in Enum.GetValues<CheckStatus>())
+                            {
+                                <option value="@((int)s)" selected="@(n.Status == s)">@s.ToTr()</option>
+                            }
+                        </select>
+                    </form>
+                    @if (!n.IsClosed && Model.BankAccounts.Count > 0)
+                    {
+                        <form method="post" asp-page-handler="CollectToBank" style="display:inline" title="@(n.Direction == CheckDirection.Alinan ? "Bankaya tahsil" : "Bankadan ödeme")">
+                            <input type="hidden" name="id" value="@n.Id" />
+                            <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="Dir" value="@Model.Dir" />
+                            <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Upcoming" value="@Model.Upcoming" />
+                            <select name="bankAccountId" class="field">
+                                <option value="0">Banka seç…</option>
+                                @foreach (var b in Model.BankAccounts)
+                                {
+                                    <option value="@b.Id">@b.Display</option>
+                                }
+                            </select>
+                            <button class="btn btn-sm" type="submit">@(n.Direction == CheckDirection.Alinan ? "Bankaya Tahsil" : "Bankadan Öde")</button>
+                        </form>
+                    }
+                    <a class="btn btn-sm" href="/BackOffice/CekSenet/Edit/@n.Id">Düzenle</a>
+                    <form method="post" asp-page-handler="ToggleDelete" style="display:inline" onsubmit="return confirm('Bu çek/senet silinsin mi?')">
+                        <input type="hidden" name="id" value="@n.Id" /><input type="hidden" name="deleted" value="true" />
+                        <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="Dir" value="@Model.Dir" />
+                        <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Upcoming" value="@Model.Upcoming" />
+                        <button class="btn btn-sm btn-danger" type="submit">Sil</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count kayıt</div>

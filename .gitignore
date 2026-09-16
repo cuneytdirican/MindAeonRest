@@ -1,0 +1,37 @@
+# Derleme çıktıları
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+.vs/
+
+# SIRLAR / ANAHTARLAR — repoya ASLA girmemeli
+_licensekeys/
+_androidkeys/
+private*.xml
+*.key
+*.pfx
+*.snk
+appsettings.*.json
+!appsettings.json
+appsettings.Production.json
+appsettings.Local.json
+issued-licenses.json
+*.lic
+mobileapi.path
+
+# Mobil/dağıtım
+dist/
+_publish/
+mobilepublish.txt
+App_Data/
+*.apk
+*.aab
+*.keystore
+
+# Diğer
+*.log
+
+# Kişisel IDE ayarları
+.cr/

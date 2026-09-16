@@ -1,0 +1,179 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Restoran & Cafe & Bar Otomasyonu";
+    string Money(decimal? v, string cur) => v.HasValue ? $"{v.Value:N0} {cur}" : "İletişim";
+}
+
+<!-- HERO -->
+<section class="hero">
+    <div class="wrap hero-inner">
+        <div class="hero-text">
+            <div class="pill-badge">☁️ Kurulum yok · Her cihazdan çalışır</div>
+            <h1>Restoranınızın <span>tüm operasyonu</span> tek ekranda.</h1>
+            <p>Adisyon, mutfak ekranı, ödeme, kurye, rezervasyon, raporlar ve ön muhasebe —
+               MindAeonRest ile bulutta. Tablet, telefon, kasa; hepsi anlık senkron.</p>
+            <div class="hero-cta">
+                <a class="btn btn-primary btn-lg" href="/Login">Giriş Yap</a>
+                <a class="btn btn-ghost btn-lg" href="#fiyat">Paketleri Gör</a>
+            </div>
+            <div class="hero-trust">POS · KDS · Offline · QR Sipariş · Trendyol/Getir/Yemeksepeti · Sadakat · e-Fatura · Çok Şube</div>
+        </div>
+        <div class="hero-shot">
+            <img src="~/img/hero.svg" alt="Restoran ambiyansı" class="hero-img" />
+        </div>
+    </div>
+</section>
+
+<!-- ÖZELLİKLER -->
+<section id="ozellikler" class="section">
+    <div class="wrap">
+        <h2 class="section-title">Neler yapabilirsiniz?</h2>
+        <p class="section-sub">Sahadan mutfağa, kasadan yönetime — uçtan uca tek sistem.</p>
+        <div class="feature-grid">
+            @foreach (var f in new[] {
+                ("🧾","Adisyon / POS","Masa, paket, self-servis; hızlı ürün ekleme, ikram/iskonto, kampanya."),
+                ("📴","Offline Çalışır","İnternet kesilse de satış durmaz; bağlantı gelince otomatik senkron."),
+                ("📱","QR ile Masadan Sipariş","Müşteri masadaki QR'ı okutur, menüden kendi siparişini geçer — temassız."),
+                ("👨‍🍳","Mutfak Ekranı (KDS)","Sipariş aşamaları, kısmi hazırlama, bar/mutfak istasyonları, gecikme uyarısı."),
+                ("💳","12 Ödeme Yöntemi","Nakit, kart, yemek çeki, açık hesap, hediye çeki, puan — doğru deftere işlenir."),
+                ("🛍️","Trendyol · Getir · Yemeksepeti","Yemek platformu siparişleri otomatik düşer; menü/durum tek panelden senkron."),
+                ("📈","Menü & Kâr Analizi","Yıldız/at ürünler, kârlılık ve satış performansıyla menü mühendisliği."),
+                ("🧠","Stok Zekâsı","Düşük stok tespiti, ortalama maliyet, otomatik sipariş taslağı ve fire takibi."),
+                ("📄","e-Fatura & Muhasebe","e-Fatura/e-Arşiv gönderimi ve muhasebe programına tek tıkla aktarım."),
+                ("🧑‍🍳","Personel & Puantaj","Personel kartları, mesai giriş/çıkış (time-clock), izin ve bahşiş havuzu."),
+                ("⭐","Müşteri Sadakat Uygulaması","Telefon+OTP ile müşteri portalı: puan bakiyesi, sipariş geçmişi, yeniden sipariş."),
+                ("📅","Online Rezervasyon","Web'den masa rezervasyonu, bekleme listesi, etiketler ve doluluk planı."),
+                ("📣","SMS / WhatsApp Kampanya","Segmentli toplu gönderim (doğum günü, sadık müşteri) SMS/e-posta/WhatsApp."),
+                ("💬","Geri Bildirim","Adisyon sonrası 1-5 yıldız anketi ve Google yorum yönlendirmeli memnuniyet hunisi."),
+                ("📊","Raporlar & Dashboard","Anlık ciro, ödeme kırılımı, X/Z, vardiya, iş günü kesimi, canlı masa doluluğu."),
+                ("🎯","Kampanyalar","Koşullu kampanyalar, X Al Y Öde, otomatik/zorunlu uygulama."),
+                ("🏢","Çok Şube & Ön Muhasebe","Şube bazlı fiyat/stok, cari, kasa/banka/POS, evrak ve ön muhasebe."),
+            })
+            {
+                <div class="feature-card">
+                    <div class="feature-ico">@f.Item1</div>
+                    <h3>@f.Item2</h3>
+                    <p>@f.Item3</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- MEKAN GALERİSİ -->
+<section class="section section-alt">
+    <div class="wrap">
+        <h2 class="section-title">Her mekana uygun</h2>
+        <p class="section-sub">Restoran, cafe, bar ve mutfak — hepsi tek sistemde.</p>
+        <div class="screens">
+            @foreach (var s in new[] { ("dining","Restoran"), ("cafe","Cafe"), ("bar","Bar"), ("kitchen","Mutfak") })
+            {
+                <figure class="screen">
+                    <img src="@Url.Content($"~/img/{s.Item1}.svg")" alt="@s.Item2" loading="lazy" />
+                    <figcaption>@s.Item2</figcaption>
+                </figure>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- FİYAT -->
+<section id="fiyat" class="section">
+    <div class="wrap">
+        <h2 class="section-title">Paketler</h2>
+        <p class="section-sub">
+            @(Model.Pricing.Live ? "Güncel liste fiyatları" : "Fiyat bilgisi için bizimle iletişime geçin")
+        </p>
+        <div class="price-grid">
+            @foreach (var p in Model.Pricing.Packages)
+            {
+                <div class="price-card @(p.Highlighted ? "highlight" : "")">
+                    @if (p.Highlighted) { <div class="price-tag">En Popüler</div> }
+                    <h3>@p.Name</h3>
+                    <div class="price">
+                        @if (p.Monthly.HasValue) { <span class="amount">@Money(p.Monthly, p.Currency)</span> <span class="per">/ay</span> }
+                        else if (p.Yearly.HasValue) { <span class="amount">@Money(p.Yearly, p.Currency)</span> <span class="per">/yıl</span> }
+                        else { <span class="amount">İletişim</span> }
+                    </div>
+                    <ul class="limits">
+                        <li>👤 @(p.MaxUsers >= int.MaxValue ? "Sınırsız" : p.MaxUsers.ToString()) kullanıcı</li>
+                        <li>🖥️ @(p.MaxKiosks >= int.MaxValue ? "Sınırsız" : p.MaxKiosks.ToString()) terminal</li>
+                        <li>🏢 @(p.MaxBranches >= int.MaxValue ? "Sınırsız" : p.MaxBranches.ToString()) şube</li>
+                    </ul>
+                    <ul class="feature-list">
+                        @foreach (var feat in p.Features) { <li>✓ @feat</li> }
+                    </ul>
+                    <a class="btn btn-primary btn-block" href="/Login">Başla</a>
+                </div>
+            }
+        </div>
+
+        @if (Model.Pricing.AddOns.Count > 0)
+        {
+            <h3 class="addon-title">Ek Modüller & Birimler</h3>
+            <div class="addon-grid">
+                @foreach (var a in Model.Pricing.AddOns)
+                {
+                    <div class="addon-card"><span>@a.Name</span><b>@Money(a.UnitPrice, a.Currency)</b></div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<!-- SSS -->
+<section id="sss" class="section section-alt">
+    <div class="wrap narrow">
+        <h2 class="section-title">Sık Sorulan Sorular</h2>
+        @foreach (var q in new[] {
+            ("Kurulum gerekiyor mu?","Hayır. Tarayıcıdan giriş yapıp kullanmaya başlarsınız; verileriniz bizim güvenli sunucumuzda tutulur."),
+            ("Verilerim güvende mi?","Her işletmenin verisi ayrı veritabanında izole tutulur; şifreli bağlantı ve erişim denetimi uygulanır."),
+            ("Mobil cihazdan çalışır mı?","Evet. Telefon ve tabletten garson/mutfak/kasiyer ekranları tam uyumlu çalışır."),
+            ("Şirket kodumu nereden alırım?","İşletmeniz oluşturulduğunda size özel şirket kodu ve yönetici hesabı tarafımızca verilir."),
+        })
+        {
+            <details class="faq"><summary>@q.Item1</summary><p>@q.Item2</p></details>
+        }
+    </div>
+</section>
+
+<!-- İLETİŞİM -->
+<section id="iletisim" class="section">
+    <div class="wrap narrow center">
+        <h2 class="section-title">Hemen başlayın</h2>
+        <p class="section-sub">İşletmenizi kuralım, size özel kod ve yönetici hesabınızı verelim.</p>
+        <div class="hero-cta center">
+            <a class="btn btn-primary btn-lg" href="mailto:info@mobilteg.com.tr">İletişime Geç</a>
+            <a class="btn btn-ghost btn-lg" href="/Login">Zaten Hesabım Var</a>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <h3 class="section-title" style="margin-top:2.5rem">İletişim Bilgileri</h3>
+        <div class="feature-grid contact-grid">
+            <div class="feature-card contact-card">
+                <div class="feature-ico">🏢</div>
+                <h3>Bursa Merkez</h3>
+                <p>📍 Ulutek Teknoloji Geliştirme Bölgesi<br />Uludağ Üniv. K:3 D:303 Nilüfer, BURSA</p>
+                <p>📞 <a href="tel:+908508850034">0 850 885 00 34</a></p>
+                <p>📞 <a href="tel:+902242808575">0 224 280 85 75</a></p>
+                <p>📠 0 224 280 85 76</p>
+            </div>
+            <div class="feature-card contact-card">
+                <div class="feature-ico">🏢</div>
+                <h3>İstanbul Şube</h3>
+                <p>📍 Tatlısu Mah. Şenol Güneş Bulvarı<br />No:2 D:3 Şerifali, İSTANBUL</p>
+                <p>📞 <a href="tel:+908508850034">0 850 885 00 34</a></p>
+                <p>📠 0 850 321 58 53</p>
+            </div>
+            <div class="feature-card contact-card">
+                <div class="feature-ico">📇</div>
+                <h3>Kurumsal Bilgiler</h3>
+                <p>🏢 Vergi D.: Nilüfer (622 049 43 60)</p>
+                <p>🏢 Ticaret Sicil No: 61649</p>
+                <p>✉️ <a href="mailto:info@mobilteg.com.tr">info@mobilteg.com.tr</a></p>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,172 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SysAdmin.UsersModel
+@{
+    ViewData["Title"] = "Kullanıcılar (Süper Admin)";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>👤 Kullanıcılar</h1>
+    <a class="btn btn-primary" href="/BackOffice/SysAdmin/UserEdit">➕ Yeni Kullanıcı</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert-success">@Model.Message</div>
+}
+
+<div class="bo-card bo-hint" style="margin-bottom:12px">
+    Bu konsol yalnız <strong>Sistem Yöneticisi (SysAdmin)</strong> içindir. Sistemdeki TÜM kullanıcılar (çapraz-kiracılı)
+    burada listelenir. Pasifleştirilen kullanıcı hiçbir şirkete giriş yapamaz.
+</div>
+
+@* Geçici parola paneli — TEK SEFER. Redirect/TempData YOK; sayfa yenilenince kaybolur. Hiçbir yerde saklanmaz. *@
+@if (Model.Reset is { } rr)
+{
+    <div class="bo-card bo-form" style="border:1px solid var(--warn,#c98a00);margin-bottom:16px">
+        <h3 style="margin:0 0 10px">🔑 Geçici Parola — @rr.FullName <small class="muted">(@rr.Username)</small></h3>
+        <div class="bo-alert" style="margin-bottom:14px">
+            ⚠️ <strong>Bu geçici parola yalnızca bir kez gösterilir.</strong> Hiçbir yerde saklanmaz, loglanmaz ve
+            tekrar görüntülenemez. Kullanıcıya <strong>güvenli bir kanaldan</strong> iletin; ilk girişte değişmesi zorunludur.
+        </div>
+        <div class="frm-row">
+            <label>Geçici Parola</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;max-width:560px">
+                <input id="tpass" class="field" value="@rr.TempPassword" readonly onclick="this.select()"
+                       style="font-family:Consolas,monospace;flex:1;min-width:200px" />
+                <button type="button" class="btn btn-sm" id="copybtn" data-copy="@rr.TempPassword">Kopyala</button>
+            </div>
+            <small class="hint" id="copymsg" style="visibility:hidden">Panoya kopyalandı.</small>
+        </div>
+        <div class="frm-row">
+            <label></label>
+            <a class="btn btn-ghost" href="/BackOffice/SysAdmin/Users">Kapat</a>
+        </div>
+    </div>
+}
+
+<div class="bo-card" style="margin-bottom:12px">
+    <form method="get" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+            <label class="hint" style="display:block;margin-bottom:4px">Şirket</label>
+            <select name="company" class="field" style="min-width:220px">
+                <option value="">Tüm şirketler</option>
+                @foreach (var c in Model.CompanyFilterOptions)
+                {
+                    <option value="@c.Id" selected="@(Model.CompanyFilter == c.Id)">@c.Code — @c.Name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="hint" style="display:block;margin-bottom:4px">Ara (kullanıcı adı / ad soyad)</label>
+            <input name="q" class="field" value="@Model.Query" style="min-width:220px" autocomplete="off" />
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary">Filtrele</button>
+            <a href="/BackOffice/SysAdmin/Users" class="btn btn-ghost">Temizle</a>
+        </div>
+    </form>
+</div>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kullanıcı Adı</th>
+                <th>Ad Soyad</th>
+                <th>Roller</th>
+                <th>Şirket Erişimi</th>
+                <th>Durum</th>
+                <th>Son Giriş</th>
+                <th class="ar">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="7" class="empty">Kayıtlı kullanıcı yok.</td></tr>
+        }
+        @foreach (var r in Model.Rows)
+        {
+            <tr class="@(r.IsActive ? "" : "row-deleted")">
+                <td><b>@r.Username</b></td>
+                <td>@r.FullName</td>
+                <td>
+                    @if (r.IsSysAdmin) { <span class="badge-del">SysAdmin</span> }
+                    else { @string.Join(", ", r.Roles) }
+                </td>
+                <td>
+                    @if (r.IsSysAdmin) { <span class="muted">Tüm şirketler</span> }
+                    else if (r.Companies.Count == 0) { <span class="muted">— (erişim yok)</span> }
+                    else { @string.Join(", ", r.Companies) }
+                </td>
+                <td>
+                    @if (r.IsActive) { <span class="badge-ok">Aktif</span> }
+                    else { <span class="badge-del">Pasif</span> }
+                </td>
+                <td>@(r.LastLoginAt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
+                <td class="ar">
+                    <a class="btn btn-sm" href="/BackOffice/SysAdmin/UserEdit/@r.Id">Düzenle</a>
+                    @* Aktif/pasif — doğrudan form POST, native onay YOK. Filtre korunur. *@
+                    <form method="post" asp-page-handler="SetActive" style="display:inline">
+                        <input type="hidden" name="userId" value="@r.Id" />
+                        <input type="hidden" name="active" value="@((!r.IsActive).ToString().ToLowerInvariant())" />
+                        <input type="hidden" name="company" value="@Model.CompanyFilter" />
+                        <input type="hidden" name="q" value="@Model.Query" />
+                        @if (r.IsActive)
+                        {
+                            <button class="btn btn-sm btn-danger" type="submit">Pasifleştir</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm" type="submit">Aktifleştir</button>
+                        }
+                    </form>
+                    @* Parola sıfırla — geçici parola bu yanıtta panelde gösterilir. Native onay YOK. *@
+                    <form method="post" asp-page-handler="ResetPassword" style="display:inline">
+                        <input type="hidden" name="userId" value="@r.Id" />
+                        <input type="hidden" name="company" value="@Model.CompanyFilter" />
+                        <input type="hidden" name="q" value="@Model.Query" />
+                        <button class="btn btn-sm btn-ghost" type="submit">Parola Sıfırla</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Rows.Count kullanıcı</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var btn = document.getElementById('copybtn');
+            var msg = document.getElementById('copymsg');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var val = btn.getAttribute('data-copy') || '';
+                var done = function () {
+                    if (msg) {
+                        msg.style.visibility = 'visible';
+                        setTimeout(function () { msg.style.visibility = 'hidden'; }, 2500);
+                    }
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(val).then(done, function () {
+                        var inp = document.getElementById('tpass');
+                        if (inp) { inp.select(); document.execCommand('copy'); }
+                        done();
+                    });
+                } else {
+                    var inp = document.getElementById('tpass');
+                    if (inp) { inp.select(); document.execCommand('copy'); }
+                    done();
+                }
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,155 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.Stock.IndexModel
+@{
+    ViewData["Title"] = "Stok Raporları";
+    Layout = "_BackOfficeLayout";
+    var qs = new Dictionary<string, string?>
+    {
+        ["BranchId"] = Model.BranchId?.ToString(),
+        ["WarehouseId"] = Model.WarehouseId?.ToString(),
+        ["From"] = Model.From?.ToString("yyyy-MM-dd"),
+        ["To"] = Model.To?.ToString("yyyy-MM-dd"),
+        ["Q"] = Model.Q,
+    };
+    string TabUrl(string tab)
+    {
+        var pairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+        pairs.Add($"Tab={tab}");
+        return "/BackOffice/Reports/Stock?" + string.Join("&", pairs);
+    }
+    string CsvUrl()
+    {
+        var pairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+        pairs.Insert(0, "handler=Csv");
+        pairs.Add($"Tab={Model.Tab}");
+        return "/BackOffice/Reports/Stock?" + string.Join("&", pairs);
+    }
+}
+
+<div class="bo-page-head">
+    <h1>📦 Stok Raporları</h1>
+    <a class="btn btn-ghost" href="@CsvUrl()">⬇ CSV İndir</a>
+    <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+</div>
+
+<div class="bo-tabs" style="margin:12px 0;">
+    <a class="btn @(Model.MovesTab ? "" : "btn-primary")" href="@TabUrl("qty")">STOK MİKTAR</a>
+    <a class="btn @(Model.MovesTab ? "btn-primary" : "")" href="@TabUrl("moves")">STOK HAREKET</a>
+</div>
+
+@if (!Model.MovesTab)
+{
+    <form method="get" class="bo-filter">
+        <select name="BranchId" class="field">
+            <option value="">— Tüm şubeler —</option>
+            @foreach (var b in Model.BranchOptions)
+            {
+                <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+            }
+        </select>
+        <select name="WarehouseId" class="field">
+            <option value="">— Tüm depolar —</option>
+            @foreach (var w in Model.WarehouseOptions)
+            {
+                <option value="@w.Value" selected="@(Model.WarehouseId == w.Value)">@w.Text</option>
+            }
+        </select>
+        <input type="text" name="Q" value="@Model.Q" placeholder="Kod / ürün ara..." class="field" />
+        <input type="hidden" name="Tab" value="qty" />
+        <button type="submit" class="btn btn-primary">🔍 Göster</button>
+    </form>
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Kod</th><th>Ürün</th><th>Depo</th>
+                    <th class="ar">Miktar</th><th>Birim</th>
+                    <th class="ar">Alt Birim Miktar</th><th>Alt Birim</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Balances.Count == 0)
+            {
+                <tr><td colspan="7" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var b in Model.Balances)
+            {
+                <tr>
+                    <td><b>@b.Code</b></td>
+                    <td>@b.Name</td>
+                    <td>@b.WarehouseName</td>
+                    <td class="ar">@b.Qty.ToString("0.###")</td>
+                    <td>@b.MainUnit</td>
+                    <td class="ar">@(b.AltQty?.ToString("0.###"))</td>
+                    <td>@b.AltUnit</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-card">
+        <b>Kalem:</b> @Model.BalanceCount
+    </div>
+}
+else
+{
+    <form method="get" class="bo-filter">
+        <select name="BranchId" class="field">
+            <option value="">— Tüm şubeler —</option>
+            @foreach (var b in Model.BranchOptions)
+            {
+                <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+            }
+        </select>
+        <select name="WarehouseId" class="field">
+            <option value="">— Tüm depolar —</option>
+            @foreach (var w in Model.WarehouseOptions)
+            {
+                <option value="@w.Value" selected="@(Model.WarehouseId == w.Value)">@w.Text</option>
+            }
+        </select>
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+        <input type="text" name="Q" value="@Model.Q" placeholder="Ürün ara..." class="field" />
+        <input type="hidden" name="Tab" value="moves" />
+        <button type="submit" class="btn btn-primary">🔍 Göster</button>
+    </form>
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th><th>Ürün</th><th>Depo</th>
+                    <th>Hareket</th><th class="ar">Miktar</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Movements.Count == 0)
+            {
+                <tr><td colspan="5" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var m in Model.Movements)
+            {
+                <tr>
+                    <td>@m.DateText</td>
+                    <td>@m.ProductName</td>
+                    <td>@m.WarehouseName</td>
+                    <td>@m.TypeText</td>
+                    <td class="ar">@m.Qty.ToString("0.###")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-card">
+        <b>Hareket:</b> @Model.MovementCount &nbsp;·&nbsp;
+        <b>Giriş:</b> @Model.Giris.ToString("0.###") &nbsp;·&nbsp;
+        <b>Çıkış:</b> @Model.Cikis.ToString("0.###") &nbsp;·&nbsp;
+        <b>Net:</b> @Model.Net.ToString("0.###")
+    </div>
+}
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Excel / PDF dışa aktarım masaüstü (WPF) uygulamasına özeldir. Web'de CSV indirme (⬇ CSV İndir) ile yazdır/PDF için tarayıcının "Yazdır" penceresi (🖨 Yazdır) kullanılabilir.
+</p>

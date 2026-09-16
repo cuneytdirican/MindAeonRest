@@ -1,0 +1,57 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.BankAccounts.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Banka Hesabı" : $"Banka Hesabı · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>💳 @(Model.IsNew ? "Yeni Banka Hesabı" : "Banka Hesabı Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/BankAccounts">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Hesap Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Banka *</label>
+            <select asp-for="BankId" asp-items="Model.Banks" class="field" required>
+                <option value="">— Banka seçiniz —</option>
+            </select>
+        </div>
+        <div class="frm-row">
+            <label>Döviz Tipi *</label>
+            <select asp-for="CurrencyId" asp-items="Model.Currencies" class="field" required>
+                <option value="">— Döviz seçiniz —</option>
+            </select>
+            <small class="hint">Döviz tipi zorunludur.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/BankAccounts" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+    </script>
+}

@@ -1,0 +1,101 @@
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.DealersModel
+@{
+    var d = Model.Detail;
+    var e = Model.Earnings;
+}
+@if (d is null)
+{
+    <div class="card"><p class="text-muted mb-0">Bayi bulunamadı.</p></div>
+}
+else
+{
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <!-- Marj / bilgi editörü -->
+        <div class="card" style="border-color:var(--primary);">
+            <div class="card__head">
+                <h3 class="card__title">@d.Name</h3>
+                @if (d.IsActive)
+                {
+                    <span class="badge success"><span class="dot"></span> Aktif</span>
+                }
+                else
+                {
+                    <span class="badge"><span class="dot"></span> Pasif</span>
+                }
+            </div>
+            <form hx-post="/Admin/Dealers?handler=Update" hx-target="#dlrTable" hx-swap="innerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@d.Id" />
+                <div class="form-field"><label>Bayi Adı *</label><input type="text" name="name" value="@d.Name" required /></div>
+                <div class="grid grid-2">
+                    <div class="form-field"><label>İlgili Kişi</label><input type="text" name="contactName" value="@d.ContactName" /></div>
+                    <div class="form-field"><label>Telefon</label><input type="text" name="phone" value="@d.Phone" /></div>
+                </div>
+                <div class="form-field"><label>E-posta</label><input type="email" name="email" value="@d.Email" /></div>
+                <div class="grid grid-2">
+                    <div class="form-field">
+                        <label>Marj (%)</label>
+                        <input type="number" step="0.01" min="0" max="100" name="marginPercent" value="@d.MarginPercent.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                        <div class="hint">Taban fiyata uygulanır; brüt = taban × (1 + marj).</div>
+                    </div>
+                    <div class="form-field">
+                        <label>Tahsilat Modeli</label>
+                        <select name="billingMode">
+                            <option value="0" selected="@(d.BillingMode == MindAeonRest.Licence.Data.BillingMode.CustomerPaysUs)">Müşteri öder</option>
+                            <option value="1" selected="@(d.BillingMode == MindAeonRest.Licence.Data.BillingMode.DealerPaysUs)">Bayi öder</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label class="flex items-center gap-2" style="flex-direction:row;">
+                        <input type="checkbox" name="isActive" value="true" checked="@d.IsActive" style="width:auto;" /> Aktif
+                    </label>
+                </div>
+                <div class="form-field"><label>Not</label><textarea name="notes" rows="2">@d.Notes</textarea></div>
+                <button type="submit" class="btn btn-primary btn-block"><i data-lucide="save"></i> Kaydet</button>
+            </form>
+        </div>
+
+        <!-- Kazanç özeti -->
+        <div class="card">
+            <div class="card__head">
+                <h3 class="card__title">Kazanç Özeti</h3>
+                <span class="badge primary"><span class="dot"></span> @(e?.CurrencyCode ?? "TRY")</span>
+            </div>
+            @if (e is null)
+            {
+                <p class="text-muted mb-0">Kazanç verisi yok.</p>
+            }
+            else
+            {
+                <div class="grid grid-2">
+                    <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                        <div class="kpi__label">Brüt Tahsilat</div>
+                        <div class="kpi__value money gross" style="font-size:var(--fs-xl);">@e.GrossTotal.ToString("N2")</div>
+                    </div>
+                    <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                        <div class="kpi__label">Bayi Marjı</div>
+                        <div class="kpi__value money margin" style="font-size:var(--fs-xl);">@e.MarginTotal.ToString("N2")</div>
+                    </div>
+                    <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                        <div class="kpi__label">Net (Biz)</div>
+                        <div class="kpi__value money net" style="font-size:var(--fs-xl);">@e.NetTotal.ToString("N2")</div>
+                    </div>
+                    <div class="kpi" style="padding:var(--sp-3) var(--sp-4);">
+                        <div class="kpi__label">Bekleyen</div>
+                        <div class="kpi__value money" style="font-size:var(--fs-xl);">@e.PendingGross.ToString("N2")</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-muted" style="margin-top:var(--sp-4);">
+                    <span>Tahsil edilen işlem: <strong>@e.PaidCount</strong></span>
+                    <span>Bekleyen işlem: <strong>@e.PendingCount</strong></span>
+                </div>
+                <div class="flex items-center justify-between text-sm text-muted" style="margin-top:var(--sp-2);">
+                    <span>İşletme: <strong>@d.BusinessCount</strong></span>
+                    <span>Lisans: <strong>@d.LicenseCount</strong></span>
+                </div>
+            }
+        </div>
+    </div>
+}

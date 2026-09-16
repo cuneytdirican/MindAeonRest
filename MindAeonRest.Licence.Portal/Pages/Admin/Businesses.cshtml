@@ -1,0 +1,32 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.BusinessesModel
+@{
+    ViewData["Title"] = "İşletmeler — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetim", "/Admin", "İşletmeler"))
+
+<div class="page-head">
+    <h1>İşletmeler</h1>
+    <div class="subtitle">Kayıtlı işletmeler, donanım bağı ve aktif lisans sayıları.</div>
+</div>
+
+<div class="card">
+    <form class="flex items-center gap-3" style="margin-bottom:var(--sp-4);"
+          hx-get="/Admin/Businesses?handler=Table" hx-target="#bizTable" hx-swap="innerHTML"
+          hx-trigger="submit, keyup changed delay:400ms from:input[name='Q']">
+        <div class="form-field" style="margin:0; flex:1; max-width:420px;">
+            <label>Ara</label>
+            <input type="search" name="Q" placeholder="Unvan, şirket kodu, şehir veya e-posta…" value="@Model.Q" />
+        </div>
+        <span class="htmx-indicator flex items-center gap-2 text-muted text-sm" style="align-self:flex-end; padding-bottom:10px;">
+            <i data-lucide="loader-circle"></i>
+        </span>
+    </form>
+
+    <div id="bizTable">
+        @await Html.PartialAsync("_BusinessesTable", Model)
+    </div>
+</div>
+@section Scripts {
+    <script>document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));</script>
+}

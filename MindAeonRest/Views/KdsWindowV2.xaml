@@ -1,0 +1,280 @@
+<Window x:Class="MindAeonRest.Views.KdsWindowV2"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:MindAeonRest.Views"
+        Title="Kitchen Display" WindowState="Maximized"
+        WindowStyle="None" Background="{DynamicResource BackgroundBrush}">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <v:StringToBrushConverter x:Key="Brush" />
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="8"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.86" /></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.72" /></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bd" Property="Opacity" Value="0.45" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Bir KDS kartındaki kalem satırı (TIKLA → o satırı bir aşama ilerlet) -->
+        <DataTemplate x:Key="LineTpl">
+            <Button Click="Line_Click" Tag="{Binding}" Cursor="Hand" Margin="0,3" Padding="0"
+                    HorizontalContentAlignment="Stretch" BorderThickness="0" Background="Transparent"
+                    ToolTip="Satırı bir aşama ilerlet">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="6" Padding="8,2" VerticalAlignment="Top">
+                        <TextBlock Text="{Binding QtyText}" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="14" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <TextBlock Text="{Binding ProductName}" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding ReyonName}" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding KitchenNote}" Foreground="{DynamicResource WarningBrush}" FontSize="12" TextWrapping="Wrap"
+                                   Visibility="{Binding HasNote, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="✓" Foreground="{DynamicResource SuccessBrush}" FontWeight="Bold" FontSize="13" Margin="0,0,4,0"
+                                   Visibility="{Binding IsReady, Converter={StaticResource BoolToVis}}" />
+                        <Ellipse Width="11" Height="11" Fill="{Binding StatusColor, Converter={StaticResource Brush}}" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <!-- Bir sütundaki sipariş kartı -->
+        <DataTemplate x:Key="CardTpl">
+            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="12" Margin="0,0,0,12" Padding="0"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                <StackPanel>
+                    <Border CornerRadius="12,12,0,0" Height="5" Background="{Binding ColumnColor, Converter={StaticResource Brush}}" />
+                    <StackPanel Margin="14,12,14,14">
+                        <Grid>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding TableTitle}" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="22" />
+                                    <Border CornerRadius="6" Padding="6,1" Margin="8,3,0,0" VerticalAlignment="Center"
+                                            Background="{Binding TypeBg, Converter={StaticResource Brush}}">
+                                        <TextBlock Text="{Binding TypeLabel}" Foreground="White" FontSize="10" FontWeight="Bold" />
+                                    </Border>
+                                    <Border Background="{DynamicResource AccentBrush}" CornerRadius="6" Padding="6,1" Margin="6,3,0,0" VerticalAlignment="Center"
+                                            Visibility="{Binding IsNew, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="YENİ" Foreground="White" FontSize="10" FontWeight="Bold" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Foreground="{DynamicResource TextMutedBrush}" FontSize="12.5" Margin="0,2,0,0">
+                                    <Run Text="{Binding WaiterName, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding CoverText, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding ZoneText}" Foreground="{DynamicResource TextMutedBrush}" FontSize="11.5" />
+                            </StackPanel>
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="6" Padding="7,2"
+                                    Background="{Binding TimeBg, Converter={StaticResource Brush}}">
+                                <TextBlock Text="{Binding TimeText}" Foreground="{Binding TimeFg, Converter={StaticResource Brush}}" FontSize="12.5" FontWeight="Bold" />
+                            </Border>
+                        </Grid>
+
+                        <!-- rozetler -->
+                        <WrapPanel Margin="0,8,0,0">
+                            <Border Background="{DynamicResource AccentBrush}" CornerRadius="6" Padding="7,2" Margin="0,0,6,4"
+                                    Visibility="{Binding IsVip, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="⭐ VIP" Foreground="White" FontSize="11.5" FontWeight="Bold" />
+                            </Border>
+                            <Border Background="{DynamicResource WarningBrush}" CornerRadius="6" Padding="7,2" Margin="0,0,6,4"
+                                    Visibility="{Binding Priority, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="⏫ ÖNCELİK" Foreground="White" FontSize="11.5" FontWeight="Bold" />
+                            </Border>
+                            <Border Background="#33EF4444" CornerRadius="6" Padding="7,2" Margin="0,0,6,4"
+                                    Visibility="{Binding HasSpicy, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="🌶 ACI" Foreground="{DynamicResource DangerBrush}" FontSize="11.5" FontWeight="Bold" />
+                            </Border>
+                            <Border Background="#33EF4444" CornerRadius="6" Padding="7,2" Margin="0,0,6,4"
+                                    Visibility="{Binding HasAllergy, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Foreground="{DynamicResource DangerBrush}" FontSize="11.5" FontWeight="Bold">
+                                    <Run Text="⚠ ALERJİ: " /><Run Text="{Binding AllergyNote, Mode=OneWay}" />
+                                </TextBlock>
+                            </Border>
+                            <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="6" Padding="7,2" Margin="0,0,6,4"
+                                    Visibility="{Binding HasNote, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding NoteText}" Foreground="{DynamicResource TextMutedBrush}" FontSize="11.5" />
+                            </Border>
+                        </WrapPanel>
+
+                        <!-- Soğuma uyarısı şeridi -->
+                        <Border Background="#33EF4444" CornerRadius="8" Padding="9,6" Margin="0,8,0,0"
+                                Visibility="{Binding IsCooling, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding CoolingText}" Foreground="{DynamicResource DangerBrush}" FontSize="12.5" FontWeight="Bold" TextWrapping="Wrap" />
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding Lines}" ItemTemplate="{StaticResource LineTpl}" Margin="0,8,0,0" />
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="{Binding ButtonText}" Padding="0,10" Cursor="Hand"
+                                    Background="{Binding ColumnColor, Converter={StaticResource Brush}}" Foreground="White" BorderThickness="0" FontWeight="Bold" FontSize="15"
+                                    Tag="{Binding}" Click="Advance_Click"
+                                    Visibility="{Binding ActionVisible, Converter={StaticResource BoolToVis}}" />
+                            <Button Grid.Column="1" Content="ℹ" Width="42" Padding="0,10" Margin="8,0,0,0" Cursor="Hand"
+                                    Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" FontWeight="Bold" FontSize="15"
+                                    Tag="{Binding}" Click="Info_Click" ToolTip="Sipariş detayı" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Kritik gecikme şeridi -->
+        <Border x:Name="AlertBar" Grid.Row="0" Background="#33EF4444" Padding="22,8" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="AlertText" Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                <ItemsControl x:Name="AlertChips" Margin="14,0,0,0">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#55EF4444" CornerRadius="6" Padding="8,2" Margin="0,0,8,0">
+                                <TextBlock Text="{Binding}" Foreground="White" FontSize="12" FontWeight="SemiBold" />
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Başlık + istatistik -->
+        <Grid Grid.Row="1" Background="{DynamicResource SurfaceBrush}" >
+            <Grid Margin="22,12">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="{DynamicResource WarningBrush}" CornerRadius="9" Width="38" Height="38" VerticalAlignment="Center">
+                        <TextBlock Text="👨‍🍳" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="KITCHEN DISPLAY" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="18" />
+                        <TextBlock x:Name="ServiceText" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" />
+                    </StackPanel>
+                    <TextBlock x:Name="ClockText" Foreground="{DynamicResource TextBrush}" FontSize="22" FontWeight="Bold" Margin="20,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <StackPanel Margin="14,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatActive" Text="0" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="AKTİF" Foreground="{DynamicResource TextMutedBrush}" FontSize="10" />
+                    </StackPanel>
+                    <StackPanel Margin="14,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatLate" Text="0" Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="GECİKEN" Foreground="{DynamicResource TextMutedBrush}" FontSize="10" />
+                    </StackPanel>
+                    <StackPanel Margin="14,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatPrep" Text="0 dk" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="ORT. HAZIRLIK" Foreground="{DynamicResource TextMutedBrush}" FontSize="10" />
+                    </StackPanel>
+                    <StackPanel Margin="14,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatCooling" Text="0" Foreground="{DynamicResource WarningBrush}" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="SOĞUYOR" Foreground="{DynamicResource TextMutedBrush}" FontSize="10" />
+                    </StackPanel>
+                    <Button x:Name="RushBtn" Content="🔥 RUSH MODE" Click="Rush_Click" Margin="14,0,0,0" Padding="12,7" Cursor="Hand"
+                            Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" FontWeight="Bold" />
+                    <Button x:Name="ThemeBtn" Content="🎨" Click="Theme_Click" Margin="8,0,0,0" Padding="10,7" Cursor="Hand"
+                            Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" ToolTip="Tema değiştir" />
+                    <Button Content="⎋ Çıkış" Click="Back_Click" Margin="8,0,0,0" Padding="12,7" Cursor="Hand"
+                            Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- İstasyon/kategori sekmeleri -->
+        <ItemsControl x:Name="TabHost" Grid.Row="2" Margin="22,10,22,0">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Tag="{Binding}" Click="Tab_Click" Margin="0,0,8,8" Padding="14,6" Cursor="Hand"
+                            Background="{Binding Bg}" Foreground="{Binding Fg}" BorderThickness="0" FontWeight="SemiBold">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Label}" />
+                            <Border Background="#33000000" CornerRadius="9" Padding="6,0" Margin="7,0,0,0" MinWidth="18">
+                                <TextBlock Text="{Binding CountText}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Kanban 4 sütun -->
+        <Grid Grid.Row="3" Margin="16,12,16,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.Resources>
+                <Style TargetType="ScrollViewer"><Setter Property="VerticalScrollBarVisibility" Value="Auto" /></Style>
+            </Grid.Resources>
+
+            <DockPanel Grid.Column="0" Margin="6,0">
+                <StackPanel DockPanel.Dock="Top" Margin="2,0,2,8">
+                    <Border Height="4" CornerRadius="2" Background="{DynamicResource WarningBrush}" />
+                    <Grid Margin="0,6,0,0">
+                        <TextBlock x:Name="Col0Title" Text="BEKLEYEN" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="14" />
+                        <TextBlock x:Name="Col0Avg" HorizontalAlignment="Right" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                    </Grid>
+                </StackPanel>
+                <ScrollViewer><ItemsControl x:Name="Col0" ItemTemplate="{StaticResource CardTpl}" /></ScrollViewer>
+            </DockPanel>
+
+            <DockPanel Grid.Column="1" Margin="6,0">
+                <StackPanel DockPanel.Dock="Top" Margin="2,0,2,8">
+                    <Border Height="4" CornerRadius="2" Background="#3B82F6" />
+                    <Grid Margin="0,6,0,0">
+                        <TextBlock x:Name="Col1Title" Text="HAZIRLANIYOR" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="14" />
+                        <TextBlock x:Name="Col1Avg" HorizontalAlignment="Right" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                    </Grid>
+                </StackPanel>
+                <ScrollViewer><ItemsControl x:Name="Col1" ItemTemplate="{StaticResource CardTpl}" /></ScrollViewer>
+            </DockPanel>
+
+            <DockPanel Grid.Column="2" Margin="6,0">
+                <StackPanel DockPanel.Dock="Top" Margin="2,0,2,8">
+                    <Border Height="4" CornerRadius="2" Background="{DynamicResource SuccessBrush}" />
+                    <Grid Margin="0,6,0,0">
+                        <TextBlock x:Name="Col2Title" Text="HAZIR" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="14" />
+                        <TextBlock x:Name="Col2Avg" HorizontalAlignment="Right" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                    </Grid>
+                </StackPanel>
+                <ScrollViewer><ItemsControl x:Name="Col2" ItemTemplate="{StaticResource CardTpl}" /></ScrollViewer>
+            </DockPanel>
+
+            <DockPanel Grid.Column="3" Margin="6,0">
+                <StackPanel DockPanel.Dock="Top" Margin="2,0,2,8">
+                    <Border Height="4" CornerRadius="2" Background="{DynamicResource TextMutedBrush}" />
+                    <Grid Margin="0,6,0,0">
+                        <TextBlock x:Name="Col3Title" Text="TAMAMLANDI" Foreground="{DynamicResource TextBrush}" FontWeight="Bold" FontSize="14" />
+                        <TextBlock x:Name="Col3Avg" HorizontalAlignment="Right" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                    </Grid>
+                </StackPanel>
+                <ScrollViewer><ItemsControl x:Name="Col3" ItemTemplate="{StaticResource CardTpl}" /></ScrollViewer>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</Window>

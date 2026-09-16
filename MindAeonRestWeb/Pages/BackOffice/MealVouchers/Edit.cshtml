@@ -1,0 +1,45 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.MealVouchers.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Yemek Çeki" : $"Yemek Çeki · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🎫 @(Model.IsNew ? "Yeni Yemek Çeki" : "Yemek Çeki Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/MealVouchers">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Yemek Çeki Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+            <small class="hint">Yemek çeki firması (ör. Sodexo, Multinet, Ticket).</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/MealVouchers" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+    </script>
+}

@@ -1,0 +1,101 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.CariHareket.IndexModel
+@{
+    ViewData["Title"] = "Cari Hareketler";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📒 Cari Hareketler</h1>
+    <a class="btn btn-primary" href="/BackOffice/CariHareket/Edit?customerId=@Model.CustomerId">+ Yeni Hareket</a>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="CustomerId" asp-items="Model.CustomerOptions" class="field"></select>
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+@if (Model.CustomerId <= 0)
+{
+    @* Cari seçili değil: tüm carilerin son hareketleri (WPF MainWindow CariHareketGrid = GetRecent(300)). *@
+    <div class="bo-card">
+        <p class="hint" style="margin-top:0">Ekstre görmek için bir cari seçiniz. Aşağıda tüm carilerin son hareketleri listelenir.</p>
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th><th>Cari</th><th>İşlem Tipi</th><th>Belge No</th><th>Açıklama</th>
+                    <th class="ar">Borç</th><th class="ar">Alacak</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.RecentRows.Count == 0)
+                {
+                    <tr><td colspan="7" class="empty">Hareket yok.</td></tr>
+                }
+                @foreach (var h in Model.RecentRows)
+                {
+                    <tr>
+                        <td>@h.TxnDate.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@(h.CustomerName ?? "—")</td>
+                        <td>@h.DocTypeText</td>
+                        <td>@(h.DocNo ?? "—")</td>
+                        <td>@(h.Description ?? "—")</td>
+                        <td class="ar">@(h.Debt != 0 ? h.Debt.ToString("N2") : "")</td>
+                        <td class="ar">@(h.Credit != 0 ? h.Credit.ToString("N2") : "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.RecentRows.Count hareket (son @Model.RecentRows.Count)</div>
+}
+else
+{
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th><th>İşlem Tipi</th><th>Belge No</th><th>Açıklama</th><th>Proje</th><th>Döviz</th>
+                    <th class="ar">Borç</th><th class="ar">Alacak</th><th class="ar">Bakiye</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="8"><b>Devir (Açılış Bakiyesi)</b></td>
+                    <td class="ar"><b>@Model.Opening.ToString("N2")</b></td>
+                </tr>
+                @if (Model.Rows.Count == 0)
+                {
+                    <tr><td colspan="9" class="empty">Bu dönemde hareket yok.</td></tr>
+                }
+                @foreach (var h in Model.Rows)
+                {
+                    <tr>
+                        <td>@h.TxnDate.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@h.DocTypeText</td>
+                        <td>@(h.DocNo ?? "—")</td>
+                        <td>@(h.Description ?? "—")</td>
+                        <td>@(h.ProjectCode ?? "—")</td>
+                        <td>@(h.CurrencyCode ?? "—")</td>
+                        <td class="ar">@(h.Debt != 0 ? h.Debt.ToString("N2") : "")</td>
+                        <td class="ar">@(h.Credit != 0 ? h.Credit.ToString("N2") : "")</td>
+                        <td class="ar">@h.RunningBalance.ToString("N2")</td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="6"><b>Toplam (GERÇEK BAKİYE)</b></td>
+                    <td class="ar"><b>@Model.TotalDebt.ToString("N2")</b></td>
+                    <td class="ar"><b>@Model.TotalCredit.ToString("N2")</b></td>
+                    <td class="ar"><b>@((Model.TotalDebt - Model.TotalCredit).ToString("N2"))</b></td>
+                </tr>
+                <tr>
+                    <td colspan="8"><b>Kapanış Bakiyesi</b></td>
+                    <td class="ar"><b>@Model.Closing.ToString("N2")</b></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.Rows.Count hareket</div>
+}

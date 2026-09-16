@@ -1,0 +1,52 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Units.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Birim" : $"Birim · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📏 @(Model.IsNew ? "Yeni Birim" : "Birim Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Units">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            @if (Model.IsNew)
+            {
+                <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+                <small class="hint">Benzersiz; otomatik BÜYÜK harfe çevrilir. Kaydettikten sonra değiştirilemez.</small>
+            }
+            else
+            {
+                <input asp-for="Code" class="field up" readonly />
+                <small class="hint">Kod düzenlenemez.</small>
+            }
+        </div>
+        <div class="frm-row">
+            <label>Birim Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Units" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]:not([readonly])')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+    </script>
+}

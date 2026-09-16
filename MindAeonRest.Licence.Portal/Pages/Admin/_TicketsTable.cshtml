@@ -1,0 +1,36 @@
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.TicketsModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Konu</th>
+                <th>Öncelik</th>
+                <th>Durum</th>
+                <th class="num">Mesaj</th>
+                <th>Güncelleme</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted" style="text-align:center; padding:var(--sp-6);">Talep yok.</td></tr>
+            }
+            @foreach (var t in Model.Items)
+            {
+                var st = AdminLabels.Ticket(t.Status);
+                var pr = AdminLabels.Priority(t.Priority);
+                <tr style="cursor:pointer;"
+                    hx-get="/Admin/Tickets?handler=Detail&id=@t.Id" hx-target="#tkDetail" hx-swap="innerHTML"
+                    x-on:click="$dispatch('open-detail')">
+                    <td style="font-weight:600;">@t.Subject</td>
+                    <td><span class="badge @pr.Css">@pr.Text</span></td>
+                    <td><span class="badge @st.Css"><span class="dot"></span> @st.Text</span></td>
+                    <td class="num">@t.MessageCount</td>
+                    <td class="text-sm">@((t.UpdatedUtc ?? t.CreatedUtc).ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

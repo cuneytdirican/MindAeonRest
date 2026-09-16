@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>MindAeonRestLicence</RootNamespace>
+    <AssemblyName>MindAeonRestLicence</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MindAeonRest.Licensing\MindAeonRest.Licensing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- ÖZEL ANAHTAR — yalnız dahili lisans-üretici makinede bulunur, müşteriye verilmez -->
+    <None Include="private.xml" Condition="Exists('private.xml')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

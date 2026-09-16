@@ -1,0 +1,58 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.MealVoucherOut.IndexModel
+@{
+    ViewData["Title"] = "Yemek Çeki Çıkışı";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🎫 Yemek Çeki Çıkışı</h1>
+    <a class="btn btn-ghost" href="/BackOffice/MealVoucherAccounts">← Hesaplar</a>
+</div>
+
+@if (TempData["Ok"] is string ok && !string.IsNullOrEmpty(ok))
+{
+    <div class="alert-success">@ok</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">
+        Toplanan yemek çekleri, Yemek Çeki Şirketi'ne (cari) <strong>Satış Faturası</strong> olarak çıkılır → şirket size borçlanır (cari borç).
+        Tahsilat sonra banka girişiyle yapılır.
+    </p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Yemek Çeki Hesabı</label>
+            <select asp-for="AccountId" asp-items="Model.AccountOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Yemek Çeki Şirketi (Cari) *</label>
+            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Tutar (₺) *</label>
+            <input asp-for="Amount" class="field" autocomplete="off" required placeholder="Örn: 1250,00" />
+        </div>
+        <div class="frm-row">
+            <label>Tarih *</label>
+            <input asp-for="Date" type="date" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Belge No</label>
+            <input asp-for="DocNo" class="field" maxlength="50" autocomplete="off" placeholder="Opsiyonel" />
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <input asp-for="Note" class="field" maxlength="250" autocomplete="off" />
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Satış Faturası Oluştur</button>
+            <a href="/BackOffice/MealVoucherAccounts" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>

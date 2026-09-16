@@ -1,0 +1,123 @@
+/* ===== Back-office layout ===== */
+.bo-shell{display:flex;min-height:calc(100vh - 62px)}
+.bo-nav{width:264px;flex:0 0 264px;background:var(--bg2);border-right:1px solid var(--line);
+  padding:14px 10px;overflow-y:auto;max-height:calc(100vh - 62px);position:sticky;top:62px}
+.bo-nav-home{display:block;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.bo-nav-home:hover,.bo-nav-home.on{background:var(--card2)}
+.bo-nav-sec{margin-bottom:4px}
+.bo-nav-sec>summary.bo-nav-title{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);
+  padding:9px 12px;border-radius:9px;user-select:none}
+.bo-nav-sec>summary.bo-nav-title::-webkit-details-marker{display:none}
+.bo-nav-sec>summary.bo-nav-title:hover{background:var(--card2);color:var(--ink)}
+.bo-nav-sec>summary.bo-nav-title>span:first-of-type{flex:1}
+.bo-nav-caret{font-size:11px;transition:transform .15s;opacity:.7}
+.bo-nav-sec[open]>summary .bo-nav-caret{transform:rotate(180deg)}
+.bo-nav-sec[open]>summary.bo-nav-title{color:var(--ink)}
+.bo-nav-item{display:block;padding:8px 12px;border-radius:9px;color:var(--muted);font-weight:600;font-size:14px;text-decoration:none}
+.bo-nav-item:hover{background:var(--card);color:var(--ink)}
+.bo-nav-item.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink)}
+.bo-nav-item.soon{opacity:.4;cursor:default}
+.bo-nav-item.soon:hover{background:none;color:var(--muted)}
+
+/* min-width:0 → geniş içerik ana alanı taşırmaz (yatay sayfa kayması olmaz); geniş tablolar kendi kartında kayar. */
+.bo-main{flex:1;min-width:0;padding:26px 30px}
+.bo-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.bo-page-head h1{margin:0;font-size:24px}
+
+.bo-filter{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.bo-filter .field{max-width:320px}
+.bo-filter .chk{color:var(--muted);font-weight:600;display:flex;gap:6px;align-items:center}
+
+/* overflow-x:auto → çok kolonlu geniş tablolar/alt-tablolar sayfayı uzatmadan KART İÇİNDE yatay kayar. */
+.bo-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto}
+.bo-table{width:100%;border-collapse:collapse}
+.bo-table th,.bo-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+.bo-table th{background:var(--bg2);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.bo-table tr:last-child td{border-bottom:none}
+.bo-table .ar{text-align:right;white-space:nowrap}
+.bo-table .empty{text-align:center;color:var(--muted);padding:26px}
+.bo-table .row-deleted{opacity:.5}
+.bo-table .thumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:1px solid var(--line)}
+.bo-count{color:var(--muted);margin-top:10px;font-size:13px}
+
+.badge-ok{color:var(--green);font-weight:700;font-size:12px}
+.badge-off{color:var(--muted);font-weight:700;font-size:12px}
+.badge-del{color:var(--danger);font-weight:700;font-size:12px}
+
+.btn-sm{padding:6px 12px;font-size:13px;border-radius:9px}
+
+/* form — responsive: PC'de tam genişlik; tekil alanlar okunur kapaklı, alt-tablolar hücreyi doldurur */
+.bo-form{max-width:100%;padding:22px}
+.frm-row{margin-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.frm-row > label:first-child{font-weight:700;font-size:14px}
+/* Yalnız frm-row'un DOĞRUDAN çocuğu tekil alanlar sınırlanır; alt-tablo içindekiler serbest */
+.bo-form .frm-row > input,
+.bo-form .frm-row > select,
+.bo-form .frm-row > textarea,
+.bo-form .frm-row > .field{max-width:560px;width:100%}
+.bo-form .frm-row > textarea{max-width:760px}
+/* Çok kolonlu alt-tablolar (Fiyatlar/Birimler/Barkod/Satırlar) tam genişlik + hücre input'ları doldurur */
+.bo-form .sub-grid,
+.bo-form table.bo-table{width:100%}
+.bo-form .sub-grid .field,
+.bo-form .sub-grid input:not([type=checkbox]):not([type=radio]),
+.bo-form .sub-grid select,
+.bo-form .sub-grid textarea,
+.bo-form table.bo-table .field,
+.bo-form table.bo-table input:not([type=checkbox]):not([type=radio]),
+.bo-form table.bo-table select,
+.bo-form table.bo-table textarea{width:100%;max-width:none;min-width:0;padding:8px 10px;font-size:14px;box-sizing:border-box}
+.bo-form table.bo-table th{white-space:nowrap}
+.frm-row .hint{color:var(--muted);font-size:12px}
+.frm-row .chk{flex-direction:row;display:flex;gap:8px;align-items:center;font-weight:600}
+.frm-row .field.up{text-transform:uppercase}
+.img-prev img{max-width:160px;border-radius:10px;border:1px solid var(--line);margin-bottom:6px}
+.frm-actions{display:flex;gap:10px;margin-top:22px}
+
+/* ortak yardımcılar (form batch'lerinin kullandığı) */
+.alert-success{background:rgba(23,178,106,.12);border:1px solid var(--green);color:var(--green);padding:12px 14px;border-radius:10px;margin-bottom:12px;font-weight:600}
+.chk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 14px;padding:8px 0}
+.scoped-row{opacity:.75}
+.scoped-row td{font-style:italic}
+.sub-grid{width:100%;border-collapse:collapse;margin:8px 0}
+.sub-grid th,.sub-grid td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.sub-grid th{font-size:12px;color:var(--muted);text-transform:uppercase}
+.bo-alert{background:rgba(245,166,35,.12);border:1px solid var(--accent);color:var(--ink);padding:12px 14px;border-radius:10px;margin-bottom:12px;font-weight:600}
+/* S3 — SysAdmin kiracı geçişi uyarı bandı: dikkat çekici (accent→accent2), tema-bağımsız (design-token). */
+.bo-impersonate{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;background:linear-gradient(90deg,var(--accent2),var(--accent));color:var(--accent-ink);padding:9px 16px;font-weight:700;box-shadow:0 2px 12px rgba(0,0,0,.28)}
+.bo-impersonate b{text-decoration:underline;text-underline-offset:2px}
+.bo-impersonate form{margin:0}
+.bo-impersonate .btn{background:rgba(0,0,0,.22);color:#fff;border:1px solid rgba(255,255,255,.45)}
+.bo-impersonate .btn:hover{background:rgba(0,0,0,.34)}
+.bo-hint{color:var(--muted);font-size:12px;margin:4px 0}
+.bo-actions{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap;align-items:center}
+.bo-group-row td{background:var(--bg2);font-weight:800;color:var(--accent);text-transform:uppercase;font-size:12px;letter-spacing:.3px}
+.field-price{width:120px;text-align:right}
+
+/* ===== Dashboard (Özet) ===== */
+.dash-filter{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px}
+.dash-filter .field{max-width:170px}
+.dash-quickdates{display:flex;gap:6px}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.kpi .lbl{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.kpi .val{font-size:22px;font-weight:800;margin-top:6px}
+.kpi.pos .val{color:var(--green)}
+.kpi.neg .val{color:var(--danger)}
+.kpi.gift .val{color:#8B5CF6}
+.kpi.loy .val{color:var(--accent)}
+.dash-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:22px}
+.dash-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;overflow:hidden}
+.dash-card h3{margin:0 0 12px;font-size:14px}
+.bar-row{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;margin-bottom:7px;font-size:13px}
+.bar-row .bar-lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.bar-track{height:14px;background:var(--bg2);border-radius:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.bar-val{white-space:nowrap;font-weight:700;font-size:12px}
+.dash-empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+@media(max-width:820px){
+  .bo-nav{position:static;width:100%;flex-basis:auto;max-height:none;border-right:none;border-bottom:1px solid var(--line)}
+  .bo-shell{flex-direction:column}
+}

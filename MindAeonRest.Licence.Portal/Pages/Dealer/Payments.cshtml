@@ -1,0 +1,104 @@
+@page
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Dealer.PaymentsModel
+@{
+    ViewData["Title"] = "Kazançlarım — MindAeon";
+    string Money(decimal v) => v.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"));
+}
+@await Html.PartialAsync("_Breadcrumb", ("Bayi", "/Dealer", "Kazançlarım"))
+
+<div class="page-head">
+    <h1>Kazançlarım</h1>
+    <div class="subtitle">Marj kazancınız, ödeme hareketleri ve tahsilat durumu.</div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Flash))
+{
+    <div class="toast @(Model.FlashKind ?? "info")" style="margin-bottom:var(--sp-4); max-width:none;">
+        <i data-lucide="info"></i><div>@Model.Flash</div>
+    </div>
+}
+
+<div class="grid grid-4">
+    <div class="kpi">
+        <div class="kpi__label">Marj (tahsil edilen)</div>
+        <div class="kpi__value money margin">@Money(Model.MarginPaid)</div>
+        <div class="kpi__delta">@Model.Currency</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bekleyen Marj</div>
+        <div class="kpi__value money">@Money(Model.MarginPending)</div>
+        <div class="kpi__delta">@Model.Currency</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Brüt Ciro</div>
+        <div class="kpi__value money gross">@Money(Model.GrossPaid)</div>
+        <div class="kpi__delta">@Model.Currency</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Net (üretici payı)</div>
+        <div class="kpi__value money net">@Money(Model.NetPaid)</div>
+        <div class="kpi__delta">@Model.Currency</div>
+    </div>
+</div>
+
+@if (Model.DealerPays)
+{
+    <div class="card mt-4" style="display:flex; align-items:center; gap:var(--sp-3); background:color-mix(in srgb, var(--warning) 10%, var(--surface));">
+        <i data-lucide="wallet" style="color:var(--warning);"></i>
+        <div class="text-sm mb-0">
+            Tahsilat modeliniz <strong>Bayi bize öder</strong>. Bekleyen ödemeleri aşağıdaki tablodan kapatabilirsiniz.
+        </div>
+    </div>
+}
+
+<div class="card mt-4">
+    <div class="card__head"><h3 class="card__title">Ödeme Hareketleri (@Model.Payments.Count)</h3></div>
+
+    @if (Model.Payments.Count == 0)
+    {
+        <div class="text-muted text-sm" style="padding:var(--sp-4) 0;">Henüz ödeme kaydı yok.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th><th>Sağlayıcı</th><th>Tahsilat</th>
+                        <th class="num">Brüt</th><th class="num">Marj</th><th class="num">Net</th>
+                        <th>Durum</th><th>Tarih</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Payments)
+                    {
+                        var st = DealerLabels.PaymentStatus(p.Status);
+                        <tr>
+                            <td class="text-muted">#@p.Id</td>
+                            <td>@DealerLabels.Provider(p.Provider)</td>
+                            <td class="text-sm text-muted">@DealerLabels.BillingMode(p.BillingMode)</td>
+                            <td class="num money gross">@Money(p.Amount)</td>
+                            <td class="num money margin">@Money(p.MarginAmount)</td>
+                            <td class="num money net">@Money(p.NetAmount)</td>
+                            <td><span class="badge @st.Css"><span class="dot"></span>@st.Text</span></td>
+                            <td class="text-sm text-muted">@p.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                            <td>
+                                @if (Model.DealerPays && p.BillingMode == 1 && p.Status == 0)
+                                {
+                                    <form method="post" asp-page-handler="Pay" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="paymentId" value="@p.Id" />
+                                        <button class="btn btn-sm btn-primary" type="submit"><i data-lucide="credit-card"></i> Öde</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts { <script>lucide.createIcons();</script> }

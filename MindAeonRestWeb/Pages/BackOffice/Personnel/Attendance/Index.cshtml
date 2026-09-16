@@ -1,0 +1,126 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Personnel.Attendance.IndexModel
+@{
+    ViewData["Title"] = "Puantaj / Mesai";
+    Layout = "_BackOfficeLayout";
+    var qs = new Dictionary<string, string?>
+    {
+        ["BranchId"] = Model.BranchId?.ToString(),
+        ["PersonnelId"] = Model.PersonnelId?.ToString(),
+        ["From"] = Model.From?.ToString("yyyy-MM-dd"),
+        ["To"] = Model.To?.ToString("yyyy-MM-dd"),
+        ["StdHours"] = Model.StdHours,
+    };
+    var csvPairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+    var csvUrl = "/BackOffice/Personnel/Attendance?handler=Csv" + (csvPairs.Count > 0 ? "&" + string.Join("&", csvPairs) : "");
+}
+
+<div class="bo-page-head">
+    <h1>⏱ Puantaj / Mesai</h1>
+    <div class="bo-actions no-print">
+        <a class="btn btn-ghost" href="@csvUrl">⬇ CSV İndir</a>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+    </div>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field">
+        @foreach (var b in Model.BranchOptions)
+        {
+            <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+        }
+    </select>
+    <select name="PersonnelId" class="field">
+        @foreach (var p in Model.PersonnelOptions)
+        {
+            <option value="@p.Value" selected="@(Model.PersonnelId == p.Value)">@p.Text</option>
+        }
+    </select>
+    <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="text" name="StdHours" value="@Model.StdHours" placeholder="Std. aylık saat" class="field" style="max-width:130px;" title="Aylık maaştan saatlik ücret türetmede kullanılır (boş = varsayılan)." />
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+@if (Model.Report is not null)
+{
+    <div class="bo-card">
+        <h3 style="margin:0 0 8px;">İşçilik (Labor-Cost) Özeti</h3>
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Kod</th><th>Personel</th><th class="ar">Maaş</th><th class="ar">Mesai</th>
+                    <th class="ar">Saat</th><th class="ar">Saatlik Ücret</th><th class="ar">İşçilik</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Report.Rows.Count == 0)
+            {
+                <tr><td colspan="7" class="empty">Dönemde kapanmış mesai yok.</td></tr>
+            }
+            @foreach (var r in Model.Report.Rows)
+            {
+                <tr>
+                    <td><b>@r.PersonnelCode</b></td>
+                    <td>@r.PersonnelName</td>
+                    <td class="ar">@r.Salary.ToString("N2")</td>
+                    <td class="ar">@r.Shifts</td>
+                    <td class="ar">@r.HoursText</td>
+                    <td class="ar">@r.HourlyRateText</td>
+                    <td class="ar">@r.LaborCostText ₺</td>
+                </tr>
+            }
+            </tbody>
+            @if (Model.Report.Rows.Count > 0)
+            {
+                <tfoot>
+                    <tr>
+                        <td colspan="4"><b>TOPLAM</b></td>
+                        <td class="ar"><b>@Model.Report.TotalHours.ToString("N2")</b></td>
+                        <td class="ar"></td>
+                        <td class="ar"><b>@Model.Report.TotalLaborCost.ToString("N2") ₺</b></td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-top:12px;">
+            <div><span style="color:var(--muted,#888);font-size:12px;">Dönem Cirosu</span><br /><b>@Model.Report.Revenue.ToString("N2") ₺</b></div>
+            <div><span style="color:var(--muted,#888);font-size:12px;">Toplam İşçilik</span><br /><b>@Model.Report.TotalLaborCost.ToString("N2") ₺</b></div>
+            <div><span style="color:var(--muted,#888);font-size:12px;">Labor-Cost %</span><br /><b>@Model.Report.LaborCostPercent.ToString("N2") %</b></div>
+            <div><span style="color:var(--muted,#888);font-size:12px;">Std. Aylık Saat</span><br /><b>@Model.Report.StandardMonthlyHours.ToString("N0")</b></div>
+        </div>
+    </div>
+}
+
+<div class="bo-card">
+    <h3 style="margin:0 0 8px;">Mesai Dökümü (Puantaj)</h3>
+    <table class="bo-table">
+        <thead>
+            <tr><th>Kod</th><th>Personel</th><th>Giriş</th><th>Çıkış</th><th class="ar">Saat</th><th>Not</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Timesheet.Count == 0)
+        {
+            <tr><td colspan="6" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var a in Model.Timesheet)
+        {
+            <tr>
+                <td><b>@a.PersonnelCode</b></td>
+                <td>@a.PersonnelName</td>
+                <td>@a.ClockInText</td>
+                <td>@(a.IsOpen ? "—" : a.ClockOutText)</td>
+                <td class="ar">@a.HoursText</td>
+                <td>@a.Note</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Timesheet.Count mesai kaydı</div>
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Puantaj = personel işe geliş-gidiş kaydıdır (kasa vardiyasından ayrıdır). İşçilik maliyeti, personelin
+    maaşından türetilen saatlik ücret × çalışılan saat ile hesaplanır; açık (çıkışsız) mesailer maliyete katılmaz.
+    Labor-Cost % = toplam işçilik / dönem cirosu × 100.
+</p>

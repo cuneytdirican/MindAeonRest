@@ -1,0 +1,121 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel
+@{
+    ViewData["Title"] = "Hesap Ekstreleri";
+    Layout = "_BackOfficeLayout";
+    var res = Model.Result;
+}
+
+<div class="bo-page-head no-print">
+    <h1>📒 Ekstreler (Hesap Ekstresi)</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+
+<style>
+    .bo-sub { margin:16px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted,#888); }
+    @@media print {
+        .no-print { display:none !important; }
+        .bo-card { box-shadow:none; border:none; }
+    }
+</style>
+
+@* Tip veya şube değişince hesap listesi yenilensin diye otomatik gönderim (WPF Type_Changed/Branch_Changed). *@
+<form method="get" class="bo-filter no-print">
+    <label>Tip
+        <select name="Type" asp-items="Model.TypeOptions" class="field" onchange="this.form.submit()"></select>
+    </label>
+    @if (Model.ShowBranch)
+    {
+        <label>Şube
+            <select name="BranchId" asp-items="Model.BranchOptions" class="field" onchange="this.form.submit()"></select>
+        </label>
+    }
+    else
+    {
+        <input type="hidden" name="BranchId" value="@Model.BranchId" />
+    }
+    <label>Hesap
+        <select name="AccountId" asp-items="Model.AccountOptions" class="field">
+            @if (Model.AccountOptions.Count == 0) { <option value="">(hesap yok)</option> }
+        </select>
+    </label>
+    <label>Başlangıç
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <label>Bitiş
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    @if (res != null)
+    {
+        <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+    }
+</form>
+
+@if (res != null)
+{
+    <div class="bo-card" id="extractReport">
+        <div style="text-align:center;margin-bottom:14px">
+            <h2 style="margin:0">@Model.Title</h2>
+            <div class="hint">@Model.Subtitle</div>
+        </div>
+
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>İşlem</th>
+                    <th>Açıklama</th>
+                    <th class="ar">Giriş</th>
+                    <th class="ar">Çıkış</th>
+                    <th class="ar">Bakiye</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td></td>
+                    <td><b>AÇILIŞ BAKİYE</b></td>
+                    <td></td>
+                    <td class="ar"></td>
+                    <td class="ar"></td>
+                    <td class="ar"><b>@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.Opening)</b></td>
+                </tr>
+                @if (res.Rows.Count == 0)
+                {
+                    <tr><td colspan="6" class="empty">Bu aralıkta hareket yok.</td></tr>
+                }
+                @foreach (var r in res.Rows)
+                {
+                    <tr>
+                        <td>@r.DateText</td>
+                        <td>@r.TypeText</td>
+                        <td>@r.Note</td>
+                        <td class="ar">@r.InText</td>
+                        <td class="ar">@r.OutText</td>
+                        <td class="ar">@r.RunningText</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid var(--bo-border,#ddd);font-weight:bold">
+                    <td colspan="3">TOPLAM / KAPANIŞ</td>
+                    <td class="ar">@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.TotalIn)</td>
+                    <td class="ar">@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.TotalOut)</td>
+                    <td class="ar">@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.Closing)</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="frm-row" style="margin-top:12px;gap:24px;flex-wrap:wrap">
+            <div>Açılış: <b>@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.Opening)</b></div>
+            <div>Toplam Giriş: <b>@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.TotalIn)</b></div>
+            <div>Toplam Çıkış: <b>@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.TotalOut)</b></div>
+            <div>Kapanış: <b>@MindAeonRestWeb.Pages.BackOffice.Extracts.IndexModel.Money(res.Closing)</b></div>
+        </div>
+    </div>
+}

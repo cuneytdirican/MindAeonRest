@@ -1,0 +1,75 @@
+/* FAZ 5d — Geri bildirim / anket müşteri arayüzü. Mobil-öncelikli, tam ekran, büyük dokunmatik yıldızlar.
+   Standalone (order.css deseni). Koyu tema temel; açık tema @media ile. Native dialog YOK — sayfa içi durum. */
+:root{
+  --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --line:#2a2f3a;
+  --txt:#eef1f6; --mut:#9aa3b2; --brand:#f5a623; --brand-ink:#1a1205;
+  --ok:#2ecc71; --star:#f5a623; --star-off:#3a4150;
+  --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f4f5f8; --bg2:#fff; --card:#fff; --line:#e3e6ec;
+    --txt:#1a1d24; --mut:#68707e; --brand:#e8930a; --brand-ink:#fff;
+    --star-off:#d3d8e0; --shadow:0 6px 20px rgba(20,30,60,.12);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:16px; line-height:1.45;
+}
+button{font-family:inherit; cursor:pointer; border:0; background:none; color:inherit}
+
+.fb-wrap{
+  min-height:100vh; min-height:100dvh;
+  display:flex; align-items:center; justify-content:center;
+  padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 18px);
+}
+.fb-card{
+  width:100%; max-width:440px; background:var(--card); border:1px solid var(--line);
+  border-radius:18px; box-shadow:var(--shadow); padding:26px 22px 24px; text-align:center;
+}
+.fb-logo{font-size:34px; line-height:1; margin-bottom:8px}
+.fb-title{font-size:20px; font-weight:700; margin:0 0 4px}
+.fb-sub{color:var(--mut); font-size:14px; margin:0 0 20px}
+
+/* ===== Yıldızlar ===== */
+.fb-stars{display:flex; justify-content:center; gap:6px; margin:8px 0 18px}
+.fb-star{
+  font-size:44px; line-height:1; color:var(--star-off); background:none; padding:4px;
+  transition:transform .08s ease, color .12s ease;
+}
+.fb-star.on{color:var(--star)}
+.fb-star:active{transform:scale(.9)}
+.fb-rating-label{min-height:20px; color:var(--brand); font-weight:600; font-size:14px; margin-bottom:14px}
+
+/* ===== Yorum + telefon ===== */
+.fb-field{
+  width:100%; background:var(--bg2); color:var(--txt); border:1px solid var(--line);
+  border-radius:12px; padding:12px 14px; font-size:15px; margin-bottom:12px; resize:vertical;
+}
+.fb-field:focus{outline:2px solid var(--brand); outline-offset:1px}
+textarea.fb-field{min-height:96px}
+
+.fb-btn{
+  width:100%; background:var(--brand); color:var(--brand-ink); font-size:17px; font-weight:700;
+  padding:14px; border-radius:12px; margin-top:4px;
+}
+.fb-btn[disabled]{opacity:.5; cursor:default}
+
+.fb-hint{color:var(--mut); font-size:12px; margin-top:12px}
+
+/* ===== Durum / teşekkür (native alert yerine) ===== */
+.fb-done{padding:14px 4px}
+.fb-done .fb-logo{font-size:52px}
+.fb-done .fb-title{font-size:22px; margin-top:6px}
+.fb-error{color:#ff5b5b; font-weight:600; margin-top:10px; min-height:18px}
+
+/* Yönlendirme bilgi kutusu (yüksek puan → Google) */
+.fb-redirect{
+  background:var(--bg2); border:1px solid var(--line); border-radius:12px;
+  padding:14px; margin-top:14px; font-size:14px; color:var(--mut);
+}
+.fb-redirect a{color:var(--brand); font-weight:700; text-decoration:none}

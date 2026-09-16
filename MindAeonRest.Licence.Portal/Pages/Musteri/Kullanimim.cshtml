@@ -1,0 +1,138 @@
+@page
+@using MindAeonRest.Licence.Data
+@model MindAeonRest.Licence.Portal.Pages.Musteri.KullanimimModel
+@{
+    ViewData["Title"] = "Kullanımım — MindAeon";
+    var latest = Model.Latest;
+}
+@await Html.PartialAsync("_Breadcrumb", ("Müşteri", "/Musteri", "Kullanımım"))
+
+<div class="page-head">
+    <h1>Kullanımım</h1>
+    <div class="subtitle">Masaüstü uygulamanızdan gelen periyodik kullanım ve ciro raporları.</div>
+</div>
+
+@foreach (var w in Model.LimitWarnings())
+{
+    <div class="@(w.Kind == "danger" ? "alert-error" : "")" style="@(w.Kind == "warning" ? "background:color-mix(in srgb, var(--warning) 12%, transparent);border:1px solid color-mix(in srgb, var(--warning) 40%, transparent);color:var(--warning);border-radius:var(--radius-sm);padding:var(--sp-3) var(--sp-4);font-size:var(--fs-sm);margin-bottom:var(--sp-4)" : "margin-bottom:var(--sp-4)")">
+        <span class="flex items-center gap-2"><i data-lucide="alert-triangle" style="width:16px;height:16px"></i>@w.Text</span>
+    </div>
+}
+
+@if (latest is null)
+{
+    <div class="card">
+        <div class="flex items-center gap-3">
+            <i data-lucide="activity" style="color:var(--text-3)"></i>
+            <div>
+                <div style="font-weight:600">Henüz kullanım raporu yok</div>
+                <div class="text-muted text-sm">Masaüstü uygulaması ciro/kullanım raporunu gönderdikçe burada listelenir.</div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- En güncel dönem KPI'ları -->
+    <div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+        <div class="kpi">
+            <div class="kpi__label">Güncel Dönem</div>
+            <div class="kpi__value" style="font-size:var(--fs-xl)">@latest.Period</div>
+            <div class="text-muted text-sm">@latest.ReportedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi__label">Dönem Cirosu</div>
+            <div class="kpi__value money net">@CustomerUi.Money(latest.Revenue) ₺</div>
+            @if (Model.Reports.Count > 1)
+            {
+                var tr = Model.RevenueTrend;
+                <div class="kpi__delta @(tr >= 0 ? "up" : "down")">
+                    <i data-lucide="@(tr >= 0 ? "trending-up" : "trending-down")" style="width:14px;height:14px"></i>
+                    @(tr >= 0 ? "+" : "")@tr.ToString("0.#")% önceki döneme göre
+                </div>
+            }
+        </div>
+        <div class="kpi">
+            <div class="kpi__label">Aktif Şube</div>
+            <div class="kpi__value">@latest.BranchCount</div>
+            @if (Model.License is not null)
+            {
+                <div class="text-muted text-sm">Limit: @(Model.License.MaxBranches == int.MaxValue ? "Sınırsız" : Model.License.MaxBranches.ToString())</div>
+            }
+        </div>
+        <div class="kpi">
+            <div class="kpi__label">Kullanıcı / Kiosk</div>
+            <div class="kpi__value">@latest.UserCount<span style="font-size:var(--fs-md);color:var(--text-3)"> / @latest.KioskCount</span></div>
+            @if (Model.License is not null)
+            {
+                <div class="text-muted text-sm">Kullanıcı limiti: @(Model.License.MaxUsers == int.MaxValue ? "Sınırsız" : Model.License.MaxUsers.ToString())</div>
+            }
+        </div>
+    </div>
+
+    <!-- Ciro grafiği (ECharts) -->
+    <div class="card" style="margin-bottom:var(--sp-5)">
+        <div class="card__head"><h2 class="card__title">Ciro Eğilimi</h2></div>
+        <div id="revChart" style="height:300px"></div>
+    </div>
+
+    <!-- Dönem tablosu -->
+    <div class="card">
+        <div class="card__head"><h2 class="card__title">Dönem Geçmişi</h2></div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Dönem</th><th>Rapor Tarihi</th>
+                        <th class="num">Şube</th><th class="num">Kullanıcı</th><th class="num">Kiosk</th>
+                        <th class="num">Ciro (₺)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var r in Model.Reports)
+                {
+                    <tr>
+                        <td><strong>@r.Period</strong></td>
+                        <td class="tabular">@r.ReportedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="num">@r.BranchCount</td>
+                        <td class="num">@r.UserCount</td>
+                        <td class="num">@r.KioskCount</td>
+                        <td class="num money net">@CustomerUi.Money(r.Revenue)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            lucide.createIcons();
+            (function () {
+                var el = document.getElementById('revChart');
+                if (!el || !window.echarts) return;
+                var data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.Reports.OrderBy(r => r.ReportedUtc).Select(r => new { period = r.Period, rev = r.Revenue })));
+                var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                var chart = echarts.init(el, null, { renderer: 'canvas' });
+                chart.setOption({
+                    grid: { left: 60, right: 20, top: 24, bottom: 40 },
+                    tooltip: { trigger: 'axis', valueFormatter: function (v) { return Number(v).toLocaleString('tr-TR') + ' ₺'; } },
+                    xAxis: { type: 'category', data: data.map(function (d) { return d.period; }),
+                             axisLine: { lineStyle: { color: dark ? '#324158' : '#E2E6EE' } },
+                             axisLabel: { color: dark ? '#8294AE' : '#94A3B8' } },
+                    yAxis: { type: 'value', axisLabel: { color: dark ? '#8294AE' : '#94A3B8',
+                             formatter: function (v) { return (v / 1000) + 'k'; } },
+                             splitLine: { lineStyle: { color: dark ? '#243248' : '#F1F3F8' } } },
+                    series: [{
+                        type: 'line', smooth: true, data: data.map(function (d) { return d.rev; }),
+                        symbolSize: 7, lineStyle: { width: 3, color: '#2541B2' }, itemStyle: { color: '#2541B2' },
+                        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(37,65,178,.28)' }, { offset: 1, color: 'rgba(14,165,164,.02)' }]) }
+                    }]
+                });
+                window.addEventListener('resize', function () { chart.resize(); });
+            })();
+        </script>
+    }
+}

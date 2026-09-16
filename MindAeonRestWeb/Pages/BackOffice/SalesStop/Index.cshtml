@@ -1,0 +1,73 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SalesStop.IndexModel
+@{
+    ViewData["Title"] = "Satış Durdurma";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🚫 Satış Durdurma</h1>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field" onchange="this.form.submit()">
+        @foreach (var b in Model.Branches)
+        {
+            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Code — @b.Name</option>
+        }
+    </select>
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod veya ad ara..." class="field" />
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th>Kod</th><th>Ad</th><th>Durum</th><th class="ar">İşlem</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.BranchId <= 0)
+        {
+            <tr><td colspan="4" class="empty">Önce bir şube seçin.</td></tr>
+        }
+        else if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="4" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var p in Model.Items)
+        {
+            <tr class="@(p.IsSalesStopped ? "row-deleted" : "")">
+                <td><b>@p.Code</b></td>
+                <td>@p.Name</td>
+                <td>
+                    @if (p.IsSalesStopped) { <span class="badge-del">DURDURULDU</span> }
+                    else { <span class="badge-ok">Satışta</span> }
+                </td>
+                <td class="ar">
+                    @if (p.IsSalesStopped)
+                    {
+                        <form method="post" asp-page-handler="Toggle" style="display:inline">
+                            <input type="hidden" name="productId" value="@p.ProductId" />
+                            <input type="hidden" name="stopped" value="false" />
+                            <input type="hidden" name="BranchId" value="@Model.BranchId" />
+                            <input type="hidden" name="Q" value="@Model.Q" />
+                            <button class="btn btn-sm" type="submit">Satışa Aç</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="Toggle" style="display:inline">
+                            <input type="hidden" name="productId" value="@p.ProductId" />
+                            <input type="hidden" name="stopped" value="true" />
+                            <input type="hidden" name="BranchId" value="@Model.BranchId" />
+                            <input type="hidden" name="Q" value="@Model.Q" />
+                            <button class="btn btn-sm btn-danger" type="submit">Satışı Durdur</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count kayıt</div>

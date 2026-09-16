@@ -1,0 +1,60 @@
+<Window x:Class="MindAeonRest.Views.ReyonEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        Title="Reyon" Height="560" Width="560"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="30,26,30,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock x:Name="TitleText" Text="Yeni Reyon" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <TextBlock Text="Reyon (mutfak/hazırlık birimi) bir lokasyona bağlıdır. Yazıcı opsiyoneldir." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,5,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Margin="0,18,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="KOD" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="CodeBox" Style="{StaticResource InputTextBox}" CharacterCasing="Upper" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="REYON ADI" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="LOKASYON (ZONE)" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                <views:EntityPicker x:Name="ZonePicker" />
+
+                <TextBlock Text="İSTASYON TİPİ" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                <ComboBox x:Name="StationCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" Tag="İstasyon">
+                    <ComboBoxItem Content="Mutfak (yemek — KDS / Sipariş Teslim)" Tag="0" />
+                    <ComboBoxItem Content="Bar / İçecek (Meşrubatlar)" Tag="1" />
+                </ComboBox>
+
+                <TextBlock Text="YAZICI (Windows)" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                <ComboBox x:Name="PrinterCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" Tag="Yazıcı" />
+
+                <CheckBox x:Name="ActiveCheck" Content="Reyon aktif" Style="{StaticResource ThemedCheckBox}" Margin="2,18,0,0" IsChecked="True" />
+
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="2,14,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+            </StackPanel>
+
+            <Grid Grid.Row="2" Margin="0,18,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

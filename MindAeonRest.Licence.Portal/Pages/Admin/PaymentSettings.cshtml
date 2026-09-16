@@ -1,0 +1,63 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.PaymentSettingsModel
+@{
+    ViewData["Title"] = "Ödeme Ayarları — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Finans", "/Admin", "Ödeme Ayarları"))
+
+<div class="page-head">
+    <h1>Ödeme Ayarları / Havale Hesabı</h1>
+    <div class="subtitle">Müşteri ve bayilere gösterilecek banka havalesi hesap bilgileri.</div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Flash))
+{
+    <div class="toast @(Model.FlashKind ?? "info")" style="margin-bottom:var(--sp-4); max-width:none;">
+        <i data-lucide="info"></i><div>@Model.Flash</div>
+    </div>
+}
+
+<div class="card" style="max-width:640px;">
+    <div class="card__head"><h2 class="card__title">Havale Hesabı</h2></div>
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="form-field">
+            <label for="Iban">IBAN</label>
+            <input type="text" id="Iban" name="Iban" value="@Model.Iban" maxlength="34"
+                   placeholder="TR00 0000 0000 0000 0000 0000 00" autocomplete="off" />
+        </div>
+
+        <div class="form-field">
+            <label for="AccountName">Hesap Adı</label>
+            <input type="text" id="AccountName" name="AccountName" value="@Model.AccountName" maxlength="120"
+                   placeholder="Hesap sahibi / ünvan" autocomplete="off" />
+        </div>
+
+        <div class="form-field">
+            <label for="BankName">Banka</label>
+            <input type="text" id="BankName" name="BankName" value="@Model.BankName" maxlength="80"
+                   placeholder="Banka adı" autocomplete="off" />
+        </div>
+
+        <div class="form-field">
+            <label for="Description">Açıklama</label>
+            <textarea id="Description" name="Description" rows="3" maxlength="500"
+                      placeholder="Ödeme açıklamasında belirtilmesi gerekenler (örn. referans/işletme kodu)">@Model.Description</textarea>
+        </div>
+
+        <div class="form-field">
+            <label class="flex items-center gap-2" style="flex-direction:row;">
+                <input type="checkbox" name="Active" value="true" style="width:auto;" @(Model.Active ? "checked" : "") />
+                Havale ile ödeme aktif
+            </label>
+        </div>
+
+        <div class="flex items-center gap-2" style="margin-top:var(--sp-2);">
+            <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Kaydet</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts { <script>if (window.lucide) lucide.createIcons();</script> }

@@ -1,0 +1,202 @@
+@using MindAeonRest.Licence.Data
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.LicensesModel
+
+<div class="table-wrap" x-data="licenseActions()">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Lisans Kodu</th>
+                <th>İşletme</th>
+                <th>Bayi</th>
+                <th>Paket</th>
+                <th>Durum</th>
+                <th class="num">Şube/Kul.</th>
+                <th>Bitiş</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="8" class="text-muted" style="text-align:center; padding:var(--sp-6);">Kayıt bulunamadı.</td></tr>
+            }
+            @foreach (var l in Model.Items)
+            {
+                var st = AdminLabels.License(l.Status);
+                var canManage = l.Status is LicenseStatus.Active or LicenseStatus.Trial or LicenseStatus.Expired;
+                <tr>
+                    <td>
+                        <a href="javascript:void(0)"
+                           hx-get="/Admin/Licenses?handler=Detail&id=@l.Id"
+                           hx-target="#licDetail" hx-swap="innerHTML"
+                           x-on:click="$dispatch('open-detail')"
+                           style="font-weight:600; font-variant-numeric:tabular-nums;">@l.LicenseCode</a>
+                    </td>
+                    <td>
+                        <div>@(l.BusinessTitle ?? l.CompanyCode)</div>
+                        <div class="text-sm text-muted">@l.CompanyCode</div>
+                    </td>
+                    <td>@(l.DealerName ?? "—")</td>
+                    <td><span class="badge primary">@l.PackageName</span></td>
+                    <td><span class="badge @st.Css"><span class="dot"></span> @st.Text</span></td>
+                    <td class="num">@l.MaxBranches / @l.MaxUsers</td>
+                    <td>@(l.ExpiresUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? "Süresiz")</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        @if (canManage)
+                        {
+                            <button type="button" class="btn btn-sm btn-primary"
+                                    x-on:click="openUpgrade(@l.Id, @l.Package)" title="Yükselt">
+                                <i data-lucide="trending-up"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm"
+                                    x-on:click="openRenew(@l.Id)" title="Yenile">
+                                <i data-lucide="refresh-cw"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger"
+                                    x-on:click="openRevoke(@l.Id)" title="İptal">
+                                <i data-lucide="ban"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted text-sm">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- ===== Yükseltme sihirbazı ===== -->
+    <template x-if="modal === 'upgrade'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Lisans Yükselt</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Licenses?handler=Upgrade" hx-target="#licTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <div class="form-field">
+                            <label>Hedef Paket</label>
+                            <select name="package" x-model.number="package">
+                                <option value="0">Lite</option>
+                                <option value="1">Standart</option>
+                                <option value="2">Enterprise</option>
+                            </select>
+                            <div class="hint">Yeni imzalı token üretilir; eski lisans "Yükseltildi" olur.</div>
+                        </div>
+                        <div class="form-field">
+                            <label>Bitiş (opsiyonel)</label>
+                            <input type="date" name="expiresUtc" />
+                            <div class="hint">Boş bırakılırsa süresiz.</div>
+                        </div>
+                        @if (Model.AddOns.Count > 0)
+                        {
+                            <div class="form-field">
+                                <label>Ek Modüller (add-on)</label>
+                                <div style="display:flex; flex-wrap:wrap; gap:8px 14px;">
+                                    @foreach (var a in Model.AddOns)
+                                    {
+                                        <label style="display:flex; align-items:center; gap:5px; font-weight:400;">
+                                            <input type="checkbox" name="addOns" value="@a.Bit" /> @a.Name
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <div class="grid grid-3">
+                            <div class="form-field"><label>Ek Kullanıcı</label><input type="number" name="extraUsers" min="0" value="0" /></div>
+                            <div class="form-field"><label>Ek Terminal</label><input type="number" name="extraKiosks" min="0" value="0" /></div>
+                            <div class="form-field"><label>Ek Şube</label><input type="number" name="extraBranches" min="0" value="0" /></div>
+                        </div>
+                        <div class="form-field">
+                            <label>Not</label>
+                            <textarea name="note" rows="2" placeholder="İsteğe bağlı açıklama"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="trending-up"></i> Yükselt</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- ===== Yenileme ===== -->
+    <template x-if="modal === 'renew'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Lisans Yenile</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Licenses?handler=Renew" hx-target="#licTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <div class="form-field">
+                            <label>Yeni Bitiş Tarihi</label>
+                            <input type="date" name="expiresUtc" />
+                            <div class="hint">Aynı paket/kod/donanım; token yeni tarihle yeniden imzalanır.</div>
+                        </div>
+                        <div class="form-field">
+                            <label>Not</label>
+                            <textarea name="note" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="refresh-cw"></i> Yenile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- ===== İptal ===== -->
+    <template x-if="modal === 'revoke'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Lisansı İptal Et</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Licenses?handler=Revoke" hx-target="#licTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <p class="text-muted">Bu işlem lisansı <strong>Revoked</strong> yapar ve masaüstü heartbeat'te etki eder. Geri alınamaz.</p>
+                        <div class="form-field">
+                            <label>İptal Gerekçesi</label>
+                            <textarea name="note" rows="2" placeholder="Gerekçe (önerilir)"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-danger"><i data-lucide="ban"></i> İptal Et</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    function licenseActions() {
+        return {
+            modal: null, id: null, package: 1,
+            openUpgrade(id, pkg) { this.id = id; this.package = pkg; this.modal = 'upgrade'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+            openRenew(id) { this.id = id; this.modal = 'renew'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+            openRevoke(id) { this.id = id; this.modal = 'revoke'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+            close() { this.modal = null; this.id = null; }
+        };
+    }
+</script>

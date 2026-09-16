@@ -1,0 +1,133 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.CsvImport.IndexModel
+@{
+    ViewData["Title"] = "CSV İçe Aktarım";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📥 CSV İçe Aktarım (Stok + Fiyat)</h1>
+    <a class="btn btn-ghost" href="/BackOffice/CsvImport?handler=Sample">⬇ Örnek CSV İndir</a>
+</div>
+
+<p class="bo-hint">
+    CSV ile toplu stok kartı ve fiyat tanımlayın. Başlık satırı zorunludur, ayraç <b>;</b> veya <b>,</b> olabilir.
+    Boş bırakılan birim/vergi/döviz alanları için aşağıdaki varsayılanlar kullanılır. Kodlar (birim, vergi,
+    döviz, kategori, şube) sistemde tanımlı olmalıdır.
+</p>
+
+<div class="bo-card bo-form">
+    <div class="frm-row">
+        <label>Kolon Formatı</label>
+        <code style="display:block;white-space:pre-wrap;word-break:break-word;">@Model.SampleHeader</code>
+        <small class="hint">
+            Kod*; Ad*; Aciklama; BirimKodu; SatisVergiKodu; AlisVergiKodu; IadeVergiKodu;
+            Takip(YOK/PARTI/PARTILOT/SERI/RENKBEDEN); KategoriKodlari(| ile çoklu); Fiyat; DovizKodu; SubeKodu; Barkod
+            &nbsp;(*zorunlu)
+        </small>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ImportResultMessage))
+{
+    <div class="@(Model.ImportHadFailures ? "alert-error" : "bo-alert")">@Model.ImportResultMessage</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post" asp-page-handler="Validate" enctype="multipart/form-data">
+        <div class="frm-row">
+            <label>CSV Dosyası *</label>
+            <input type="file" name="csvFile" accept=".csv,text/csv" class="field" required />
+        </div>
+
+        <div class="frm-row">
+            <label>Varsayılan Birim</label>
+            <select asp-for="DefaultUnitId" asp-items="Model.UnitOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Varsayılan Satış Vergi</label>
+            <select asp-for="DefaultSalesTaxId" asp-items="Model.TaxOptions" class="field"></select>
+            <small class="hint">Alış ve iade vergisi için de bu varsayılan kullanılır.</small>
+        </div>
+        <div class="frm-row">
+            <label>Varsayılan Döviz</label>
+            <select asp-for="DefaultCurrencyId" asp-items="Model.CurrencyOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Fiyat Kapsamı</label>
+            <select asp-for="TargetBranchId" asp-items="Model.ScopeOptions" class="field"></select>
+            <small class="hint">Satırda şube kodu yoksa fiyat bu kapsama yazılır.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="UpdateExisting" type="checkbox" /> Var olan kodları güncelle (üzerine yaz)</label>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">🔍 Doğrula</button>
+        </div>
+    </form>
+</div>
+
+@if (Model.Rows.Count > 0)
+{
+    <div class="bo-page-head">
+        <h1 style="font-size:1.1rem;">Önizleme</h1>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.Summary))
+    {
+        <div class="bo-alert">@Model.Summary</div>
+    }
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Kod</th>
+                    <th>Ad</th>
+                    <th>Birim</th>
+                    <th>Fiyat</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr class="@(r.IsValid ? "" : "row-invalid")">
+                    <td>@r.RowNo</td>
+                    <td><b>@r.Code</b></td>
+                    <td>@r.Name</td>
+                    <td>@r.UnitName</td>
+                    <td>@r.PriceDisplay</td>
+                    <td>@r.StatusText</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.ShowImport)
+    {
+        <form method="post" asp-page-handler="Import"
+              onsubmit="return confirm('Geçerli satırlar aktarılsın mı? (Hatalı satırlar atlanır)');">
+            @* İçe aktarım, Doğrula adımında saklanan geçici dosyayı aynı varsayılanlarla tekrar ayrıştırır. *@
+            <input type="hidden" asp-for="DefaultUnitId" />
+            <input type="hidden" asp-for="DefaultSalesTaxId" />
+            <input type="hidden" asp-for="DefaultCurrencyId" />
+            <input type="hidden" asp-for="TargetBranchId" />
+            <input type="hidden" asp-for="UpdateExisting" value="@Model.UpdateExisting.ToString().ToLowerInvariant()" />
+            <div class="bo-actions">
+                <button type="submit" class="btn btn-primary">İÇE AKTAR</button>
+            </div>
+        </form>
+    }
+}
+
+<style>
+    .row-invalid td { color: var(--danger, #c0392b); font-style: italic; }
+</style>

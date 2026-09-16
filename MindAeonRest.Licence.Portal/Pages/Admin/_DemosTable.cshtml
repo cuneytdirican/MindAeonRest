@@ -1,0 +1,63 @@
+@model MindAeonRest.Licence.Portal.Pages.Admin.DemosModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Şirket Kodu</th>
+                <th>Unvan</th>
+                <th>İlgili Kişi</th>
+                <th>İletişim</th>
+                <th>Başlangıç</th>
+                <th>Durum</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="text-muted" style="text-align:center; padding:var(--sp-6);">Demo kaydı yok.</td></tr>
+            }
+            @foreach (var dm in Model.Items)
+            {
+                <tr>
+                    <td style="font-weight:600; font-variant-numeric:tabular-nums;">@dm.CompanyCode</td>
+                    <td>@(dm.BusinessTitle ?? "—")</td>
+                    <td>@(dm.ContactName ?? "—")</td>
+                    <td class="text-sm">
+                        @if (!string.IsNullOrWhiteSpace(dm.Email)) { <div>@dm.Email</div> }
+                        @if (!string.IsNullOrWhiteSpace(dm.Phone)) { <div class="text-muted">@dm.Phone</div> }
+                        @if (string.IsNullOrWhiteSpace(dm.Email) && string.IsNullOrWhiteSpace(dm.Phone)) { <span class="text-muted">—</span> }
+                    </td>
+                    <td>@dm.StartedUtc.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                    <td>
+                        @if (dm.Converted)
+                        {
+                            <span class="badge success"><span class="dot"></span> Dönüştü</span>
+                        }
+                        else
+                        {
+                            <span class="badge info"><span class="dot"></span> Demo</span>
+                        }
+                    </td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        @if (!dm.Converted)
+                        {
+                            <button type="button" class="btn btn-sm btn-primary" x-on:click="openConvert(@dm.Id)">
+                                <i data-lucide="arrow-up-right"></i> Dönüştür
+                            </button>
+                        }
+                        else if (dm.LicenseId is { } lid)
+                        {
+                            <span class="text-sm text-muted">Lisans #@lid</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted text-sm">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

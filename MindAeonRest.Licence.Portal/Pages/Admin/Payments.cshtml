@@ -1,0 +1,75 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.PaymentsModel
+@{
+    ViewData["Title"] = "Ödemeler — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Finans", "/Admin", "Ödemeler"))
+
+<div class="page-head">
+    <h1>Ödemeler</h1>
+    <div class="subtitle">Brüt / marj / net finans semantiğiyle tüm tahsilatlar.</div>
+</div>
+
+<div class="grid grid-4">
+    <div class="kpi">
+        <div class="kpi__label">Brüt Tahsilat</div>
+        <div class="kpi__value money gross">@Model.TotalGross.ToString("N2") <span class="text-sm text-muted">@Model.Currency</span></div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bayi Marjı</div>
+        <div class="kpi__value money margin">@Model.TotalMargin.ToString("N2") <span class="text-sm text-muted">@Model.Currency</span></div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Net (Biz)</div>
+        <div class="kpi__value money net">@Model.TotalNet.ToString("N2") <span class="text-sm text-muted">@Model.Currency</span></div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bekleyen</div>
+        <div class="kpi__value money">@Model.Pending.ToString("N2") <span class="text-sm text-muted">@Model.Currency</span></div>
+    </div>
+</div>
+
+<div class="card mt-4" x-data="paymentActions()">
+    <div id="payTable">
+        @await Html.PartialAsync("_PaymentsTable", Model)
+    </div>
+
+    <!-- Havale onay modalı -->
+    <template x-if="modal === 'approve'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Havale Onayla</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Payments?handler=ApproveTransfer" hx-target="#payTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <p class="text-muted">Banka havalesi dekontu eşleşince ödeme <strong>Tahsil Edildi</strong> olarak işaretlenir.</p>
+                        <div class="form-field"><label>Dekont / Referans</label><input type="text" name="providerRef" placeholder="EFT referansı (opsiyonel)" /></div>
+                        <div class="form-field"><label>Not</label><textarea name="note" rows="2"></textarea></div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Onayla</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+        function paymentActions() {
+            return {
+                modal: null, id: null,
+                openApprove(id) { this.id = id; this.modal = 'approve'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+                close() { this.modal = null; this.id = null; }
+            };
+        }
+    </script>
+}

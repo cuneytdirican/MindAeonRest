@@ -1,0 +1,59 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Kiosks.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni KIOSK" : $"KIOSK · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🖥 @(Model.IsNew ? "Yeni KIOSK" : "KIOSK Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Kiosks">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Şube bazlı self-servis cihaz. Kasa/POS/Çek hesapları bu KIOSK'a atanabilir.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>KIOSK No *</label>
+            <input asp-for="No" type="number" min="1" class="field" required />
+            <small class="hint">appsettings.json KIOSKNO ile eşleşir (şube içinde tekil).</small>
+        </div>
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>KIOSK Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Şube *</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Hesap / Fiş Yazıcısı</label>
+            <input asp-for="ReceiptPrinterName" class="field" maxlength="200" autocomplete="off" />
+            <small class="hint">Bu KIOSK terminalinin yazıcı adı; boş = yazıcı yok.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Kiosks" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+    </script>
+}

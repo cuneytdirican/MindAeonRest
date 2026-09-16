@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             x:Class="MindAeonRest.Mobile.Pages.ScanPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#000000">
+    <Grid>
+        <zxing:CameraBarcodeReaderView x:Name="Reader" BarcodesDetected="OnDetected" />
+
+        <!-- Üst bilgi -->
+        <Border BackgroundColor="#CC16181D" Padding="16,12" VerticalOptions="Start" StrokeThickness="0">
+            <Label Text="Sunucu QR kodunu kameraya gösterin" TextColor="{StaticResource TextColor}" FontAttributes="Bold" HorizontalOptions="Center" />
+        </Border>
+
+        <!-- Hedef çerçeve -->
+        <Border WidthRequest="230" HeightRequest="230" StrokeThickness="3" Stroke="{StaticResource Accent}"
+                StrokeShape="RoundRectangle 18" BackgroundColor="Transparent" HorizontalOptions="Center" VerticalOptions="Center" />
+
+        <!-- İptal -->
+        <Button Text="İptal" Clicked="Cancel_Clicked" BackgroundColor="#CC3C4757" TextColor="{StaticResource TextColor}"
+                CornerRadius="10" Padding="24,10" VerticalOptions="End" HorizontalOptions="Center" Margin="0,0,0,40" />
+    </Grid>
+</ContentPage>

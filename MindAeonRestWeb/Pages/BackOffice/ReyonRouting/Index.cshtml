@@ -1,0 +1,116 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.ReyonRouting.IndexModel
+@{
+    ViewData["Title"] = "Reyon Yönlendirme";
+    Layout = "_BackOfficeLayout";
+
+    // Reyon <select> seçenekleri (yalnız bu lokasyonun aktif reyonları). WPF: ad + 🖨 yazıcı / (yalnız ekran).
+    Func<MindAeonRest.Models.Reyon, string> reyonLabel = r =>
+        r.Name + (string.IsNullOrWhiteSpace(r.PrinterName) ? " (yalnız ekran)" : $" 🖨 {r.PrinterName}");
+}
+
+<div class="bo-page-head">
+    <h1>🍳 Reyon Yönlendirme</h1>
+</div>
+
+<p class="bo-hint">
+    Her lokasyonda, ürün kategorisi hangi reyona (mutfak/bar) düşsün? Reyonun yazıcısı = mutfak fişinin
+    çıkacağı yazıcı. Yalnız o lokasyonun reyonları seçilebilir. Boş bırakılan kategori, lokasyonun varsayılan
+    reyonuna düşer. Çözümleme sırası: (lokasyon+ürün) → (ürün) → (lokasyon+kategori) → (kategori) → (lokasyon varsayılan).
+</p>
+
+@if (Model.Message is string msg)
+{
+    <div class="bo-alert">@msg</div>
+}
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field" onchange="this.form.submit()">
+        @if (Model.Branches.Count == 0)
+        {
+            <option value="0">(şube yok)</option>
+        }
+        @foreach (var b in Model.Branches)
+        {
+            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Code — @b.Name</option>
+        }
+    </select>
+    <select name="ZoneId" class="field" onchange="this.form.submit()">
+        @if (Model.Zones.Count == 0)
+        {
+            <option value="0">(lokasyon yok)</option>
+        }
+        @foreach (var z in Model.Zones)
+        {
+            <option value="@z.Id" selected="@(z.Id == Model.ZoneId)">@z.Code — @z.Name</option>
+        }
+    </select>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+@if (Model.ZoneId <= 0 || Model.Reyons.Count == 0)
+{
+    <div class="bo-card">
+        <p class="empty">@Model.Hint</p>
+    </div>
+}
+else
+{
+    <form method="post" asp-page-handler="SaveAll">
+        <input type="hidden" name="branchId" value="@Model.BranchId" />
+        <input type="hidden" name="zoneId" value="@Model.ZoneId" />
+
+        <div class="bo-card bo-form">
+            <div class="frm-row">
+                <label>Bu lokasyonun varsayılan reyonu</label>
+                <select name="defaultReyonId" class="field">
+                    <option value="0" selected="@(Model.DefaultReyonId == 0)">(yok — yazıcısız/ekran)</option>
+                    @foreach (var r in Model.Reyons)
+                    {
+                        <option value="@r.Id" selected="@(r.Id == Model.DefaultReyonId)">@reyonLabel(r)</option>
+                    }
+                </select>
+                <small class="hint">Kategori satırında reyon seçilmezse ürün bu reyona (yazıcıya) düşer.</small>
+            </div>
+        </div>
+
+        <div class="bo-card" style="overflow-x:auto">
+            <table class="bo-table">
+                <thead>
+                    <tr>
+                        <th>Kategori</th>
+                        <th>Reyon (→ yazıcı)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Rows.Count == 0)
+                {
+                    <tr><td colspan="2" class="empty">Aktif kategori yok. Önce Kategoriler ekranından kategori ekleyin.</td></tr>
+                }
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td><b>@row.CategoryName</b></td>
+                        <td>
+                            @* Kategori satırı kendi kimliğini taşır; POST dizileri (categoryId/reyonId) hizalı kalır. *@
+                            <input type="hidden" name="categoryId" value="@row.CategoryId" />
+                            <select name="reyonId" class="field">
+                                <option value="0" selected="@(row.ReyonId == 0)">↳ (varsayılan reyona düşsün)</option>
+                                @foreach (var r in Model.Reyons)
+                                {
+                                    <option value="@r.Id" selected="@(r.Id == row.ReyonId)">@reyonLabel(r)</option>
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bo-actions">
+            <span class="bo-count">@Model.Rows.Count kategori × @Model.Reyons.Count reyon</span>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </form>
+}

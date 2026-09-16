@@ -1,0 +1,82 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.BulkPrice.IndexModel
+@{
+    ViewData["Title"] = "Toplu Fiyat Düzenleme";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>💰 Toplu Fiyat Düzenleme</h1>
+</div>
+
+<p class="bo-hint">
+    Tüm ürünlerin GENEL satış fiyatını tek ekranda düzenleyin. Fiyat kutusuna yazıp "Toplu Kaydet"e basın
+    (boş bıraktıklarınız değişmez). Şube/liste bazlı fiyatlar fiyat matrisi ekranından yönetilir.
+</p>
+
+@if (TempData["BulkPriceResult"] is string msg)
+{
+    <div class="bo-alert">@msg</div>
+}
+
+<form method="get" class="bo-filter">
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod veya ad ara..." class="field" />
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<form method="post" asp-page-handler="SaveAll">
+    <input type="hidden" name="Q" value="@Model.Q" />
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Kod</th>
+                    <th>Ürün</th>
+                    <th>Birim</th>
+                    <th>Satış Fiyatı</th>
+                    <th>KDV Dahil</th>
+                    <th>Döviz</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="empty">Kayıt yok.</td></tr>
+            }
+            @{ string? currentCat = null; }
+            @foreach (var r in Model.Items)
+            {
+                if (r.CategoryNames != currentCat)
+                {
+                    currentCat = r.CategoryNames;
+                    <tr class="bo-group-row"><td colspan="6"><b>@currentCat</b></td></tr>
+                }
+                <tr>
+                    <td><b>@r.Code</b></td>
+                    <td>@r.Name</td>
+                    <td>@r.UnitName</td>
+                    <td>
+                        <input type="hidden" name="productId" value="@r.ProductId" />
+                        <input type="hidden" name="unitId" value="@r.UnitId" />
+                        <input type="hidden" name="currencyId" value="@r.CurrencyId" />
+                        <input type="text" name="price" value="@r.PriceInput" class="field field-price" inputmode="decimal" />
+                    </td>
+                    <td>
+                        @* Select kullanıyoruz: checkbox işaretsizken POST'ta gelmez ve dizi hizası bozulur.
+                           Select her satırda MUTLAKA bir değer gönderir → productId ile birebir aynı sırada. *@
+                        <select name="taxIncluded" class="field">
+                            <option value="true" selected="@r.TaxIncluded">Evet</option>
+                            <option value="false" selected="@(!r.TaxIncluded)">Hayır</option>
+                        </select>
+                    </td>
+                    <td>@r.CurrencyCode</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-actions">
+        <span class="bo-count">@Model.Items.Count ürün</span>
+        <button type="submit" class="btn btn-primary">Toplu Kaydet</button>
+    </div>
+</form>

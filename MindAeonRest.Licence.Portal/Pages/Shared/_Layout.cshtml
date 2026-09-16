@@ -1,0 +1,139 @@
+@{
+    var role = User.IsInRole("Admin") ? "Admin"
+             : User.IsInRole("Dealer") ? "Dealer"
+             : User.IsInRole("Customer") ? "Customer"
+             : "";
+    var fullName = User.FindFirst("name")?.Value ?? User.Identity?.Name ?? "Kullanıcı";
+    var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                        .Take(2).Select(w => char.ToUpper(w[0])));
+    if (string.IsNullOrEmpty(initials)) { initials = "K"; }
+    var roleLabel = role switch { "Admin" => "Yönetici", "Dealer" => "Bayi", "Customer" => "Müşteri", _ => "" };
+    string Active(string prefix) =>
+        (ViewContext.HttpContext.Request.Path.Value ?? "").StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "MindAeon Lisans Portalı")</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/app.css" />
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Sol rail (rol bazlı) -->
+        <aside class="rail">
+            <div class="rail__brand">
+                <span class="logo-dot"></span>
+                <span>MindAeon</span>
+            </div>
+
+            @if (role == "Admin")
+            {
+                <div class="rail__group-label">Genel</div>
+                <a class="rail__link @Active("/Admin")" href="/Admin"><i data-lucide="layout-dashboard"></i><span>Panel</span></a>
+                <div class="rail__group-label">Yönetim</div>
+                <a class="rail__link @Active("/Admin/Dealers")" href="/Admin/Dealers"><i data-lucide="store"></i><span>Bayiler</span></a>
+                <a class="rail__link @Active("/Admin/Businesses")" href="/Admin/Businesses"><i data-lucide="building-2"></i><span>İşletmeler</span></a>
+                <a class="rail__link @Active("/Admin/Licenses")" href="/Admin/Licenses"><i data-lucide="key-round"></i><span>Lisanslar</span></a>
+                <a class="rail__link @Active("/Admin/Requests")" href="/Admin/Requests"><i data-lucide="inbox"></i><span>Talepler</span></a>
+                <a class="rail__link @Active("/Admin/Demos")" href="/Admin/Demos"><i data-lucide="flask-conical"></i><span>Demolar</span></a>
+                <a class="rail__link @Active("/Admin/Usage")" href="/Admin/Usage"><i data-lucide="activity"></i><span>Kullanım</span></a>
+                <div class="rail__group-label">POS</div>
+                <a class="rail__link @Active("/Admin/Tenants")" href="/Admin/Tenants"><i data-lucide="server"></i><span>Tenant'lar</span></a>
+                <a class="rail__link @Active("/Admin/NewTenant")" href="/Admin/NewTenant"><i data-lucide="server-cog"></i><span>Yeni Tenant</span></a>
+                <div class="rail__group-label">Finans</div>
+                <a class="rail__link @Active("/Admin/Payments")" href="/Admin/Payments"><i data-lucide="credit-card"></i><span>Ödemeler</span></a>
+                <a class="rail__link @Active("/Admin/Packages")" href="/Admin/Packages"><i data-lucide="package"></i><span>Paket Fiyatları</span></a>
+                <a class="rail__link @Active("/Admin/AddOnPrices")" href="/Admin/AddOnPrices"><i data-lucide="puzzle"></i><span>Add-on Fiyatları</span></a>
+                <a class="rail__link @Active("/Admin/PaymentSettings")" href="/Admin/PaymentSettings"><i data-lucide="landmark"></i><span>Ödeme Ayarları</span></a>
+                <div class="rail__group-label">Destek</div>
+                <a class="rail__link @Active("/Admin/Tickets")" href="/Admin/Tickets"><i data-lucide="life-buoy"></i><span>Talepler/Ticket</span></a>
+            }
+            else if (role == "Dealer")
+            {
+                <div class="rail__group-label">Genel</div>
+                <a class="rail__link @Active("/Dealer")" href="/Dealer"><i data-lucide="layout-dashboard"></i><span>Panel</span></a>
+                <div class="rail__group-label">Portföyüm</div>
+                <a class="rail__link @Active("/Dealer/Businesses")" href="/Dealer/Businesses"><i data-lucide="building-2"></i><span>İşletmelerim</span></a>
+                <a class="rail__link @Active("/Dealer/Licenses")" href="/Dealer/Licenses"><i data-lucide="key-round"></i><span>Lisanslar</span></a>
+                <a class="rail__link @Active("/Dealer/Requests")" href="/Dealer/Requests"><i data-lucide="arrow-up-circle"></i><span>Yükseltme Talebi</span></a>
+                <div class="rail__group-label">Finans</div>
+                <a class="rail__link @Active("/Dealer/Payments")" href="/Dealer/Payments"><i data-lucide="credit-card"></i><span>Ödemeler</span></a>
+                <div class="rail__group-label">Destek</div>
+                <a class="rail__link @Active("/Dealer/Tickets")" href="/Dealer/Tickets"><i data-lucide="life-buoy"></i><span>Destek</span></a>
+            }
+            else
+            {
+                <div class="rail__group-label">Genel</div>
+                <a class="rail__link @Active("/Musteri")" href="/Musteri"><i data-lucide="layout-dashboard"></i><span>Panel</span></a>
+                <div class="rail__group-label">Hesabım</div>
+                <a class="rail__link @Active("/Musteri/Lisanslarim")" href="/Musteri/Lisanslarim"><i data-lucide="key-round"></i><span>Lisanslarım</span></a>
+                <a class="rail__link @Active("/Musteri/Kullanimim")" href="/Musteri/Kullanimim"><i data-lucide="activity"></i><span>Kullanımım</span></a>
+                <a class="rail__link @Active("/Musteri/Odemelerim")" href="/Musteri/Odemelerim"><i data-lucide="credit-card"></i><span>Ödemelerim</span></a>
+                <a class="rail__link @Active("/Musteri/Hesabim")" href="/Musteri/Hesabim"><i data-lucide="user"></i><span>Hesabım</span></a>
+                <div class="rail__group-label">Destek</div>
+                <a class="rail__link @Active("/Musteri/Destek")" href="/Musteri/Destek"><i data-lucide="life-buoy"></i><span>Destek</span></a>
+            }
+        </aside>
+
+        <!-- Üst bar -->
+        <header class="topbar">
+            <button class="btn btn-ghost btn-icon" type="button" onclick="toggleRail()" aria-label="Menüyü daralt">
+                <i data-lucide="panel-left"></i>
+            </button>
+            <div class="topbar__spacer"></div>
+            <button class="btn btn-ghost btn-icon" type="button" onclick="toggleTheme()" aria-label="Tema değiştir">
+                <i data-lucide="sun-moon"></i>
+            </button>
+            <div class="topbar__user">
+                <div class="topbar__user-meta">
+                    <div class="topbar__user-name">@fullName</div>
+                    <div class="topbar__user-role">@roleLabel</div>
+                </div>
+                <div class="avatar">@initials</div>
+                <form method="post" action="/Logout">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-ghost btn-icon" type="submit" aria-label="Çıkış">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- İçerik -->
+        <main class="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- htmx + Alpine + ECharts + Lucide (YEREL — CDN güvenilmez, formlar htmx'e bağlı) -->
+    <script src="~/lib/htmx.min.js"></script>
+    <script defer src="~/lib/alpine.min.js"></script>
+    <script src="~/lib/echarts.min.js"></script>
+    <script src="~/lib/lucide.min.js"></script>
+    <script>
+        // Alpine <template x-if> ile sonradan DOM'a eklenen htmx formlarını htmx'e tanıt.
+        // htmx'in kendi MutationObserver'ı bu dinamik eklemeleri kaçırabiliyor → hx-post formları
+        // native GET'e düşüp kayıt OLUŞMUYORDU. Burada eklenen her öğeyi açıkça htmx.process ediyoruz.
+        (function () {
+            var SEL = '[hx-get],[hx-post],[hx-put],[hx-delete],[hx-patch]';
+            function proc(n) {
+                if (!window.htmx || !n || n.nodeType !== 1) return;
+                try {
+                    if (n.matches && n.matches(SEL)) window.htmx.process(n);
+                    if (n.querySelector && n.querySelector(SEL)) window.htmx.process(n);
+                } catch (e) { }
+            }
+            new MutationObserver(function (muts) {
+                muts.forEach(function (m) { Array.prototype.forEach.call(m.addedNodes, proc); });
+            }).observe(document.documentElement, { childList: true, subtree: true });
+        })();
+    </script>
+    <script src="~/js/app.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

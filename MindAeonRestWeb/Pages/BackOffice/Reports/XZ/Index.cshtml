@@ -1,0 +1,208 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Reports.XZ.IndexModel
+@{
+    ViewData["Title"] = "X / Z Raporu";
+    Layout = "_BackOfficeLayout";
+    var rep = Model.Report;
+}
+
+<div class="bo-page-head no-print">
+    <h1>🧾 X / Z Raporu</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Info))
+{
+    <div class="alert-success no-print">@Model.Info</div>
+}
+
+<style>
+    .bo-sub { margin:16px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted,#888); }
+    @@media print {
+        .no-print { display:none !important; }
+        .bo-card { box-shadow:none; border:none; }
+    }
+</style>
+
+<form method="get" class="bo-filter no-print">
+    <label>Şube
+        <select name="BranchId" asp-items="Model.BranchOptions" class="field"></select>
+    </label>
+    <label>Tarih (iş günü)
+        <input type="date" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    @if (rep != null)
+    {
+        <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+        <a class="btn" href="/BackOffice/Reports/XZ?handler=Csv&BranchId=@Model.BranchId&Date=@(Model.Date?.ToString("yyyy-MM-dd"))">⬇ CSV İndir</a>
+    }
+</form>
+
+@if (rep != null)
+{
+    <div class="bo-card" id="xzReport">
+        <div style="text-align:center;margin-bottom:14px">
+            <h2 style="margin:0">@Model.ReportTitle</h2>
+            <div class="hint">@Model.BusinessDayInfo</div>
+        </div>
+
+        <div class="frm-row" style="align-items:center;border-bottom:1px solid var(--bo-border,#ddd);padding-bottom:8px">
+            <label style="font-weight:bold">TOPLAM SATIŞ</label>
+            <div style="font-size:22px;font-weight:bold;text-align:right;flex:1">@MindAeonRestWeb.Pages.BackOffice.Reports.XZ.IndexModel.Money(rep.SalesTotal)</div>
+        </div>
+        <div class="hint" style="margin-bottom:12px">@rep.OrderCount adisyon · @rep.FisCount fiş</div>
+
+        <h3 class="bo-sub">Ödeme Dağılımı</h3>
+        <table class="bo-table">
+            <tbody>
+            @if (rep.Payments.Count == 0) { <tr><td colspan="2" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var p in rep.Payments)
+            {
+                <tr><td>@p.KindText</td><td class="ar"><b>@p.AmountText</b></td></tr>
+            }
+            </tbody>
+        </table>
+
+        <h3 class="bo-sub">KDV Kırılımı</h3>
+        <table class="bo-table">
+            <thead><tr><th>Oran</th><th class="ar">Matrah</th><th class="ar">KDV</th></tr></thead>
+            <tbody>
+            @if (rep.Kdv.Count == 0) { <tr><td colspan="3" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var k in rep.Kdv)
+            {
+                <tr><td>@k.RateText</td><td class="ar">@k.MatrahText</td><td class="ar">@k.TaxText</td></tr>
+            }
+            </tbody>
+        </table>
+
+        <div class="frm-row" style="margin:12px 0">
+            <label>İkram / Fire</label>
+            <div style="text-align:right;flex:1">İkram @rep.TreatText · Fire @rep.FireQty.ToString("0.##") adet</div>
+        </div>
+
+        <h3 class="bo-sub">Kasa Durumu</h3>
+        <table class="bo-table">
+            <tbody>
+            @if (rep.CashBalances.Count == 0) { <tr><td colspan="2" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var c in rep.CashBalances)
+            {
+                <tr><td>@c.Name</td><td class="ar"><b>@c.BalanceText</b></td></tr>
+            }
+            </tbody>
+        </table>
+
+        <h3 class="bo-sub">Banka Defter Bakiyeleri</h3>
+        <table class="bo-table">
+            <tbody>
+            @if (rep.BankBalances.Count == 0) { <tr><td colspan="2" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var c in rep.BankBalances)
+            {
+                <tr><td>@c.Name</td><td class="ar"><b>@c.BalanceText</b></td></tr>
+            }
+            </tbody>
+        </table>
+
+        <h3 class="bo-sub">POS Defter Bakiyeleri</h3>
+        <table class="bo-table">
+            <tbody>
+            @if (rep.PosBalances.Count == 0) { <tr><td colspan="2" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var c in rep.PosBalances)
+            {
+                <tr><td>@c.Name</td><td class="ar"><b>@c.BalanceText</b></td></tr>
+            }
+            </tbody>
+        </table>
+
+        <h3 class="bo-sub">Yemek Çeki Defter Bakiyeleri</h3>
+        <table class="bo-table">
+            <tbody>
+            @if (rep.MealVoucherBalances.Count == 0) { <tr><td colspan="2" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var c in rep.MealVoucherBalances)
+            {
+                <tr><td>@c.Name</td><td class="ar"><b>@c.BalanceText</b></td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @* ── AÇIK MASA UYARISI: Z'den önce açık masalar (WPF RaporWindow) — "Yine de Z Al" / "Vazgeç" ── *@
+    @if (Model.CanTakeZ && Model.ShowOpenTablesWarning)
+    {
+        <div class="bo-card no-print" style="margin-top:16px;border:2px solid var(--danger,#c0392b)">
+            <h3 class="bo-sub" style="margin-top:0;color:var(--danger,#c0392b)">
+                ⚠ AÇIK MASALAR (@Model.OpenTables.Count) — Z'den önce kontrol edin
+            </h3>
+            <p class="hint">
+                Şubede <b>@Model.OpenTables.Count</b> açık masa var (toplam kalan
+                @MindAeonRestWeb.Pages.BackOffice.Reports.XZ.IndexModel.Money(Model.OpenTablesRemaining)).
+                Bu masalar henüz kapatılmadı. Yine de Z alırsanız açık masalar sonraki güne devreder.
+            </p>
+            <table class="bo-table">
+                <thead><tr><th>Masa / Adisyon</th><th class="ar">Kalan</th><th>Durum</th></tr></thead>
+                <tbody>
+                @foreach (var t in Model.OpenTables)
+                {
+                    <tr>
+                        <td>@(string.IsNullOrWhiteSpace(t.TableCodes) ? t.OrderCode : t.TableCodes)</td>
+                        <td class="ar"><b>@t.RemainingText</b></td>
+                        <td>@t.StatusText</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <div class="frm-actions">
+                <form method="post" asp-page-handler="TakeZ" style="display:inline"
+                      onsubmit="return confirm('Açık masalar var. Yine de gün sonu (Z) raporu alınsın mı? Açık masalar sonraki güne devreder.');">
+                    <input type="hidden" name="BranchId" value="@Model.BranchId" />
+                    <input type="hidden" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" />
+                    <input type="hidden" name="confirm" value="1" />
+                    <input type="hidden" name="cashTransfer" value="@Model.PendingCashTransfer.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" />
+                    @if (Model.PendingTargetCashId is int pc) { <input type="hidden" name="targetCashId" value="@pc" /> }
+                    @if (Model.PendingTargetPosId is int pp) { <input type="hidden" name="targetPosId" value="@pp" /> }
+                    <button type="submit" class="btn btn-danger">Yine de Z Al</button>
+                </form>
+                <a class="btn" href="/BackOffice/Reports/XZ?BranchId=@Model.BranchId&Date=@(Model.Date?.ToString("yyyy-MM-dd"))">Vazgeç (masaları kapat)</a>
+            </div>
+        </div>
+    }
+
+    @* ── GÜN SONU (Z) DEVRİ: nakit (seçilen tutar) + kart (tamamı) ŞUBE kasasına ── *@
+    @if (Model.CanTakeZ && !Model.ShowOpenTablesWarning)
+    {
+        <div class="bo-card no-print" style="margin-top:16px">
+            <h3 class="bo-sub" style="margin-top:0">🏦 Gün Sonu Devri (Şube Kasasına) — Z Al</h3>
+            <p class="hint">Nakitin seçtiğiniz kısmı şube kasasına devredilir, kalanı kasada kalır. Kart bakiyeleri tamamen devredilir.
+               Z yalnız içinde bulunulan iş günü için alınabilir. Z almadan önce şubede açık masa varsa uyarı gösterilir;
+               açık masalar etkilenmez, sonraki güne devreder.</p>
+            <form method="post" asp-page-handler="TakeZ"
+                  onsubmit="return confirm('Gün sonu (Z) raporu alınsın mı? Devir yapılacak ve gün kapatılacak.');">
+                <input type="hidden" name="BranchId" value="@Model.BranchId" />
+                <input type="hidden" name="Date" value="@(Model.Date?.ToString("yyyy-MM-dd"))" />
+                <div class="frm-row">
+                    <label>Hedef Şube Nakit Kasası</label>
+                    <select name="targetCashId" asp-items="Model.TargetCashOptions" class="field">
+                        <option value="">(seçiniz)</option>
+                    </select>
+                </div>
+                <div class="frm-row">
+                    <label>Nakit Devir Tutarı (₺)</label>
+                    <input type="number" step="0.01" name="cashTransfer" value="@Model.DefaultCashTransfer.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" class="field" />
+                </div>
+                <div class="frm-row">
+                    <label>Hedef Şube POS (kart — tamamı devredilir)</label>
+                    <select name="targetPosId" asp-items="Model.TargetPosOptions" class="field">
+                        <option value="">(seçiniz)</option>
+                    </select>
+                </div>
+                <div class="frm-actions">
+                    <button type="submit" class="btn btn-danger">Z RAPORU AL</button>
+                </div>
+            </form>
+        </div>
+    }
+}

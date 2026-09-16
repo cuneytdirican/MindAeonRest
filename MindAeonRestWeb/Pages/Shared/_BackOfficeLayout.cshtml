@@ -1,0 +1,113 @@
+@using MindAeonRestWeb.Services
+@using MindAeonRest.Helpers
+@using MindAeonRest.Licensing
+@{
+    var title = ViewData["Title"] as string ?? "Yönetim";
+    var company = User.FindFirst("company_code")?.Value ?? "";
+    var name = User.Identity?.Name ?? "";
+    var path = Context.Request.Path.Value ?? "";
+    var theme = Context.Request.Cookies["mar.theme"] ?? "dark";
+}
+<!DOCTYPE html>
+<html lang="tr" data-theme="@theme">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@title · MindAeonRest Yönetim</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/backoffice.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/aichat.css" asp-append-version="true" />
+</head>
+<body class="bo">
+    @* ===== S3 — SysAdmin oturum-içi kiracı geçişi uyarı bandı. YALNIZ geçiş modunda (sa_imp) görünür;
+         normal SysAdmin oturumunda hiç render edilmez. "Süper Admin'e dön" ev şirketine geri imzalar. ===== *@
+    @if (Session.IsImpersonating)
+    {
+        <div class="bo-impersonate">
+            <span>🛡️ <strong>Süper Admin</strong>: şu an <b>@Session.CompanyCode</b> şirketindesiniz.</span>
+            <form method="post" asp-page="/BackOffice/SysAdmin/Tenants" asp-page-handler="ReturnHome">
+                <button type="submit" class="btn btn-sm">↩ Süper Admin'e dön</button>
+            </form>
+        </div>
+    }
+    <header class="bo-header">
+        <div class="bo-header-inner">
+            <a class="brand" href="/BackOffice">🍽️ <span>MindAeonRest</span> <small>Yönetim</small></a>
+            <div class="bo-user">
+                <div class="theme-switch" title="Tema">
+                    <button type="button" data-theme-set="dark" title="Koyu">🌙</button>
+                    <button type="button" data-theme-set="light" title="Açık">☀️</button>
+                    <button type="button" data-theme-set="ocean" title="Okyanus">🌊</button>
+                </div>
+                <span class="muted">@company</span>
+                <span>@name</span>
+                <a class="btn btn-ghost" href="/Logout">Çıkış</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="bo-shell">
+        <aside class="bo-nav">
+            <a class="bo-nav-home @(path.Equals("/BackOffice", StringComparison.OrdinalIgnoreCase) ? "on" : "")" href="/BackOffice">🏠 Kontrol Paneli</a>
+            @foreach (var s in BackOfficeNav.Visible())
+            {
+                var sectionActive = s.Items.Any(i => i.Url is not null &&
+                    (path.Equals(i.Url.Split('?')[0], StringComparison.OrdinalIgnoreCase) ||
+                     path.StartsWith(i.Url.Split('?')[0] + "/", StringComparison.OrdinalIgnoreCase)));
+                <details class="bo-nav-sec" open="@sectionActive">
+                    <summary class="bo-nav-title">@s.Icon <span>@s.Title</span><span class="bo-nav-caret">▾</span></summary>
+                    @foreach (var i in s.Items)
+                    {
+                        if (i.Url is null)
+                        {
+                            <span class="bo-nav-item soon" title="Yakında">@i.Icon @i.Label</span>
+                        }
+                        else
+                        {
+                            var baseUrl = i.Url.Split('?')[0];
+                            var on = path.Equals(baseUrl, StringComparison.OrdinalIgnoreCase) ||
+                                     path.StartsWith(baseUrl + "/", StringComparison.OrdinalIgnoreCase);
+                            <a class="bo-nav-item @(on ? "on" : "")" href="@i.Url">@i.Icon @i.Label</a>
+                        }
+                    }
+                </details>
+            }
+        </aside>
+
+        <main class="bo-main">
+            @RenderBody()
+        </main>
+    </div>
+
+    @* ===== Bağlam-farkında AI Chat widget'ı (yüzen) — YALNIZ yetkili + lisanslı kullanıcıya render edilir.
+         Yetkisiz DOM'da bile görmez. Sesli (Web Speech API, tr-TR) + tüm back-office sayfalarında çalışır. ===== *@
+    @if (Permissions.Ai && Session.LicenseHas(Feature.AiHub))
+    {
+        <button type="button" id="ai-fab" title="AI Asistan" aria-label="AI Asistan">🧠</button>
+        <div id="ai-panel" class="ai-panel" aria-hidden="true">
+            <div class="ai-head">
+                <span class="ai-title">🧠 AI Asistan</span>
+                <div class="ai-head-actions">
+                    <button type="button" id="ai-voice-toggle" class="ai-icon-btn" title="Yanıtı sesli oku" aria-pressed="false">🔊</button>
+                    <button type="button" id="ai-close" class="ai-icon-btn" title="Kapat" aria-label="Kapat">✕</button>
+                </div>
+            </div>
+            <div id="ai-msgs" class="ai-msgs" aria-live="polite"></div>
+            <div class="ai-input-row">
+                <button type="button" id="ai-mic" class="ai-icon-btn ai-mic" title="Sesli sor" aria-label="Sesli sor">🎤</button>
+                <textarea id="ai-input" class="ai-input" rows="1" placeholder="Bir soru yazın… (Enter = gönder)"
+                          autocomplete="off"></textarea>
+                <button type="button" id="ai-send" class="ai-send" title="Gönder" aria-label="Gönder">➤</button>
+            </div>
+            @Html.AntiForgeryToken()
+        </div>
+    }
+
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    @if (Permissions.Ai && Session.LicenseHas(Feature.AiHub))
+    {
+        <script src="~/js/aichat.js" asp-append-version="true"></script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

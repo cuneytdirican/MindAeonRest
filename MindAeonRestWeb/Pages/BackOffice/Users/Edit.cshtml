@@ -1,0 +1,105 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Users.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Kullanıcı" : $"Kullanıcı · {Model.Username}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>👤 @(Model.IsNew ? "Yeni Kullanıcı" : "Kullanıcı Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Users">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Kullanıcı yönetimi sistem geneline aittir; şube erişimi seçili şirket içindir.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kullanıcı Adı *</label>
+            <input asp-for="Username" class="field" maxlength="100" autocomplete="off"
+                   readonly="@(!Model.IsNew)" required />
+            @if (!Model.IsNew)
+            {
+                <small class="hint">Kullanıcı adı değiştirilemez.</small>
+            }
+        </div>
+        <div class="frm-row">
+            <label>Ad Soyad *</label>
+            <input asp-for="FullName" class="field" maxlength="150" required />
+        </div>
+
+        <div class="frm-row">
+            <label>@(Model.IsNew ? "Parola / PIN *" : "Yeni Parola / PIN")</label>
+            <input asp-for="Password" type="password" class="field" autocomplete="new-password"
+                   required="@Model.IsNew" />
+            <small class="hint">
+                @if (Model.IsNew) { <text>KIOSK için basit numerik PIN verilebilir (ör. 1234).</text> }
+                else { <text>Boş bırakılırsa parola değişmez.</text> }
+            </small>
+        </div>
+
+        <div class="frm-row">
+            <label>Roller *</label>
+            <div style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+                @foreach (var r in Model.RoleOptions)
+                {
+                    <label class="chk">
+                        <input type="checkbox" name="SelectedRoleIds" value="@r.Id"
+                               @(Model.SelectedRoleIds.Contains(r.Id) ? "checked" : "") />
+                        @r.Name
+                    </label>
+                }
+            </div>
+            <small class="hint">Mutfak ve SysAdmin tek başına atanır. Garson + Kasiyer birlikte olabilir.</small>
+        </div>
+
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Kullanıcı aktif</label>
+        </div>
+
+        <div class="frm-row">
+            <label>Şube Erişimi</label>
+            <label class="chk"><input asp-for="AllBranches" type="checkbox" id="allBranchesChk" /> Tüm şubelere erişebilir</label>
+            <div id="branchList" style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+                @if (Model.BranchOptions.Count == 0)
+                {
+                    <small class="hint">Bu şirkette şube bulunamadı.</small>
+                }
+                @foreach (var b in Model.BranchOptions)
+                {
+                    <label class="chk">
+                        <input type="checkbox" name="SelectedBranchIds" value="@b.Id"
+                               @(Model.SelectedBranchIds.Contains(b.Id) ? "checked" : "") />
+                        @b.Name
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Users" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // "Tüm şubeler" işaretliyse tekil şube seçimi devre dışı (WPF UpdateBranchListState karşılığı).
+        const allChk = document.getElementById('allBranchesChk');
+        const branchList = document.getElementById('branchList');
+        function syncBranches() {
+            const all = allChk && allChk.checked;
+            if (branchList) {
+                branchList.style.opacity = all ? '0.45' : '1';
+                branchList.querySelectorAll('input[type=checkbox]').forEach(cb => cb.disabled = all);
+            }
+        }
+        allChk?.addEventListener('change', syncBranches);
+        syncBranches();
+    </script>
+}

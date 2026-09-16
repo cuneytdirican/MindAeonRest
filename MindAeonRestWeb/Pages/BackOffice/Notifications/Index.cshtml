@@ -1,0 +1,101 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Notifications.IndexModel
+@{
+    ViewData["Title"] = "Bildirim Ayarları";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🔔 Bildirim Ayarları</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">SMS / e-posta / WhatsApp — her şube için ayrı tanımlanır. Anahtar/parola şifreli saklanır. <strong>TEST modunda gerçek gönderim yapılmaz (simülasyon).</strong> Rezervasyon onayı, kampanya ve teslimat bildirimleri bu ayarlara dayanır.</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form" style="margin-bottom:14px;">
+    <form method="get">
+        <div class="frm-row">
+            <label>Şube</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field" onchange="this.form.submit()"></select>
+            <small class="hint">Ayarlar seçili şube için gösterilir/kaydedilir.</small>
+        </div>
+        <noscript><div class="frm-actions"><button type="submit" class="btn">Şubeyi Getir</button></div></noscript>
+    </form>
+</div>
+
+@if (Model.BranchId > 0 && Model.Rows.Count > 0)
+{
+    <form method="post">
+        <input type="hidden" asp-for="BranchId" />
+        @for (int i = 0; i < Model.Rows.Count; i++)
+        {
+            var row = Model.Rows[i];
+            var ch = (NotificationChannel)row.Channel;
+            <div class="bo-card bo-form" style="margin-bottom:14px;">
+                <h3 style="margin:0 0 10px;">@row.ChannelText</h3>
+                <input type="hidden" asp-for="Rows[i].Channel" />
+                <input type="hidden" asp-for="Rows[i].ChannelText" />
+
+                <div class="frm-row">
+                    <label>Sağlayıcı</label>
+                    <select asp-for="Rows[i].Provider" asp-items="MindAeonRestWeb.Pages.BackOffice.Notifications.IndexModel.ProvidersFor(ch)" class="field"></select>
+                </div>
+                <div class="frm-row">
+                    <label>@(ch == NotificationChannel.Email ? "Gönderen (From)" : ch == NotificationChannel.WhatsApp ? "Gönderen Numara" : "SMS Başlığı")</label>
+                    <input asp-for="Rows[i].Sender" class="field" autocomplete="off" />
+                </div>
+                <div class="frm-row">
+                    <label>@(ch == NotificationChannel.WhatsApp ? "Erişim Jetonu" : "Kullanıcı / API Key")</label>
+                    <input asp-for="Rows[i].ApiKey" class="field" autocomplete="off" placeholder="(değiştirmemek için boş bırakın)" />
+                </div>
+                @if (ch != NotificationChannel.WhatsApp)
+                {
+                    <div class="frm-row">
+                        <label>Parola / Secret</label>
+                        <input asp-for="Rows[i].ApiSecret" class="field" type="password" autocomplete="new-password" placeholder="(değiştirmemek için boş bırakın)" />
+                    </div>
+                }
+                @if (ch == NotificationChannel.Email)
+                {
+                    <div class="frm-row">
+                        <label>SMTP Sunucu</label>
+                        <input asp-for="Rows[i].Host" class="field" autocomplete="off" placeholder="smtp.example.com" />
+                    </div>
+                    <div class="frm-row">
+                        <label>Port</label>
+                        <input asp-for="Rows[i].Port" class="field" type="number" min="1" max="65535" placeholder="587" />
+                    </div>
+                    <div class="frm-row">
+                        <label>SSL/TLS</label>
+                        <input asp-for="Rows[i].UseSsl" type="checkbox" />
+                    </div>
+                }
+                <div class="frm-row">
+                    <label>Kanal Etkin</label>
+                    <input asp-for="Rows[i].IsEnabled" type="checkbox" />
+                </div>
+                <div class="frm-row">
+                    <label>Test Modu</label>
+                    <input asp-for="Rows[i].TestMode" type="checkbox" />
+                    <small class="hint">Açıkken gerçek gönderim yapılmaz (simülasyon).</small>
+                </div>
+            </div>
+        }
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+        </div>
+    </form>
+}
+else if (Model.BranchOptions.Count == 0)
+{
+    <div class="bo-card"><em class="hint">Tanımlı şube bulunamadı.</em></div>
+}

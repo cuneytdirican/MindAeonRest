@@ -1,0 +1,64 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.ExpenseTypes.IndexModel
+@{
+    ViewData["Title"] = "Gider Tipleri";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>💸 Gider Tipleri</h1>
+    <a class="btn btn-primary" href="/BackOffice/ExpenseTypes/Edit">+ Yeni Gider Tipi</a>
+</div>
+
+<form method="get" class="bo-filter">
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod veya ad ara..." class="field" />
+    <label class="chk"><input type="checkbox" name="ShowDeleted" value="true" @(Model.ShowDeleted ? "checked" : "") /> Silinenleri göster</label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th>Kod</th><th>Ad</th><th>Maaş</th><th>Durum</th><th class="ar">İşlem</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="5" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var e in Model.Items)
+        {
+            <tr class="@(e.IsDeleted ? "row-deleted" : "")">
+                <td><b>@e.Code</b></td>
+                <td>@e.Name</td>
+                <td>@if (e.IsSalary) { <span class="badge-ok">Maaş</span> } else { <span class="muted">—</span> }</td>
+                <td>
+                    @if (e.IsDeleted) { <span class="badge-del">Silinmiş</span> }
+                    else if (e.IsActive) { <span class="badge-ok">Aktif</span> }
+                    else { <span class="badge-off">Pasif</span> }
+                </td>
+                <td class="ar">
+                    @if (!e.IsDeleted)
+                    {
+                        <a class="btn btn-sm" href="/BackOffice/ExpenseTypes/Edit/@e.Id">Düzenle</a>
+                        <form method="post" asp-page-handler="ToggleDelete" style="display:inline" onsubmit="return confirm('Silinsin (pasifleştirilsin) mi?')">
+                            <input type="hidden" name="id" value="@e.Id" /><input type="hidden" name="deleted" value="true" />
+                            <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="ShowDeleted" value="@Model.ShowDeleted" />
+                            <button class="btn btn-sm btn-danger" type="submit">Sil</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="ToggleDelete" style="display:inline">
+                            <input type="hidden" name="id" value="@e.Id" /><input type="hidden" name="deleted" value="false" />
+                            <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="ShowDeleted" value="@Model.ShowDeleted" />
+                            <button class="btn btn-sm" type="submit">Geri Al</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count kayıt</div>

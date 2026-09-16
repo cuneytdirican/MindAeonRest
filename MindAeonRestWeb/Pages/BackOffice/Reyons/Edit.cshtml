@@ -1,0 +1,112 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Reyons.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Reyon" : $"Reyon · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🍳 @(Model.IsNew ? "Yeni Reyon" : "Reyon Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Reyons">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Reyon (mutfak/hazırlık birimi) bir lokasyona bağlıdır. Yazıcı opsiyoneldir.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Reyon Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Lokasyon (Zone) *</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <select asp-for="ZoneId" asp-items="Model.ZoneOptions" id="zoneSel" class="field" style="flex:1" required></select>
+                <button type="button" class="btn btn-sm" onclick="toggleZoneAdd()" title="Yeni lokasyon ekle">+</button>
+            </div>
+            <div id="zoneAdd" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <input id="newZoneCode" class="field up" maxlength="50" placeholder="Kod" autocomplete="off" style="flex:0 0 120px" />
+                    <input id="newZoneName" class="field" maxlength="150" placeholder="Lokasyon adı" autocomplete="off" style="flex:1" />
+                    <select id="newZoneBranch" asp-items="Model.BranchOptions" class="field" style="flex:0 0 160px"></select>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveZone()">Ekle</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleZoneAdd()">Vazgeç</button>
+                </div>
+                <small class="hint" id="zoneAddErr" style="color:#c0392b"></small>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>İstasyon Tipi *</label>
+            <select asp-for="StationType" asp-items="Model.StationOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Yazıcı</label>
+            <input asp-for="PrinterName" class="field" maxlength="150" autocomplete="off" />
+            <small class="hint">Windows yazıcı adı; boş bırakılırsa yalnızca ekran (KDS) kullanılır.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Reyons" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // ---- "+" hızlı lokasyon (zone) ekleme (proje kuralı; WPF ReyonEditWindow "+ Yeni"): fetch → OnPostAddZone → listeye ekle + seç. ----
+        function toggleZoneAdd() {
+            const box = document.getElementById('zoneAdd');
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            document.getElementById('zoneAddErr').textContent = '';
+            if (show) document.getElementById('newZoneCode').focus();
+        }
+
+        document.getElementById('newZoneCode')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        async function saveZone() {
+            const err = document.getElementById('zoneAddErr');
+            err.textContent = '';
+            const code = document.getElementById('newZoneCode').value.trim();
+            const name = document.getElementById('newZoneName').value.trim();
+            const branchId = document.getElementById('newZoneBranch').value;
+            if (!code || !name) { err.textContent = 'Kod ve lokasyon adı zorunludur.'; return; }
+            if (!branchId || branchId === '0') { err.textContent = 'Şube seçiniz.'; return; }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            try {
+                const params = new URLSearchParams({ code, name, branchId });
+                const res = await fetch('?handler=AddZone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                    body: params.toString()
+                });
+                const data = await res.json();
+                if (!data.ok) { err.textContent = data.error || 'Lokasyon eklenemedi.'; return; }
+                const sel = document.getElementById('zoneSel');
+                const o = document.createElement('option');
+                o.value = String(data.id); o.textContent = data.text; o.selected = true;
+                sel.appendChild(o);
+                document.getElementById('newZoneCode').value = '';
+                document.getElementById('newZoneName').value = '';
+                toggleZoneAdd();
+            } catch (ex) {
+                err.textContent = 'Lokasyon eklenirken hata oluştu.';
+            }
+        }
+    </script>
+}

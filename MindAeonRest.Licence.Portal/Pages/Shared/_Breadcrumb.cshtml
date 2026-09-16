@@ -1,0 +1,16 @@
+@model (string Section, string SectionHref, string Current)
+<nav class="breadcrumb" aria-label="breadcrumb">
+    <a href="/">Ana Sayfa</a>
+    <span class="sep">/</span>
+    @if (!string.IsNullOrEmpty(Model.SectionHref))
+    {
+        <a href="@Model.SectionHref">@Model.Section</a>
+        <span class="sep">/</span>
+    }
+    else if (!string.IsNullOrEmpty(Model.Section))
+    {
+        <span>@Model.Section</span>
+        <span class="sep">/</span>
+    }
+    <span class="current">@Model.Current</span>
+</nav>

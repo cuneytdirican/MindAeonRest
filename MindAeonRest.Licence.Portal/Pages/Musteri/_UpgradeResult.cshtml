@@ -1,0 +1,19 @@
+@model bool
+@if (Model)
+{
+    <div class="badge success" style="padding:var(--sp-3) var(--sp-4)">
+        <i data-lucide="check-circle-2" style="width:16px;height:16px"></i>
+        Yükseltme talebiniz alındı. Destek ekibimiz en kısa sürede dönecek.
+    </div>
+    <script>
+        if (window.toast) toast("Yükseltme talebiniz iletildi.", "success");
+        document.dispatchEvent(new CustomEvent("upgrade:done"));
+        if (window.lucide) lucide.createIcons();
+    </script>
+}
+else
+{
+    var upgErr = ViewData["UpgradeError"] as string;
+    <div class="alert-error">@(string.IsNullOrWhiteSpace(upgErr) ? "Talep gönderilemedi. Lütfen tekrar deneyin veya destek sayfasından iletişime geçin." : upgErr)</div>
+    <script>if (window.lucide) lucide.createIcons();</script>
+}

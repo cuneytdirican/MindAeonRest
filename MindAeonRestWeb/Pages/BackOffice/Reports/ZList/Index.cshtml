@@ -1,0 +1,97 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Reports.ZList.IndexModel
+@{
+    ViewData["Title"] = "Z (Gün Sonu) Raporları";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head no-print">
+    <h1>📋 Z (Gün Sonu) Raporları</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+
+<style>
+    .bo-sub { margin:16px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted,#888); }
+    @@media print {
+        .no-print { display:none !important; }
+        .bo-card { box-shadow:none; border:none; }
+    }
+</style>
+
+<form method="get" class="bo-filter no-print">
+    <label>Şube
+        <select name="BranchId" asp-items="Model.BranchOptions" class="field"></select>
+    </label>
+    <label>KIOSK
+        <select name="KioskNo" asp-items="Model.KioskOptions" class="field"></select>
+    </label>
+    <label>Başlangıç
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <label>Bitiş
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+    <a class="btn" href="/BackOffice/Reports/ZList?handler=Csv&BranchId=@Model.BranchId&KioskNo=@Model.KioskNo&From=@(Model.From?.ToString("yyyy-MM-dd"))&To=@(Model.To?.ToString("yyyy-MM-dd"))">⬇ CSV İndir</a>
+</form>
+
+<div class="bo-card">
+    <div style="text-align:center;margin-bottom:14px">
+        <h2 style="margin:0">Z (GÜN SONU) RAPORLARI</h2>
+        <div class="hint">@Model.SubTitle</div>
+    </div>
+
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Tarih</th>
+                <th>Şube</th>
+                <th>KIOSK</th>
+                <th class="ar">Fiş Adedi</th>
+                <th class="ar">Satış Toplamı</th>
+                <th>Alınma</th>
+                <th>Alan</th>
+                <th class="no-print"></th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var z in Model.Rows)
+        {
+            <tr>
+                <td>@z.DateText</td>
+                <td>@z.BranchName</td>
+                <td>@z.KioskText</td>
+                <td class="ar">@z.FisCount</td>
+                <td class="ar"><b>@MindAeonRestWeb.Pages.BackOffice.Reports.ZList.IndexModel.Money(z.SalesTotal)</b></td>
+                <td>@z.TakenAtText</td>
+                <td>@z.TakenByName</td>
+                <td class="no-print">
+                    <a class="btn btn-ghost"
+                       href="/BackOffice/Reports/Fiche?BranchId=@z.BranchId&From=@z.ReportDate.ToString("yyyy-MM-dd")&To=@z.ReportDate.ToString("yyyy-MM-dd")">Fişler</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+        @if (Model.Rows.Count > 0)
+        {
+            <tfoot>
+                <tr>
+                    <th colspan="3">TOPLAM (@Model.Rows.Count Z)</th>
+                    <th class="ar">@Model.TotalFis</th>
+                    <th class="ar">@MindAeonRestWeb.Pages.BackOffice.Reports.ZList.IndexModel.Money(Model.TotalSales)</th>
+                    <th colspan="3"></th>
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>

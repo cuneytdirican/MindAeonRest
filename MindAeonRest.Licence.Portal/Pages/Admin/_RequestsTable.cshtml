@@ -1,0 +1,148 @@
+@using MindAeonRest.Licence.Data
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.RequestsModel
+
+<div class="table-wrap" x-data="requestActions()">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Şirket Kodu</th>
+                <th>Donanım</th>
+                <th>İstenen Paket</th>
+                <th>Durum</th>
+                <th>Tarih</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-muted" style="text-align:center; padding:var(--sp-6);">Bu durumda talep yok.</td></tr>
+            }
+            @foreach (var r in Model.Items)
+            {
+                var st = AdminLabels.Request(r.Status);
+                <tr>
+                    <td style="font-weight:600;">@r.CompanyCode</td>
+                    <td class="text-sm" style="font-variant-numeric:tabular-nums; max-width:180px; overflow:hidden; text-overflow:ellipsis;">@r.HardwareId</td>
+                    <td><span class="badge primary">@r.RequestedPackageName</span></td>
+                    <td><span class="badge @st.Css"><span class="dot"></span> @st.Text</span></td>
+                    <td>@r.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        @if (r.Status == RequestStatus.Pending)
+                        {
+                            <button type="button" class="btn btn-sm btn-primary" x-on:click="openApprove(@r.Id, '@r.CompanyCode', '@r.RequestedPackageName')">
+                                <i data-lucide="check"></i> Onayla
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" x-on:click="openReject(@r.Id)">
+                                <i data-lucide="x"></i> Reddet
+                            </button>
+                        }
+                        else if (r.IssuedLicenseId is { } lid)
+                        {
+                            <span class="text-sm text-muted">Lisans #@lid</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted text-sm">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Onay sihirbazı -->
+    <template x-if="modal === 'approve'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Talebi Onayla</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Requests?handler=Approve" hx-target="#reqTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <p class="text-muted"><strong x-text="company"></strong> için <strong x-text="pkg"></strong> paketi onaylanacak. İmzalı lisans üretilecektir.</p>
+                        <div class="form-field">
+                            <label>Süre</label>
+                            <select name="duration" x-model="duration">
+                                <option value="0">Süresiz</option>
+                                <option value="1">Aylık</option>
+                                <option value="2">Yıllık</option>
+                            </select>
+                        </div>
+                        <div class="form-field" x-show="duration !== '0'">
+                            <label>Bitiş Tarihi</label>
+                            <input type="date" name="expiresUtc" />
+                        </div>
+                        <div class="form-field">
+                            <label>Ek Modüller (add-on)</label>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px 14px;">
+                                @foreach (var a in Model.AddOns)
+                                {
+                                    <label style="display:flex; align-items:center; gap:5px; font-weight:400;">
+                                        <input type="checkbox" name="addOns" value="@a.Bit" /> @a.Name
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        <div class="grid grid-3">
+                            <div class="form-field"><label>Ek Kullanıcı</label><input type="number" name="extraUsers" min="0" value="0" /></div>
+                            <div class="form-field"><label>Ek Terminal</label><input type="number" name="extraKiosks" min="0" value="0" /></div>
+                            <div class="form-field"><label>Ek Şube</label><input type="number" name="extraBranches" min="0" value="0" /></div>
+                        </div>
+                        <div class="form-field">
+                            <label>Not</label>
+                            <textarea name="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Onayla ve Üret</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- Reddet -->
+    <template x-if="modal === 'reject'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Talebi Reddet</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Requests?handler=Reject" hx-target="#reqTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <div class="form-field">
+                            <label>Gerekçe</label>
+                            <textarea name="reason" rows="3" placeholder="Reddetme gerekçesi"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-danger"><i data-lucide="x"></i> Reddet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    function requestActions() {
+        return {
+            modal: null, id: null, company: '', pkg: '', duration: '0',
+            openApprove(id, company, pkg) { this.id = id; this.company = company; this.pkg = pkg; this.duration = '0'; this.modal = 'approve'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+            openReject(id) { this.id = id; this.modal = 'reject'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+            close() { this.modal = null; this.id = null; }
+        };
+    }
+</script>

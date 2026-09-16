@@ -1,0 +1,118 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.KioskDashboard.IndexModel
+@{
+    ViewData["Title"] = "KIOSK Kasa Paneli";
+    Layout = "_BackOfficeLayout";
+    var snap = Model.Snap;
+}
+
+<div class="bo-page-head">
+    <h1>💰 KIOSK Kasa Paneli</h1>
+    <a class="btn" href="/BackOffice/KioskDashboard">🔄 Yenile</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<form method="get" class="bo-filter">
+    <label>Şube
+        <select name="BranchId" class="field">
+            @foreach (var b in Model.BranchOptions)
+            {
+                <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+            }
+        </select>
+    </label>
+    <label>KIOSK No
+        <select name="KioskNo" class="field">
+            @foreach (var k in Model.KioskOptions)
+            {
+                <option value="@k.Value" selected="@(Model.KioskNo == k.Value)">@k.Text</option>
+            }
+        </select>
+    </label>
+    <label>Zaman Kapsamı
+        <select name="Scope" class="field">
+            @foreach (var s in Model.ScopeOptions)
+            {
+                <option value="@s.Value" selected="@(Model.Scope == s.Value)">@s.Text</option>
+            }
+        </select>
+    </label>
+    @if (Model.Scope == 2)
+    {
+        <label>Başlangıç
+            <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+        </label>
+        <label>Bitiş
+            <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+        </label>
+    }
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+<div class="bo-count">@Model.ScopeInfo &nbsp;·&nbsp; Son Z: <b>@Model.LastZText</b></div>
+
+@if (snap != null)
+{
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>💵 Nakit</th>
+                    <th>💳 Kredi Kartı</th>
+                    <th>🎫 Yemek Çeki</th>
+                    <th>📋 Açık Hesap</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="ar"><b>@snap.NakitText</b></td>
+                    <td class="ar"><b>@snap.KrediKartiText</b></td>
+                    <td class="ar"><b>@snap.YemekCekiText</b></td>
+                    <td class="ar"><b>@snap.AcikHesapText</b></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <tbody>
+                <tr>
+                    <td><b>TOPLAM TAHSİLAT</b><br /><span class="bo-count">Nakit + Kart + Çek + Havale + Hediye + Puan (açık hesap hariç)</span></td>
+                    <td class="ar" style="font-size:22px;font-weight:bold">@snap.TahsilatText</td>
+                </tr>
+                <tr>
+                    <td>Fiş sayısı</td>
+                    <td class="ar"><b>@snap.FisCount</b> fiş</td>
+                </tr>
+                @if (snap.Havale != 0)
+                {
+                    <tr><td>Havale / EFT</td><td class="ar">@snap.HavaleText</td></tr>
+                }
+                @if (snap.HediyeCeki != 0)
+                {
+                    <tr><td>Hediye Çeki</td><td class="ar">@snap.HediyeCekiText</td></tr>
+                }
+                @if (snap.PuanSadakat != 0)
+                {
+                    <tr><td>Puan / Sadakat</td><td class="ar">@snap.PuanSadakatText</td></tr>
+                }
+                @if (snap.AcikHesap != 0)
+                {
+                    <tr><td>Açık hesap dahil genel toplam</td><td class="ar"><b>@String.Format("₺{0:N2}", snap.Total)</b></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<p class="bo-count">⏱ Bu ekran açık kaldıkça 1 dakikada bir otomatik yenilenir.</p>
+
+<script>
+    // WPF'teki 1 dakikalık otomatik yenileme karşılığı — mevcut filtre korunur.
+    setTimeout(function () { location.reload(); }, 60000);
+</script>

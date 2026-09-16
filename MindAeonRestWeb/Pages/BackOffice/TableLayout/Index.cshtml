@@ -1,0 +1,142 @@
+@page
+@using System.Globalization
+@using MindAeonRest.Helpers
+@model MindAeonRestWeb.Pages.BackOffice.TableLayout.IndexModel
+@{
+    ViewData["Title"] = "Masa Planı";
+    Layout = "_BackOfficeLayout";
+    CultureInfo inv = CultureInfo.InvariantCulture;
+}
+
+<div class="bo-page-head">
+    <h1>🪑 Masa Planı</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Info))
+{
+    <div class="alert-success">@Model.Info</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<form method="get" class="bo-filter">
+    <label>Lokasyon</label>
+    <select name="ZoneId" asp-items="Model.ZoneOptions" class="field" onchange="this.form.submit()"></select>
+    <noscript><button type="submit" class="btn">Göster</button></noscript>
+</form>
+
+@if (!Model.HasZone)
+{
+    <div class="bo-card"><p class="empty">Masaları yönetmek için yukarıdan bir lokasyon seçin.</p></div>
+}
+else
+{
+    <form method="post">
+        <input type="hidden" name="ZoneId" value="@Model.ZoneId" />
+        <input type="hidden" name="DeletedIds" id="deletedIds" value="" />
+
+        <div class="bo-card">
+            <table class="bo-table sub-grid" id="tblTable">
+                <thead>
+                    <tr>
+                        <th style="width:16%">Kod *</th>
+                        <th style="width:24%">Ad</th>
+                        <th style="width:12%">Koltuk</th>
+                        <th style="width:16%">Şekil</th>
+                        <th style="width:12%">X</th>
+                        <th style="width:12%">Y</th>
+                        <th class="ar" style="width:8%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="tblBody">
+                @if (Model.Tables.Count == 0)
+                {
+                    <tr class="no-rows"><td colspan="7" class="empty">Bu lokasyonda masa yok. "+ Masa Ekle" ile başlayın.</td></tr>
+                }
+                @for (int i = 0; i < Model.Tables.Count; i++)
+                {
+                    var t = Model.Tables[i];
+                    <tr class="tbl-row">
+                        <td>
+                            <input type="hidden" name="Tables[@i].Id" value="@t.Id" class="tbl-id" />
+                            <input name="Tables[@i].Code" value="@t.Code" class="field tbl-code" maxlength="30" required />
+                        </td>
+                        <td><input name="Tables[@i].Name" value="@t.Name" class="field" maxlength="60" /></td>
+                        <td><input name="Tables[@i].Seats" value="@t.Seats" type="number" min="0" max="40" class="field" /></td>
+                        <td>
+                            <select name="Tables[@i].Shape" class="field">
+                                <option value="0" selected="@(t.Shape == 0)">Kare</option>
+                                <option value="1" selected="@(t.Shape == 1)">Yuvarlak</option>
+                            </select>
+                        </td>
+                        <td><input name="Tables[@i].X" value="@t.X.ToString(inv)" type="number" step="1" min="0" class="field" /></td>
+                        <td><input name="Tables[@i].Y" value="@t.Y.ToString(inv)" type="number" step="1" min="0" class="field" /></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addRow()" style="margin-top:8px">+ Masa Ekle</button>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <script>
+        let NEXT_NO = @Model.NextNumber;
+        const deleted = [];
+
+        function reindex() {
+            document.querySelectorAll('#tblBody .tbl-row').forEach((row, i) => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/Tables\[\d+\]/, 'Tables[' + i + ']');
+                });
+            });
+        }
+
+        function usedCodes() {
+            return Array.from(document.querySelectorAll('#tblBody .tbl-code')).map(el => (el.value || '').trim().toUpperCase());
+        }
+
+        function nextCode() {
+            const used = usedCodes();
+            let n = NEXT_NO;
+            while (used.includes('MASA' + n)) n++;
+            NEXT_NO = n + 1;
+            return 'MASA' + n;
+        }
+
+        function addRow() {
+            const body = document.getElementById('tblBody');
+            body.querySelector('.no-rows')?.remove();
+            const i = body.querySelectorAll('.tbl-row').length;
+            const tr = document.createElement('tr');
+            tr.className = 'tbl-row';
+            tr.innerHTML =
+                `<td>` +
+                    `<input type="hidden" name="Tables[${i}].Id" value="0" class="tbl-id" />` +
+                    `<input name="Tables[${i}].Code" value="${nextCode()}" class="field tbl-code" maxlength="30" required /></td>` +
+                `<td><input name="Tables[${i}].Name" value="" class="field" maxlength="60" /></td>` +
+                `<td><input name="Tables[${i}].Seats" value="4" type="number" min="0" max="40" class="field" /></td>` +
+                `<td><select name="Tables[${i}].Shape" class="field"><option value="0">Kare</option><option value="1">Yuvarlak</option></select></td>` +
+                `<td><input name="Tables[${i}].X" value="0" type="number" step="1" min="0" class="field" /></td>` +
+                `<td><input name="Tables[${i}].Y" value="0" type="number" step="1" min="0" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function removeRow(btn) {
+            const row = btn.closest('.tbl-row');
+            const id = parseInt(row.querySelector('.tbl-id')?.value || '0', 10);
+            if (id > 0) { deleted.push(id); document.getElementById('deletedIds').value = deleted.join(','); }
+            row.remove();
+            reindex();
+        }
+    </script>
+}

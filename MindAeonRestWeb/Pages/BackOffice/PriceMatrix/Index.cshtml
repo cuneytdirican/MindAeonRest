@@ -1,0 +1,196 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.PriceMatrix.IndexModel
+@{
+    ViewData["Title"] = "Şube · Fiyat Listesi Matrisi";
+    Layout = "_BackOfficeLayout";
+    var axisIsList = string.Equals(Model.Axis, MindAeonRestWeb.Pages.BackOffice.PriceMatrix.IndexModel.AxisList, StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="bo-page-head">
+    <h1>🧮 Şube · Fiyat Listesi Matrisi</h1>
+</div>
+
+<p class="bo-hint">
+    Her ürünün (satır) seçilen eksene (sütun: şube veya fiyat listesi) ait kapsamlı satış fiyatını
+    tek ekranda düzenleyin. Boş hücreye fiyat yazıp "Toplu Kaydet"e basınca yeni kapsamlı fiyat oluşur;
+    dolu hücreyi düzenleyince güncellenir (değişmeyen hücreler atlanır). Genel (kapsamsız) fiyat Toplu Fiyat
+    ekranından yönetilir.
+</p>
+
+@if (Model.Message is string msg)
+{
+    <div class="bo-alert">@msg</div>
+}
+
+<form method="get" class="bo-filter">
+    <select name="Axis" class="field" onchange="this.form.submit()">
+        <option value="@MindAeonRestWeb.Pages.BackOffice.PriceMatrix.IndexModel.AxisBranch" selected="@(!axisIsList)">Eksen: Şube</option>
+        <option value="@MindAeonRestWeb.Pages.BackOffice.PriceMatrix.IndexModel.AxisList" selected="@(axisIsList)">Eksen: Fiyat Listesi</option>
+    </select>
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod veya ad ara..." class="field" />
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+@if (Model.Columns.Count == 0)
+{
+    <div class="bo-card">
+        <p class="empty">
+            @(axisIsList ? "Tanımlı fiyat listesi yok. Önce Fiyat Listeleri ekranından liste ekleyin."
+                          : "Bu şirkete bağlı şube yok. Önce Şubeler ekranından şube ekleyin.")
+        </p>
+    </div>
+}
+else
+{
+    <form method="post" asp-page-handler="SaveAll">
+        <input type="hidden" name="Axis" value="@Model.Axis" />
+        <input type="hidden" name="Q" value="@Model.Q" />
+        <div class="bo-card" style="overflow-x:auto">
+            <table class="bo-table">
+                <thead>
+                    <tr>
+                        <th>Kod</th>
+                        <th>Ürün</th>
+                        <th>Birim</th>
+                        @foreach (var c in Model.Columns)
+                        {
+                            <th title="@c.Code">@c.Title</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Rows.Count == 0)
+                {
+                    <tr><td colspan="@(3 + Model.Columns.Count)" class="empty">Kayıt yok.</td></tr>
+                }
+                @{ string? currentCat = null; }
+                @foreach (var r in Model.Rows)
+                {
+                    if (r.CategoryNames != currentCat)
+                    {
+                        currentCat = r.CategoryNames;
+                        <tr class="bo-group-row"><td colspan="@(3 + Model.Columns.Count)"><b>@currentCat</b></td></tr>
+                    }
+                    <tr>
+                        <td><b>@r.Code</b></td>
+                        <td>@r.Name</td>
+                        <td>@r.MainUnitName</td>
+                        @foreach (var cell in r.Cells)
+                        {
+                            <td>
+                                @* Her hücre kendi kimliğini taşır; POST dizileri hücre başına hizalı kalır. *@
+                                <input type="hidden" name="priceId" value="@cell.PriceId" />
+                                <input type="hidden" name="productId" value="@r.ProductId" />
+                                <input type="hidden" name="unitId" value="@cell.UnitId" />
+                                <input type="hidden" name="colId" value="@cell.ColId" />
+                                <input type="hidden" name="orig" value="@cell.PriceInput" />
+                                <input type="hidden" name="tax" value="@(cell.TaxIncluded ? "1" : "0")" />
+                                <input type="text" name="price" value="@cell.PriceInput"
+                                       class="field field-price" inputmode="decimal" placeholder="—" />
+                                @* Dolu hücre için satır bazında kapsamlı fiyat silme (WPF 🗑 DeletePriceById). *@
+                                @if (cell.PriceId > 0)
+                                {
+                                    <button type="submit" form="pmDeleteForm" name="priceId" value="@cell.PriceId"
+                                            class="btn" title="Bu kapsamlı fiyatı sil"
+                                            style="padding:2px 6px;margin-top:4px"
+                                            onclick="return confirm('Bu kapsamlı fiyat satırı silinsin mi?');">🗑</button>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="bo-actions">
+            <span class="bo-count">@Model.Rows.Count ürün × @Model.Columns.Count @(axisIsList ? "liste" : "şube") · Döviz: @Model.DefaultCurrencyCode</span>
+            <button type="submit" class="btn btn-primary">Toplu Kaydet</button>
+        </div>
+    </form>
+
+    @* Satır/hücre bazında kapsamlı fiyat SİLME. Hücredeki 🗑 butonları form="pmDeleteForm" ile buraya
+       bağlanır ve kendi name="priceId" value'sunu gönderir (JS gerekmez, nested form yok). *@
+    <form method="post" asp-page-handler="Delete" id="pmDeleteForm">
+        <input type="hidden" name="Axis" value="@Model.Axis" />
+        <input type="hidden" name="Q" value="@Model.Q" />
+    </form>
+
+    @* Kapsamlı fiyat EKLE — WPF ProductPriceEditWindow karşılığı:
+       tarih/saat aralığı + fiyat tipi (Satış/Alış) + döviz + liste fiyatı + KDV dahil + eksen kapsamı. *@
+    <details class="bo-card" style="margin-top:14px">
+        <summary style="cursor:pointer;font-weight:600">➕ Kapsamlı fiyat ekle (tarih/saat aralığı, fiyat tipi, döviz)</summary>
+        <form method="post" asp-page-handler="AddScoped" style="margin-top:12px">
+            <input type="hidden" name="Axis" value="@Model.Axis" />
+            <input type="hidden" name="Q" value="@Model.Q" />
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Ürün</span>
+                    <select name="productId" id="pmProduct" class="field" required
+                            onchange="var o=this.options[this.selectedIndex];document.getElementById('pmUnit').value=o.dataset.unit||'';document.getElementById('pmUnitName').textContent=o.dataset.unitname||'—';">
+                        <option value="">— Ürün seçin —</option>
+                        @foreach (var p in Model.ProductOptions)
+                        {
+                            <option value="@p.Id" data-unit="@p.MainUnitId" data-unitname="@p.MainUnitName">@p.Label</option>
+                        }
+                    </select>
+                </label>
+                <input type="hidden" name="unitId" id="pmUnit" value="" />
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Birim</span>
+                    <span id="pmUnitName" class="field" style="min-width:80px">—</span>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>@(axisIsList ? "Fiyat Listesi" : "Şube")</span>
+                    <select name="colId" class="field" required>
+                        <option value="">— @(axisIsList ? "Liste" : "Şube") seçin —</option>
+                        @foreach (var c in Model.Columns)
+                        {
+                            <option value="@c.Id">@c.Title</option>
+                        }
+                    </select>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Fiyat Tipi</span>
+                    <select name="priceType" class="field">
+                        <option value="Satis" selected>Satış</option>
+                        <option value="Alis">Alış</option>
+                    </select>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Fiyat</span>
+                    <input type="text" name="price" class="field" inputmode="decimal" required style="width:100px" />
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Liste Fiyatı (ops.)</span>
+                    <input type="text" name="listPrice" class="field" inputmode="decimal" style="width:100px" />
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Döviz</span>
+                    <select name="currencyId" class="field">
+                        @foreach (var c in Model.Currencies)
+                        {
+                            <option value="@c.Id" selected="@(c.Id == Model.DefaultCurrencyId)">@c.Code</option>
+                        }
+                    </select>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Başlangıç (ops.)</span>
+                    <input type="datetime-local" name="start" class="field" />
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px">
+                    <span>Bitiş (boş=süresiz)</span>
+                    <input type="datetime-local" name="end" class="field" />
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding-bottom:8px">
+                    <input type="checkbox" name="taxIncluded" value="true" checked />
+                    <span>KDV Dahil</span>
+                </label>
+                <button type="submit" class="btn btn-primary" style="margin-bottom:2px">Ekle</button>
+            </div>
+            <p class="bo-hint" style="margin-top:8px">
+                Not: Müşteri / müşteri grubu kapsamı, çekirdek AddScopedPrice servisi bu alanları kaydetmediği
+                için burada sunulmaz (Core değiştirilmeden kalıcı olamaz).
+            </p>
+        </form>
+    </details>
+}

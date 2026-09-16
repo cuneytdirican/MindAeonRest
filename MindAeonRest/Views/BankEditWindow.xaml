@@ -1,0 +1,35 @@
+<Window x:Class="MindAeonRest.Views.BankEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Banka" Height="320" Width="520"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="30,26,30,24">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock x:Name="TitleText" Text="Yeni Banka" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Margin="0,18,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="KOD" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="CodeBox" Style="{StaticResource InputTextBox}" CharacterCasing="Upper" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="BANKA ADI" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" />
+                    </StackPanel>
+                </Grid>
+                <CheckBox x:Name="ActiveCheck" Content="Aktif" Style="{StaticResource ThemedCheckBox}" Margin="2,18,0,0" IsChecked="True" />
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="2,14,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+            </StackPanel>
+            <Grid Grid.Row="2" Margin="0,18,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

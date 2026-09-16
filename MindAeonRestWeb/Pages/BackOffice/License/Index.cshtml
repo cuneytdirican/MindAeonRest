@@ -1,0 +1,221 @@
+@page
+@using MindAeonRest.Licensing
+@model MindAeonRestWeb.Pages.BackOffice.License.IndexModel
+@{
+    ViewData["Title"] = "Lisans Durumu";
+    Layout = "_BackOfficeLayout";
+}
+
+<style>
+    .lic-badge { display:inline-block; padding:3px 12px; border-radius:999px; font-size:13px; font-weight:600; }
+    .lic-badge.ok   { background:rgba(48,164,108,.16); color:#8ce0b4; border:1px solid #30a46c; }
+    .lic-badge.warn { background:rgba(224,168,64,.16); color:#f0cd8c; border:1px solid #e0a840; }
+    .lic-badge.bad  { background:rgba(220,72,72,.14);  color:#f0a0a0; border:1px solid #dc4848; }
+</style>
+
+<div class="bo-page-head">
+    <h1>🔐 Lisans Durumu</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.ActivationError))
+{
+    <div class="alert-error">@Model.ActivationError</div>
+}
+@if (!string.IsNullOrEmpty(Model.ActivationMessage))
+{
+    <div class="alert-success">@Model.ActivationMessage</div>
+}
+
+@if (Model.Status is { } st)
+{
+    <div class="bo-card bo-form">
+        <p class="hint">
+            @Model.CompanyName (@Model.CompanyCode) — bu şirketin geçerli lisans durumu (salt-okunur).
+        </p>
+
+        <div class="frm-row">
+            <label>Durum</label>
+            <div>
+                @{ var cls = Model.StateCss; }
+                <span class="lic-badge @cls">@st.StateText</span>
+            </div>
+        </div>
+
+        <div class="frm-row">
+            <label>Paket</label>
+            <input value="@st.PackageName" class="field" readonly disabled />
+        </div>
+
+        <div class="frm-row">
+            <label>Bitiş Tarihi</label>
+            <input value="@Model.ExpiresText" class="field" readonly disabled />
+            @if (st.State == LicenseState.Trial)
+            {
+                <small class="hint">Deneme sürümü — @st.TrialDaysLeft gün kaldı.</small>
+            }
+        </div>
+    </div>
+
+    <div class="bo-card">
+        <h3 style="margin:0 0 10px">Limitler</h3>
+        <table class="bo-table">
+            <thead>
+                <tr><th>Limit</th><th>İzin</th><th>Kullanım</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Şube</td>
+                    <td>@MindAeonRestWeb.Pages.BackOffice.License.IndexModel.LimitText(st.MaxBranches)</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>Kullanıcı</td>
+                    <td>@MindAeonRestWeb.Pages.BackOffice.License.IndexModel.LimitText(st.MaxUsers)</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>Terminal (KIOSK)</td>
+                    <td>@MindAeonRestWeb.Pages.BackOffice.License.IndexModel.LimitText(st.MaxKiosks)</td>
+                    <td>@st.ActiveKiosks aktif</td>
+                </tr>
+            </tbody>
+        </table>
+        <small class="hint">Şube/kullanıcı kullanım sayacı bu ekranda gösterilmez; yalnız terminal kaydı sayılır.</small>
+    </div>
+
+    <div class="bo-card">
+        <h3 style="margin:0 0 10px">Özellikler (Modüller)</h3>
+        <table class="bo-table">
+            <thead>
+                <tr><th>Modül</th><th>Tür</th><th>Durum</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model.FeatureRows)
+                {
+                    <tr>
+                        <td>@f.Name</td>
+                        <td>@(f.Core ? "Çekirdek" : "Ek Modül")</td>
+                        <td>
+                            @if (f.Enabled)
+                            {
+                                <span class="lic-badge ok">Açık</span>
+                            }
+                            else
+                            {
+                                <span class="lic-badge bad">Kapalı</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bo-card bo-form">
+        <h3 style="margin:0 0 10px">📋 Talep Anahtarı (internet yoksa)</h3>
+        <p class="hint">
+            İnternetiniz yoksa, paketi (ve varsa bayi kodunu) seçip <strong>Talep Anahtarı Oluştur</strong>'a basın.
+            Oluşan talep anahtarını aşağıdaki kutudan kopyalayıp üretici/bayinize iletin; size imzalı
+            <code>MAR-LIC.</code> anahtarını verecekler.
+        </p>
+        <form method="post" asp-page-handler="BuildRequest">
+            <div class="frm-row">
+                <label>Bayi Kodu (varsa)</label>
+                <input name="dealerCode" class="field" value="@(Model.RequestDealerCode)" placeholder="Boş bırakılabilir" style="text-transform:uppercase" />
+            </div>
+            <div class="frm-row">
+                <label>Paket</label>
+                <select name="package" class="field">
+                    <option value="@((int)LicensePackage.Lite)" selected="@(Model.RequestPackage == (int)LicensePackage.Lite)">Lite</option>
+                    <option value="@((int)LicensePackage.Standart)" selected="@(Model.RequestPackage == (int)LicensePackage.Standart)">Standart</option>
+                    <option value="@((int)LicensePackage.Enterprise)" selected="@(Model.RequestPackage == (int)LicensePackage.Enterprise)">Enterprise</option>
+                </select>
+            </div>
+            <div class="frm-row">
+                <label></label>
+                <button type="submit" class="btn btn-primary">📋 Talep Anahtarı Oluştur</button>
+            </div>
+        </form>
+        @if (!string.IsNullOrEmpty(Model.RequestKey))
+        {
+            <div class="frm-row">
+                <label>Talep Anahtarı</label>
+                <textarea class="field" rows="4" readonly onclick="this.select()"
+                          style="font-family:Consolas,monospace;font-size:12px">@Model.RequestKey</textarea>
+            </div>
+            <small class="hint">Kutuya tıklayınca tümü seçilir — kopyalayıp (Ctrl+C) üreticinize iletin.</small>
+        }
+    </div>
+
+    <div class="bo-card bo-form">
+        <h3 style="margin:0 0 10px">🔑 Offline Aktivasyon</h3>
+        <p class="hint">
+            Üretici/bayiden gelen imzalı lisans anahtarını (<code>MAR-LIC.</code> ile başlayan) aşağıya yapıştırıp
+            (ya da <code>.lic</code>/<code>.txt</code> dosyasından yükleyip) <strong>Etkinleştir</strong>'e basın.
+            Anahtar imzası doğrulanır ve bu şirket için kaydedilir.
+        </p>
+        <form method="post" asp-page-handler="OfflineActivate" enctype="multipart/form-data">
+            <div class="frm-row">
+                <label>Lisans Anahtarı</label>
+                <textarea name="licenseKey" class="field" rows="5" placeholder="MAR-LIC...."></textarea>
+            </div>
+            <div class="frm-row">
+                <label>...veya Dosyadan Yükle</label>
+                <input type="file" name="licenseFile" class="field" accept=".lic,.txt" />
+            </div>
+            <div class="frm-row">
+                <label></label>
+                <button type="submit" class="btn btn-primary">✓ Etkinleştir</button>
+            </div>
+        </form>
+        <small class="hint">Anahtarı yapıştırın <em>ya da</em> <code>.lic</code>/<code>.txt</code> dosyası seçin (yapıştırılan metin önceliklidir).</small>
+    </div>
+
+    <div class="bo-card bo-form">
+        <h3 style="margin:0 0 10px">🌐 Online Aktivasyon</h3>
+        @if (Model.OnlineConfigured)
+        {
+            <p class="hint">
+                Bayi kodunuzu (varsa) ve paketi seçip <strong>Online Etkinleştir</strong>'e basın. Talep, Lisans Portalı'na
+                gönderilir; lisansınız onaylıysa anında etkinleşir, değilse talep kaydedilir.
+            </p>
+            <form method="post" asp-page-handler="OnlineActivate">
+                <div class="frm-row">
+                    <label>Bayi Kodu (varsa)</label>
+                    <input name="dealerCode" class="field" placeholder="Boş bırakılabilir" style="text-transform:uppercase" />
+                </div>
+                <div class="frm-row">
+                    <label>Paket</label>
+                    <select name="package" class="field">
+                        <option value="@((int)LicensePackage.Lite)">Lite</option>
+                        <option value="@((int)LicensePackage.Standart)" selected>Standart</option>
+                        <option value="@((int)LicensePackage.Enterprise)">Enterprise</option>
+                    </select>
+                </div>
+                <div class="frm-row">
+                    <label></label>
+                    <button type="submit" class="btn btn-primary">🌐 Online Etkinleştir</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <p class="hint" style="margin:0">
+                ⚙️ Online aktivasyon <strong>yapılandırma gerektirir</strong> (Lisans API adresi tanımlı değil).
+                Şimdilik yukarıdaki <strong>Offline Aktivasyon</strong>'u kullanın.
+            </p>
+        }
+    </div>
+
+    <div class="bo-card">
+        <p class="hint" style="margin:0">
+            💡 Deneme (Trial) sürümü lisans yokken <strong>otomatik</strong> başlar (7 gün) ve ayrı bir işlem gerektirmez;
+            durum kartında kalan gün gösterilir. Paket yükseltme/yenileme için <strong>Lisans Portalı</strong>'na başvurun.
+            Web merkezî host olduğundan donanım bağı zorlanmaz.
+        </p>
+    </div>
+}

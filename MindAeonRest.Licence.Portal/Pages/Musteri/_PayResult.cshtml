@@ -1,0 +1,45 @@
+@using MindAeonRest.Licence.Data
+@model MindAeonRest.Licence.Portal.Pages.Musteri.StartPaymentResultVm?
+@if (Model is null)
+{
+    var payErr = ViewData["PayError"] as string;
+    <div class="alert-error">@(string.IsNullOrWhiteSpace(payErr) ? "Ödeme başlatılamadı. Lütfen daha sonra tekrar deneyin veya destek ile iletişime geçin." : payErr)</div>
+    <script>if (window.lucide) lucide.createIcons();</script>
+}
+else if (!string.IsNullOrWhiteSpace(Model.RedirectUrl))
+{
+    <div class="badge info" style="padding:var(--sp-3) var(--sp-4)">
+        <i data-lucide="external-link" style="width:16px;height:16px"></i>Ödeme sayfasına yönlendiriliyorsunuz…
+    </div>
+    <script>
+        window.location.href = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RedirectUrl));
+    </script>
+}
+else if (!string.IsNullOrWhiteSpace(Model.Html))
+{
+    <div>@Html.Raw(Model.Html)</div>
+}
+else if (Model.Provider == PaymentProviderKind.BankTransfer)
+{
+    <div class="card" style="box-shadow:none;border-style:dashed">
+        <div class="flex items-center gap-3" style="margin-bottom:var(--sp-3)">
+            <i data-lucide="building-2" style="color:var(--primary)"></i>
+            <strong>Banka Havalesi / EFT</strong>
+        </div>
+        <p class="text-muted text-sm mb-0">
+            Ödeme kaydınız oluşturuldu (#@Model.PaymentId).
+            Tutar: <strong class="money net">@Model.Amount.ToString("N2") @Model.CurrencyCode</strong>.
+            Açıklamaya ödeme numaranızı (<strong>@Model.PaymentId</strong>) yazıp havale/EFT yapınız;
+            dekont eşleştikten sonra ödemeniz onaylanır.
+        </p>
+    </div>
+    <script>if (window.toast) toast("Havale talimatı oluşturuldu.", "info"); if (window.lucide) lucide.createIcons();</script>
+}
+else
+{
+    <div class="badge @(Model.Status == PaymentStatus.Paid ? "success" : "warning")" style="padding:var(--sp-3) var(--sp-4)">
+        <i data-lucide="info" style="width:16px;height:16px"></i>
+        @(string.IsNullOrWhiteSpace(Model.Message) ? "Ödeme kaydı oluşturuldu." : Model.Message)
+    </div>
+    <script>if (window.lucide) lucide.createIcons();</script>
+}

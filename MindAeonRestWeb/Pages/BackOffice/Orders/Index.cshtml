@@ -1,0 +1,67 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Orders.IndexModel
+@{
+    ViewData["Title"] = "Sipariş İzleme";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 Sipariş İzleme (Adisyon Geçmişi)</h1>
+</div>
+
+<form method="get" class="bo-filter">
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Durum
+        <select name="Status" class="field">
+            @foreach (var s in Model.StatusOptions)
+            {
+                <option value="@s.Value" selected="@(Model.Status == s.Value)">@s.Text</option>
+            }
+        </select>
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    <a class="btn" href="/BackOffice/Orders?handler=Csv&From=@(Model.From?.ToString("yyyy-MM-dd"))&To=@(Model.To?.ToString("yyyy-MM-dd"))&Status=@Model.Status">⬇ CSV İndir</a>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kod</th><th>Masa</th><th>Müşteri</th>
+                <th>Açılış</th><th>Kapanış</th>
+                <th class="ar">Tutar</th><th>Durum</th><th class="ar">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var o in Model.Items)
+        {
+            <tr class="@(o.Status == OrderStatus.Iptal ? "row-deleted" : "")">
+                <td><b>@o.Code</b></td>
+                <td>@o.TableCodes</td>
+                <td>@o.CustomerName</td>
+                <td>@o.OpenedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@(o.ClosedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                <td class="ar">@o.TotalText</td>
+                <td>
+                    @switch (o.Status)
+                    {
+                        case OrderStatus.Acik: <span class="badge-off">Açık</span> break;
+                        case OrderStatus.Iptal: <span class="badge-del">İptal</span> break;
+                        default: <span class="badge-ok">@o.StatusText</span> break;
+                    }
+                </td>
+                <td class="ar">
+                    <a class="btn btn-sm" href="/BackOffice/Orders/Detail?id=@o.Id">🔍 Detay</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count sipariş</div>

@@ -1,0 +1,98 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Expenses.EditModel
+@{
+    ViewData["Title"] = "Yeni Gider";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 Yeni Gider</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Expenses">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Gider kaydedilince seçilen ödeme aracından (kasa/banka) çıkış hareketi yapılır.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Gider Tipi *</label>
+            <select asp-for="ExpenseTypeId" asp-items="Model.TypeOptions" class="field" id="expTypeSel" required></select>
+        </div>
+        <div class="frm-row" id="personnelRow" style="display:none">
+            <label>Personel (maaş)</label>
+            <select asp-for="PersonnelId" asp-items="Model.PersonnelOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Tutar *</label>
+            <input asp-for="Amount" class="field" inputmode="decimal" />
+        </div>
+        <div class="frm-row">
+            <label>Tarih *</label>
+            <input asp-for="ExpenseDate" type="date" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Ödeme *</label>
+            <select asp-for="PayKind" asp-items="Model.PayKindOptions" class="field" id="payKindSel" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Araç (kasa/banka) *</label>
+            <select asp-for="InstrumentId" class="field" id="instrumentSel" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Proje</label>
+            <select asp-for="ProjectId" asp-items="Model.ProjectOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <input asp-for="Description" class="field" maxlength="500" />
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Expenses" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        var salaryTypeIds = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SalaryTypeIds));
+        var cashOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.CashOptions.Select(o => new { v = o.Value, t = o.Text })));
+        var bankOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.BankOptions.Select(o => new { v = o.Value, t = o.Text })));
+        var selectedInstrument = "@Model.InstrumentId";
+
+        var typeSel = document.getElementById('expTypeSel');
+        var personnelRow = document.getElementById('personnelRow');
+        var payKindSel = document.getElementById('payKindSel');
+        var instrumentSel = document.getElementById('instrumentSel');
+
+        function refreshPersonnel() {
+            var id = parseInt(typeSel.value || '0', 10);
+            personnelRow.style.display = salaryTypeIds.indexOf(id) >= 0 ? '' : 'none';
+        }
+
+        function refreshInstruments() {
+            var kind = parseInt(payKindSel.value || '0', 10); // 0=Kasa, 1=Banka
+            var opts = kind === 1 ? bankOptions : cashOptions;
+            instrumentSel.innerHTML = '';
+            opts.forEach(function (o) {
+                var el = document.createElement('option');
+                el.value = o.v; el.textContent = o.t;
+                if (o.v === selectedInstrument) el.selected = true;
+                instrumentSel.appendChild(el);
+            });
+        }
+
+        typeSel.addEventListener('change', refreshPersonnel);
+        payKindSel.addEventListener('change', function () { selectedInstrument = ''; refreshInstruments(); });
+        refreshPersonnel();
+        refreshInstruments();
+    })();
+</script>
+}

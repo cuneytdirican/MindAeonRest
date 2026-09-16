@@ -1,0 +1,40 @@
+<Window x:Class="MindAeonRest.Views.LoyaltySettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sadakat Ayarları" Height="560" Width="560"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="30,24,30,22">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Border CornerRadius="8" Padding="12,6" HorizontalAlignment="Left" Background="#F59E0B">
+                    <TextBlock Text="⭐ PUAN / SADAKAT PROGRAMI" FontWeight="Bold" Foreground="#1A1208" FontSize="12.5" />
+                </Border>
+                <TextBlock Text="Sadakat Ayarları" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" Margin="0,8,0,0" />
+                <TextBlock Text="Müşteriler harcadıkça puan kazanır; puanlarını ödemede kullanabilir. Oranları buradan ayarlayın." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Margin="0,18,0,0">
+                <CheckBox x:Name="ActiveBox" Content="Sadakat programı aktif" Foreground="{DynamicResource TextBrush}" FontSize="14" FontWeight="SemiBold" />
+
+                <TextBlock Text="KAZANIM ORANI — ₺ başına kazanılan puan" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                <TextBox x:Name="EarnBox" Style="{StaticResource InputTextBox}" FontSize="16" />
+                <TextBlock x:Name="EarnHint" Text="Örn. 0,10 → harcanan her 1 ₺ için 0,10 puan kazanılır (100 ₺ → 10 puan)." FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" Margin="2,4,0,0" TextWrapping="Wrap" />
+
+                <TextBlock Text="HARCAMA ORANI — 1 puanın ₺ karşılığı" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                <TextBox x:Name="RedeemBox" Style="{StaticResource InputTextBox}" FontSize="16" />
+                <TextBlock x:Name="RedeemHint" Text="Örn. 1 → 1 puan = 1 ₺. (0,5 → 1 puan = 0,50 ₺.)" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" Margin="2,4,0,0" TextWrapping="Wrap" />
+
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="2,14,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+            </StackPanel>
+
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.6*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="AYARLARI KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

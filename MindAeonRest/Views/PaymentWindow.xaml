@@ -1,0 +1,224 @@
+<Window x:Class="MindAeonRest.Views.PaymentWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        Title="Ödeme" Height="760" Width="1080" MinHeight="640" MinWidth="940"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" WindowState="Maximized" Background="{DynamicResource PosBgBrush}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="B2V" />
+            <Style x:Key="KeyBtn" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource PosCardBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Margin" Value="4" />
+                <Setter Property="Height" Value="56" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="10"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                            <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource PosSubtleBrush}" /></Trigger></ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="{StaticResource PosHeaderBrush}" Height="58">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="‹" FontSize="24" Foreground="White" Background="Transparent" BorderThickness="0" Width="40" Cursor="Hand" Click="Back_Click" />
+                    <TextBlock Text="ÖDEME" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TableText" FontSize="13" Foreground="#F0D9EA" VerticalAlignment="Center" Margin="12,3,0,0" />
+                </StackPanel>
+                <Button Content="✕" FontSize="14" Foreground="White" Background="Transparent" BorderThickness="0" Width="40" Height="40" HorizontalAlignment="Right" Cursor="Hand" Click="Back_Click" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="14">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="420" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+            <!-- Sol: ödenecek satırlar + kişi filtresi + adisyon özeti -->
+            <Border Grid.Column="0" Background="{StaticResource PosCardBrush}" CornerRadius="12">
+                <Grid Margin="14">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock Text="ÖDENECEK SATIRLAR" FontWeight="Bold" Foreground="{StaticResource PosMutedBrush}" VerticalAlignment="Center" />
+                        <Button Content="Tümünü Seç / Kaldır" Style="{StaticResource GhostButton}" HorizontalAlignment="Right" Width="150" Click="SelectAll_Click" />
+                    </DockPanel>
+
+                    <!-- Kişi (koltuk) filtresi: çipe tıkla → sadece o kişinin satırları seçili, tutarı çipte yazar -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock Text="KİŞİ — tıkla, sadece o kişinin hesabını öde" FontSize="11" Foreground="{StaticResource PosMutedBrush}" Margin="2,0,0,4" />
+                        <WrapPanel x:Name="SeatChips" />
+                    </StackPanel>
+
+                    <ListBox x:Name="LinesList" Grid.Row="2" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Margin" Value="0,2" /></Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" Foreground="{StaticResource PosAccentBrush}" Margin="2,8,0,2" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListBox.GroupStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource PosSubtleBrush}" CornerRadius="8" Padding="10,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Foreground="{StaticResource PosTextBrush}" FontWeight="SemiBold"><Run Text="{Binding Line.QtyText, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Line.ProductName, Mode=OneWay}" /></TextBlock>
+                                            <TextBlock Text="{Binding Line.SeatText}" FontSize="11" Foreground="{StaticResource PosMutedBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="{Binding Line.LineTotalText}" FontWeight="Bold" Foreground="{StaticResource PosTextBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Adisyon özeti: seçili (ödenecek) + tüm adisyon toplam/ödenen/kalan + ödeme dökümü -->
+                    <Border Grid.Row="3" BorderBrush="{StaticResource PosBorderBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,8,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="ÖDENECEK (seçili kişi)" FontWeight="Bold" Foreground="{StaticResource PosMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="SelectedTotalText" Text="₺0,00" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PosAccentBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Adisyon Toplam" FontSize="11" Foreground="{StaticResource PosMutedBrush}" />
+                                    <TextBlock x:Name="OrderTotalText" Text="₺0,00" FontSize="15" FontWeight="Bold" Foreground="{StaticResource PosTextBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Ödenen" FontSize="11" Foreground="{StaticResource PosMutedBrush}" />
+                                    <TextBlock x:Name="OrderPaidText" Text="₺0,00" FontSize="15" FontWeight="Bold" Foreground="{StaticResource PosGreenBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Kalan" FontSize="11" Foreground="{StaticResource PosMutedBrush}" />
+                                    <TextBlock x:Name="OrderRemainingText" Text="₺0,00" FontSize="15" FontWeight="Bold" Foreground="{StaticResource PosTextBrush}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock x:Name="BreakdownText" FontSize="11" Foreground="{StaticResource PosMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Sağ: ödeme -->
+            <Border Grid.Column="2" Background="{StaticResource PosCardBrush}" CornerRadius="12">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="1.1*" /></Grid.ColumnDefinitions>
+
+                    <!-- Sol iç: yöntem + tutar + keypad -->
+                    <StackPanel Grid.Column="0">
+                        <Border Background="{DynamicResource PosSubtleBrush}" CornerRadius="10" Padding="14,10">
+                            <Grid>
+                                <TextBlock Text="KALAN" FontWeight="Bold" Foreground="{StaticResource PosMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="RemainingText" Text="₺0,00" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PosTextBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Text="ÖDEME YÖNTEMİ" Style="{StaticResource FieldLabel}" Margin="2,14,0,6" />
+                        <UniformGrid Columns="3">
+                            <Button x:Name="MNakit" Content="💵 Nakit" Style="{StaticResource PosLineToolBtnBig}" Tag="0" Click="Method_Click" />
+                            <Button x:Name="MKart" Content="💳 Kart" Style="{StaticResource PosLineToolBtnBig}" Tag="1" Click="Method_Click" />
+                            <Button x:Name="MBanka" Content="🏧 Banka Kartı" Style="{StaticResource PosLineToolBtnBig}" Tag="4" Click="Method_Click" />
+                            <Button x:Name="MTemassiz" Content="📡 Temassız" Style="{StaticResource PosLineToolBtnBig}" Tag="5" Click="Method_Click" />
+                            <Button x:Name="MQr" Content="🔳 QR Ödeme" Style="{StaticResource PosLineToolBtnBig}" Tag="6" Click="Method_Click" />
+                            <Button x:Name="MMobil" Content="📱 Mobil Ödeme" Style="{StaticResource PosLineToolBtnBig}" Tag="7" Click="Method_Click" />
+                            <Button x:Name="MOnline" Content="🌐 Online" Style="{StaticResource PosLineToolBtnBig}" Tag="9" Click="Method_Click" />
+                            <Button x:Name="MCek" Content="🍽 Yemek Çeki" Style="{StaticResource PosLineToolBtnBig}" Tag="2" Click="Method_Click" />
+                            <Button x:Name="MHavale" Content="🏦 Havale/EFT" Style="{StaticResource PosLineToolBtnBig}" Tag="8" Click="Method_Click" />
+                            <Button x:Name="MHediye" Content="🎁 Hediye Çeki" Style="{StaticResource PosLineToolBtnBig}" Tag="10" Click="Method_Click" />
+                            <Button x:Name="MPuan" Content="⭐ Puan/Sadakat" Style="{StaticResource PosLineToolBtnBig}" Tag="11" Click="Method_Click" />
+                            <Button x:Name="MAcik" Content="📒 Açık Hesap" Style="{StaticResource PosLineToolBtnBig}" Tag="3" Click="Method_Click" />
+                        </UniformGrid>
+
+                        <TextBlock x:Name="InstrLabel" Text="ARAÇ" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                        <ComboBox x:Name="InstrumentCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <StackPanel x:Name="CustomerPanel" Visibility="Collapsed">
+                            <TextBlock x:Name="CustomerLabel" Text="MÜŞTERİ (açık hesap için zorunlu)" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                            <views:EntityPicker x:Name="CustomerPicker" />
+                            <TextBlock x:Name="LoyaltyText" Foreground="{StaticResource PosAccentBrush}" FontSize="11.5" Margin="2,5,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+                        </StackPanel>
+
+                        <!-- Hediye Çeki: kod + sorgula + bakiye -->
+                        <StackPanel x:Name="GiftPanel" Visibility="Collapsed">
+                            <TextBlock Text="HEDİYE ÇEKİ KODU" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="GiftCodeBox" Grid.Column="0" Style="{StaticResource InputTextBox}" />
+                                <Button x:Name="GiftQueryBtn" Grid.Column="1" Content="Sorgula" Click="GiftQuery_Click" Style="{StaticResource GhostButton}" Width="90" Margin="6,0,0,0" />
+                            </Grid>
+                            <TextBlock x:Name="GiftBalanceText" Foreground="{StaticResource PosAccentBrush}" FontSize="11.5" Margin="2,5,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <TextBlock Text="TUTAR" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                        <TextBox x:Name="AmountBox" Style="{StaticResource InputTextBox}" FontSize="22" Text="0" TextChanged="Amount_Changed" />
+                    </StackPanel>
+
+                    <!-- Sağ iç: keypad + ödemeler -->
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <UniformGrid Grid.Row="0" Columns="3">
+                            <Button Content="7" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="8" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="9" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="4" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="5" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="6" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="1" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="2" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="3" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="0" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="00" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                            <Button Content="C" Style="{StaticResource KeyBtn}" Click="Key_Click" />
+                        </UniformGrid>
+                        <Button Grid.Row="0" Content="" Visibility="Collapsed" />
+                        <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                            <Button Content="Kalanı Yaz" Style="{StaticResource GhostButton}" Click="FillRemaining_Click" />
+                            <Button Content="+ ÖDEME EKLE" Style="{StaticResource PosAccentButton}" Margin="0,8,0,0" Click="AddPayment_Click" />
+                            <ListBox x:Name="PaymentsList" Background="Transparent" BorderThickness="0" Margin="0,8,0,0" MaxHeight="150"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource PosSubtleBrush}" CornerRadius="8" Padding="10,6" Margin="0,2">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Foreground="{StaticResource PosTextBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"><Run Text="{Binding KindText, Mode=OneWay}" /><Run Text="  " /><Run Text="{Binding InstrumentName, Mode=OneWay}" /></TextBlock>
+                                                <TextBlock Grid.Column="1" Text="{Binding AmountText}" FontWeight="Bold" Foreground="{StaticResource PosTextBrush}" VerticalAlignment="Center" />
+                                                <Button Grid.Column="2" Content="✕" Width="26" Height="26" Margin="8,0,0,0" Background="Transparent" BorderThickness="0" Foreground="{StaticResource DangerBrush}" Cursor="Hand" Click="RemovePayment_Click" Tag="{Binding}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2">
+                            <Button Content="🖨 HESAP YAZDIR" Style="{StaticResource GhostButton}" Margin="0,0,0,8" Click="PrintAccount_Click" />
+                            <Button x:Name="CompleteButton" Content="TAMAMLA ve KAPAT" Style="{StaticResource PosGreenButton}" Click="Complete_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

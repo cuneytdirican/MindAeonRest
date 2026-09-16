@@ -1,0 +1,112 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.CariHareket.EditModel
+@{
+    ViewData["Title"] = "Yeni Cari Hareket";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📒 Manuel Cari Hareket</h1>
+    <a class="btn btn-ghost" href="/BackOffice/CariHareket?CustomerId=@Model.CustomerId">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Borç: cari bize borçlanır. Alacak: cari alacaklanır. Bakiye = Σ(Borç − Alacak).</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Cari *</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="field" id="custSel" style="flex:1" required></select>
+                <button type="button" class="btn btn-sm" onclick="toggleCustAdd()" title="Yeni cari ekle">+</button>
+            </div>
+            <div id="custAdd" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <input id="newCustCode" class="field up" maxlength="50" placeholder="Kod" autocomplete="off" style="flex:0 0 120px" />
+                    <input id="newCustName" class="field" maxlength="150" placeholder="Ünvan" autocomplete="off" style="flex:1" />
+                    <input id="newCustPhone" class="field" maxlength="30" placeholder="Telefon" autocomplete="off" style="flex:0 0 140px" />
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveCust()">Ekle</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleCustAdd()">Vazgeç</button>
+                </div>
+                <small class="hint" id="custAddErr" style="color:#c0392b"></small>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>İşlem Tipi *</label>
+            <select asp-for="DocType" asp-items="Model.TypeOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Tarih *</label>
+            <input asp-for="TxnDate" type="date" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Borç</label>
+            <input asp-for="Debt" class="field" inputmode="decimal" />
+        </div>
+        <div class="frm-row">
+            <label>Alacak</label>
+            <input asp-for="Credit" class="field" inputmode="decimal" />
+        </div>
+        <div class="frm-row">
+            <label>Proje</label>
+            <select asp-for="ProjectId" asp-items="Model.ProjectOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <input asp-for="Description" class="field" maxlength="500" />
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/CariHareket?CustomerId=@Model.CustomerId" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // ---- "+" hızlı cari ekleme (proje kuralı): fetch ile OnPostAddCustomer → listeye ekle + seç. ----
+        function toggleCustAdd() {
+            const box = document.getElementById('custAdd');
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            document.getElementById('custAddErr').textContent = '';
+            if (show) document.getElementById('newCustCode').focus();
+        }
+
+        document.getElementById('newCustCode')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        async function saveCust() {
+            const err = document.getElementById('custAddErr');
+            err.textContent = '';
+            const code = document.getElementById('newCustCode').value.trim();
+            const name = document.getElementById('newCustName').value.trim();
+            const phone = document.getElementById('newCustPhone').value.trim();
+            if (!code || !name) { err.textContent = 'Kod ve ünvan zorunludur.'; return; }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            try {
+                const params = new URLSearchParams({ code, name, phone });
+                const res = await fetch('?handler=AddCustomer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                    body: params.toString()
+                });
+                const data = await res.json();
+                if (!data.ok) { err.textContent = data.error || 'Cari eklenemedi.'; return; }
+                const sel = document.getElementById('custSel');
+                const o = document.createElement('option');
+                o.value = String(data.id); o.textContent = data.text; o.selected = true;
+                sel.appendChild(o);
+                document.getElementById('newCustCode').value = '';
+                document.getElementById('newCustName').value = '';
+                document.getElementById('newCustPhone').value = '';
+                toggleCustAdd();
+            } catch (ex) {
+                err.textContent = 'Cari eklenirken hata oluştu.';
+            }
+        }
+    </script>
+}

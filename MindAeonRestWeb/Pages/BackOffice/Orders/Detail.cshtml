@@ -1,0 +1,103 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Orders.DetailModel
+@{
+    ViewData["Title"] = "Sipariş Detayı";
+    Layout = "_BackOfficeLayout";
+    var o = Model.Order!;
+}
+
+<div class="bo-page-head">
+    <h1>🧾 Sipariş · @o.Code
+        @if (Model.ZLocked)
+        {
+            <span class="badge-del">🔒 Z Kilitli — değiştirilemez</span>
+        }
+    </h1>
+    <a class="btn btn-ghost" href="/BackOffice/Orders">← Geri</a>
+</div>
+
+<div class="bo-card">
+    <div class="frm-row">
+        <div class="field"><b>Masa:</b> @(string.IsNullOrEmpty(o.TableCodes) ? "-" : o.TableCodes)</div>
+        <div class="field"><b>Müşteri:</b> @(string.IsNullOrEmpty(o.CustomerName) ? "-" : o.CustomerName)</div>
+        <div class="field"><b>Açılış:</b> @o.OpenedAt.ToString("dd.MM.yyyy HH:mm")</div>
+        <div class="field"><b>Kapanış:</b> @(o.ClosedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</div>
+        <div class="field"><b>Durum:</b> @o.StatusText</div>
+        <div class="field"><b>Toplam:</b> @o.TotalText</div>
+    </div>
+</div>
+
+<div class="bo-card">
+    <h3>Satırlar (silinmiş/iptal dahil)</h3>
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kişi</th><th>Ürün</th>
+                <th class="ar">Mik.</th><th class="ar">Fiyat</th><th class="ar">Tutar</th><th>Durum</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Lines.Count == 0)
+        {
+            <tr><td colspan="6" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var l in Model.Lines)
+        {
+            <tr class="@(l.IsDeleted || l.LineStatus == OrderLineStatus.Iptal ? "row-deleted" : "")">
+                <td>@l.SeatText</td>
+                <td>@l.ProductName</td>
+                <td class="ar">@l.QtyText</td>
+                <td class="ar">@l.UnitPrice.ToString("N2")</td>
+                <td class="ar">@l.LineTotalText</td>
+                <td>@l.DurumText</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="bo-card">
+    <h3>Ödeme Fişleri</h3>
+    @if (Model.Fiches.Count == 0)
+    {
+        <table class="bo-table"><tbody><tr><td class="empty">Kesilmiş cari fiş yok.</td></tr></tbody></table>
+    }
+    @foreach (var f in Model.Fiches)
+    {
+        <table class="bo-table" style="margin-bottom:6px">
+            <thead>
+                <tr><th>Fiş</th><th>Tarih</th><th class="ar">Tutar</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>@f.Code</b></td>
+                    <td>@f.FicheDate.ToString("dd.MM HH:mm")</td>
+                    <td class="ar">@f.TotalText</td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="bo-table" style="margin-bottom:16px">
+            <thead>
+                <tr><th>Ödeme Tipi</th><th class="ar">Tutar</th><th>Tarih</th></tr>
+            </thead>
+            <tbody>
+            @{
+                var pays = Model.Payments.TryGetValue(f.Id, out var pl) ? pl : new List<PaymentLine>();
+            }
+            @if (pays.Count == 0)
+            {
+                <tr><td colspan="3" class="empty">Ödeme hareketi yok.</td></tr>
+            }
+            @foreach (var p in pays)
+            {
+                <tr>
+                    <td>@p.KindText</td>
+                    <td class="ar">@p.AmountText</td>
+                    <td>@p.PayDate.ToString("dd.MM HH:mm")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,59 @@
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.DealersModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Bayi</th>
+                <th>Bayi Kodu</th>
+                <th>İlgili Kişi</th>
+                <th class="num">Marj</th>
+                <th>Tahsilat</th>
+                <th class="num">İşletme</th>
+                <th class="num">Lisans</th>
+                <th>Durum</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="9" class="text-muted" style="text-align:center; padding:var(--sp-6);">Bayi bulunamadı.</td></tr>
+            }
+            @foreach (var dlr in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">@dlr.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(dlr.Email)) { <div class="text-sm text-muted">@dlr.Email</div> }
+                    </td>
+                    <td><code style="font-weight:600;">@(string.IsNullOrWhiteSpace(dlr.Code) ? "—" : dlr.Code)</code></td>
+                    <td>@(dlr.ContactName ?? "—")</td>
+                    <td class="num money margin">@dlr.MarginPercent.ToString("0.##")%</td>
+                    <td>@AdminLabels.Billing(dlr.BillingMode)</td>
+                    <td class="num">@dlr.BusinessCount</td>
+                    <td class="num">@dlr.LicenseCount</td>
+                    <td>
+                        @if (dlr.IsActive)
+                        {
+                            <span class="badge success"><span class="dot"></span> Aktif</span>
+                        }
+                        else
+                        {
+                            <span class="badge"><span class="dot"></span> Pasif</span>
+                        }
+                    </td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-sm"
+                                hx-get="/Admin/Dealers?handler=Detail&id=@dlr.Id"
+                                hx-target="#dlrDetail" hx-swap="innerHTML"
+                                x-on:click="$dispatch('open-detail')">
+                            <i data-lucide="settings-2"></i> Yönet
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

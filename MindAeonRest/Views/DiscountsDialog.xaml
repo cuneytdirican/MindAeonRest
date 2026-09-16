@@ -1,0 +1,19 @@
+<Window x:Class="MindAeonRest.Views.DiscountsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="İskontolar" Height="520" Width="440"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="28,22,28,20">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="Satır İskontoları (% ardışık)" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" MouseLeftButtonDown="Header_MouseLeftButtonDown" />
+            <UniformGrid Grid.Row="1" Columns="2" Margin="0,14,0,0" x:Name="Host" />
+            <Grid Grid.Row="2" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" Content="UYGULA" Style="{StaticResource PrimaryButton}" Click="Ok_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

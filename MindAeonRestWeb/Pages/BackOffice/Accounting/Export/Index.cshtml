@@ -1,0 +1,80 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Accounting.Export.IndexModel
+@{
+    ViewData["Title"] = "Muhasebe Aktarım";
+    Layout = "_BackOfficeLayout";
+    string qs = $"From={Model.From?.ToString("yyyy-MM-dd")}&To={Model.To?.ToString("yyyy-MM-dd")}&Format={Model.Format}";
+}
+
+<div class="bo-page-head">
+    <h1>📤 Muhasebe Aktarım</h1>
+    @if (Model.Searched && Model.Count > 0)
+    {
+        <a class="btn btn-primary" href="/BackOffice/Accounting/Export?handler=Csv&@qs">⬇ CSV İndir</a>
+        <a class="btn btn-ghost" href="/BackOffice/Accounting/Export?handler=Csv&@qs&Summary=true">⬇ Özet CSV</a>
+    }
+</div>
+
+<p class="hint" style="margin:0 0 14px;">
+    Belirtilen tarih aralığındaki <b>cari hareketler</b> (+ fatura KDV'si) harici muhasebe programına
+    (Logo / Mikro / Genel) içe-aktarılabilir CSV olarak indirilir. Salt-okunur — veriye dokunmaz.
+</p>
+
+<form method="get" class="bo-filter">
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" required /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" required /></label>
+    <label>Biçim
+        <select name="Format" asp-items="Model.FormatOptions" class="field"></select>
+    </label>
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+@if (Model.Searched)
+{
+    <div class="bo-card">
+        <b>Satır:</b> @Model.Count &nbsp;·&nbsp;
+        <b>Toplam Borç:</b> @Model.TotalDebt.ToString("N2") &nbsp;·&nbsp;
+        <b>Toplam Alacak:</b> @Model.TotalCredit.ToString("N2") &nbsp;·&nbsp;
+        <b>Toplam KDV:</b> @Model.TotalKdv.ToString("N2")
+    </div>
+
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Fiş No</th><th>Tarih</th><th>Cari Kod</th><th>Cari</th><th>Belge Tipi</th>
+                    <th class="ar">Borç</th><th class="ar">Alacak</th><th class="ar">KDV</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="8" class="empty">Bu aralıkta kayıt yok.</td></tr>
+            }
+            @foreach (var x in Model.Rows.Take(500))
+            {
+                <tr>
+                    <td>@x.FisNo</td>
+                    <td>@x.Date.ToString("dd.MM.yyyy")</td>
+                    <td><b>@x.CustomerCode</b></td>
+                    <td>@x.CustomerName</td>
+                    <td>@x.DocTypeText</td>
+                    <td class="ar">@x.Debt.ToString("N2")</td>
+                    <td class="ar">@x.Credit.ToString("N2")</td>
+                    <td class="ar">@x.Kdv.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (Model.Count > 500)
+        {
+            <p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+                Önizlemede ilk 500 satır gösteriliyor. Tümü CSV indirmede yer alır (@Model.Count satır).
+            </p>
+        }
+    </div>
+}
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: CSV, harici muhasebe programına içe aktarım içindir (';' ayraç, virgül ondalık, UTF-8). Özet CSV belge tipi bazında borç/alacak/KDV toplamını verir (e-defter benzeri).
+</p>

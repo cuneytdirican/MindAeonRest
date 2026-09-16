@@ -1,0 +1,41 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.PriceTransfer.IndexModel
+@{
+    ViewData["Title"] = "Şubeler Arası Fiyat Aktarımı";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🔀 Şubeler Arası Fiyat Aktarımı</h1>
+</div>
+
+<p class="bo-hint">
+    Kaynak şubenin şube-özel fiyatları hedef şubeye kopyalanır. Hedef şubenin mevcut şube-özel fiyatları
+    silinip kaynaktan gelenlerle değiştirilir (müşteri/grup/liste bazlı fiyatlar korunur).
+</p>
+
+@if (TempData["PriceTransferResult"] is string msg)
+{
+    <div class="bo-alert">@msg</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post" asp-page-handler="Transfer"
+          onsubmit="return confirm('Hedef şubenin mevcut fiyatları kaynaktan gelenlerle değiştirilecek. Onaylıyor musunuz?');">
+        <div class="frm-row">
+            <label>Kaynak Şube *</label>
+            <select asp-for="SourceBranchId" asp-items="Model.BranchOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Hedef Şube *</label>
+            <select asp-for="TargetBranchId" asp-items="Model.BranchOptions" class="field" required></select>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Aktar</button>
+        </div>
+    </form>
+</div>

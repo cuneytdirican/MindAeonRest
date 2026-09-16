@@ -1,0 +1,113 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Branches.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Şube" : $"Şube · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🏢 @(Model.IsNew ? "Yeni Şube" : "Şube Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Branches">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Şube Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Telefon</label>
+            <input asp-for="Phone" class="field" maxlength="50" />
+        </div>
+        <div class="frm-row">
+            <label>Vergi Numarası</label>
+            <input asp-for="TaxNumber" class="field" maxlength="50" />
+        </div>
+        <div class="frm-row">
+            <label>Vergi Dairesi</label>
+            <input asp-for="TaxOffice" class="field" maxlength="150" />
+        </div>
+        <div class="frm-row">
+            <label>Ülke</label>
+            <select asp-for="CountryId" id="countrySel" class="field"><option value="">(Seçiniz)</option></select>
+        </div>
+        <div class="frm-row">
+            <label>Şehir</label>
+            <select asp-for="CityId" id="citySel" class="field"><option value="">(Seçiniz)</option></select>
+        </div>
+        <div class="frm-row">
+            <label>İlçe</label>
+            <select asp-for="DistrictId" id="districtSel" class="field"><option value="">(Seçiniz)</option></select>
+        </div>
+        <div class="frm-row">
+            <label>Adres</label>
+            <textarea asp-for="Address" class="field" rows="3"></textarea>
+        </div>
+        <div class="frm-row">
+            <label>Gün Başlangıç Saati (HH:mm)</label>
+            <input asp-for="DayStart" class="field" type="time" step="900" />
+            <small class="hint">Gece yarısını geçen/24 saat işletmeler için iş günü kesimi (örn. 06:00). 00:00 = takvim günü.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Branches" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // Lokasyon kademeli combo: Ülke → Şehir → İlçe (WPF LocationSelector karşılığı).
+        const LOC = @Html.Raw(Model.LocationJson);
+        const SEL = { country: '@Model.CountryId', city: '@Model.CityId', district: '@Model.DistrictId' };
+        const countrySel = document.getElementById('countrySel');
+        const citySel = document.getElementById('citySel');
+        const districtSel = document.getElementById('districtSel');
+
+        function fill(sel, items, chosen) {
+            sel.innerHTML = '<option value="">(Seçiniz)</option>';
+            (items || []).forEach(it => {
+                const o = document.createElement('option');
+                o.value = it.id;
+                o.textContent = it.name;
+                if (String(it.id) === String(chosen)) o.selected = true;
+                sel.appendChild(o);
+            });
+        }
+
+        function loadCountries() {
+            fill(countrySel, LOC.countries, SEL.country);
+            loadCities(SEL.city, SEL.district);
+        }
+        function loadCities(chosenCity, chosenDistrict) {
+            const cid = countrySel.value;
+            fill(citySel, cid ? LOC.cities[cid] : [], chosenCity);
+            loadDistricts(chosenDistrict);
+        }
+        function loadDistricts(chosenDistrict) {
+            const ct = citySel.value;
+            fill(districtSel, ct ? LOC.districts[ct] : [], chosenDistrict);
+        }
+
+        countrySel.addEventListener('change', () => loadCities('', ''));
+        citySel.addEventListener('change', () => loadDistricts(''));
+        loadCountries();
+    </script>
+}

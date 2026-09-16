@@ -1,0 +1,83 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.Feedback.IndexModel
+@{
+    ViewData["Title"] = "Geri Bildirim";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head no-print">
+    <h1>⭐ Geri Bildirim</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+
+<style>
+    .fb-summary { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+    .fb-kpi { flex:1 1 160px; background:var(--card2,#232833); border:1px solid var(--line,#2a2f3a); border-radius:12px; padding:14px 16px; }
+    .fb-kpi .k { font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted,#888); }
+    .fb-kpi .v { font-size:26px; font-weight:800; margin-top:4px; }
+    .fb-stars { color:#f5a623; letter-spacing:2px; }
+    .fb-comment { max-width:520px; white-space:pre-wrap; }
+    @@media print { .no-print { display:none !important; } .bo-card { box-shadow:none; border:none; } }
+</style>
+
+<form method="get" class="bo-filter no-print">
+    <label>Şube
+        <select name="BranchId" asp-items="Model.BranchOptions" class="field"></select>
+    </label>
+    <label>Başlangıç
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <label>Bitiş
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+    <a class="btn" href="/BackOffice/Reports/Feedback?handler=Csv&BranchId=@Model.BranchId&From=@(Model.From?.ToString("yyyy-MM-dd"))&To=@(Model.To?.ToString("yyyy-MM-dd"))">⬇ CSV İndir</a>
+</form>
+
+<div class="fb-summary">
+    <div class="fb-kpi"><div class="k">Ortalama Puan</div><div class="v">@Model.Stats.AverageText <span class="fb-stars">★</span></div></div>
+    <div class="fb-kpi"><div class="k">Toplam Geri Bildirim</div><div class="v">@Model.Stats.Count</div></div>
+    <div class="fb-kpi"><div class="k">Google'a Yönlendirilen</div><div class="v">@Model.Stats.Items.Count(f => f.GoogleRedirected)</div></div>
+</div>
+
+<div class="bo-card">
+    <div style="text-align:center;margin-bottom:14px">
+        <h2 style="margin:0">GERİ BİLDİRİM</h2>
+        <div class="hint">@Model.SubTitle</div>
+    </div>
+
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Tarih</th>
+                <th>Şube</th>
+                <th>Puan</th>
+                <th>Yorum</th>
+                <th>Telefon</th>
+                <th>Google</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Stats.Count == 0)
+        {
+            <tr><td colspan="6" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var f in Model.Stats.Items)
+        {
+            <tr>
+                <td>@f.CreatedAtText</td>
+                <td>@Model.BranchName(f.BranchId)</td>
+                <td><span class="fb-stars">@f.Stars</span></td>
+                <td class="fb-comment">@f.Comment</td>
+                <td>@f.CustomerPhone</td>
+                <td>@(f.GoogleRedirected ? "✔" : "")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

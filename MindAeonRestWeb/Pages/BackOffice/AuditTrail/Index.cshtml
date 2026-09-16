@@ -1,0 +1,80 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.AuditTrail.IndexModel
+@{
+    ViewData["Title"] = "Denetim İzi";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head no-print">
+    <h1>🕵 Denetim İzi</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+
+<style>
+    .audit-before { color:var(--muted,#b00020); }
+    .audit-after  { color:var(--ok,#0a7d28); }
+    .audit-json { font-family:ui-monospace,Consolas,monospace; font-size:12px; white-space:normal; word-break:break-word; max-width:420px; }
+    .audit-act { font-weight:600; }
+    @@media print { .no-print { display:none !important; } }
+</style>
+
+<form method="get" class="bo-filter no-print">
+    <label>Başlangıç
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <label>Bitiş
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    </label>
+    <label>Kullanıcı
+        <select name="UserId" asp-items="Model.UserOptions" class="field"></select>
+    </label>
+    <label>Varlık
+        <select name="EntityType" asp-items="Model.EntityOptions" class="field"></select>
+    </label>
+    <button type="submit" class="btn btn-primary">Göster</button>
+    <button type="button" class="btn" onclick="window.print()">🖨 Yazdır</button>
+</form>
+
+<div class="bo-card">
+    <div style="text-align:center;margin-bottom:14px">
+        <h2 style="margin:0">DENETİM İZİ</h2>
+        <div class="hint">@Model.SubTitle</div>
+    </div>
+
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Zaman</th>
+                <th>Kullanıcı</th>
+                <th>İşlem</th>
+                <th>Varlık</th>
+                <th>Öncesi → Sonrası</th>
+                <th>KIOSK</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="6" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var a in Model.Rows)
+        {
+            <tr>
+                <td>@MindAeonRestWeb.Pages.BackOffice.AuditTrail.IndexModel.LocalTime(a.CreatedAt)</td>
+                <td>@(a.UserName ?? (a.UserId?.ToString() ?? "—"))</td>
+                <td class="audit-act">@a.Action</td>
+                <td>@a.EntityType@(a.EntityId is int id ? $" #{id}" : "")</td>
+                <td class="audit-json">
+                    <div class="audit-before"><b>Ö:</b> @MindAeonRestWeb.Pages.BackOffice.AuditTrail.IndexModel.Summarize(a.BeforeJson)</div>
+                    <div class="audit-after"><b>S:</b> @MindAeonRestWeb.Pages.BackOffice.AuditTrail.IndexModel.Summarize(a.AfterJson)</div>
+                </td>
+                <td>#@a.KioskNo</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

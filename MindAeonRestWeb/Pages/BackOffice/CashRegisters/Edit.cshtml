@@ -1,0 +1,72 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.CashRegisters.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Nakit Kasa" : $"Nakit Kasa · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>💵 @(Model.IsNew ? "Yeni Nakit Kasa" : "Nakit Kasa Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/CashRegisters">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Şube bazlıdır; döviz tipi zorunludur.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Kasa Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Şube *</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Döviz Tipi *</label>
+            <select asp-for="CurrencyId" asp-items="Model.CurrencyOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Kapsam *</label>
+            <select asp-for="Scope" asp-items="Model.ScopeOptions" class="field" id="scopeSelect" required></select>
+        </div>
+        <div class="frm-row" id="kioskRow">
+            <label>KIOSK</label>
+            <select asp-for="KioskId" asp-items="Model.KioskOptions" class="field"></select>
+            <small class="hint">Yalnızca KIOSK kapsamı için; seçtiğiniz KIOSK'un şubesi ile kasa şubesi aynı olmalıdır.</small>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/CashRegisters" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // Kapsam KIOSK ise KIOSK satırını göster (WPF Scope_Changed karşılığı).
+        const scopeSelect = document.getElementById('scopeSelect');
+        const kioskRow = document.getElementById('kioskRow');
+        function syncKiosk() {
+            const isKiosk = scopeSelect && scopeSelect.value === '1'; // FinanceScope.Kiosk = 1
+            if (kioskRow) kioskRow.style.display = isKiosk ? '' : 'none';
+        }
+        scopeSelect?.addEventListener('change', syncKiosk);
+        syncKiosk();
+    </script>
+}

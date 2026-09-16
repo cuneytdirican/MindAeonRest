@@ -1,0 +1,504 @@
+@page
+@using System.Globalization
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Documents.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? $"Yeni {Model.Title}" : $"{Model.Title} · {Model.FisNo}";
+    Layout = "_BackOfficeLayout";
+    CultureInfo inv = CultureInfo.InvariantCulture;
+}
+
+<div class="bo-page-head no-print">
+    <h1>📄 @(Model.IsNew ? $"Yeni {Model.Title}" : $"{Model.Title} Düzenle")</h1>
+    <div>
+        @if (Model.CanPrint)
+        {
+            <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır</button>
+        }
+        <a class="btn btn-ghost" href="/BackOffice/Documents?type=@((int)Model.Type)">← Liste</a>
+    </div>
+</div>
+
+@if (!Model.IsNew)
+{
+    <div class="bo-count no-print">Fiş No: <b>@Model.FisNo</b> · Durum: <b>@Model.Status.ToTr()</b></div>
+}
+@if (Model.ReadOnlyDoc)
+{
+    <div class="alert-error no-print">Bu evrak @Model.Status.ToTr(). Salt-inceleme; değişiklik için önce iptal edin.</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error no-print">@Model.Error</div>
+}
+
+<div class="bo-card bo-form no-print">
+    <form method="post">
+        <input type="hidden" name="Type" value="@((int)Model.Type)" />
+
+        <div class="frm-row">
+            <label>Belge No *</label>
+            <input asp-for="BelgeNo" class="field" maxlength="50" required />
+        </div>
+        <div class="frm-row">
+            <label>Tarih *</label>
+            <input asp-for="DocDate" type="date" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Belge Tarihi *</label>
+            <input asp-for="BelgeTarihi" type="date" class="field" required />
+        </div>
+        <div class="frm-row">
+            <label>Döviz *</label>
+            <select asp-for="CurrencyId" asp-items="Model.CurrencyOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Şube *</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field" id="branchSel"></select>
+        </div>
+        <div class="frm-row">
+            <label>Depo *</label>
+            <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="field" id="whSel"></select>
+        </div>
+        <div class="frm-row">
+            <label>Proje</label>
+            <select asp-for="ProjectId" asp-items="Model.ProjectOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Personel</label>
+            <select asp-for="PersonnelId" asp-items="Model.PersonnelOptions" class="field"></select>
+        </div>
+
+        @if (Model.NeedsCustomer)
+        {
+            <div class="frm-row">
+                <label>Cari *</label>
+                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="field" id="custSel"></select>
+            </div>
+            <div class="frm-row">
+                <label>Adres</label>
+                <select asp-for="AddressId" asp-items="Model.AddressOptions" class="field" id="addrSel"></select>
+            </div>
+        }
+
+        @if (Model.IsTransfer)
+        {
+            <div class="frm-row">
+                <label>Hedef Şube *</label>
+                <select asp-for="TargetBranchId" asp-items="Model.BranchOptions" class="field" id="tbranchSel"></select>
+            </div>
+            <div class="frm-row">
+                <label>Hedef Depo *</label>
+                <select asp-for="TargetWarehouseId" asp-items="Model.TargetWarehouseOptions" class="field" id="twhSel"></select>
+            </div>
+        }
+
+        @if (Model.IsGider)
+        {
+            <div class="frm-row">
+                <label>Gider Tipi *</label>
+                <select asp-for="ExpenseTypeId" asp-items="Model.ExpenseOptions" class="field"></select>
+            </div>
+        }
+
+        <div class="frm-row">
+            <label>Not</label>
+            <textarea asp-for="Note" class="field" rows="2" maxlength="500"></textarea>
+        </div>
+
+        <div class="frm-row">
+            <label>Satırlar</label>
+            <small class="hint">Ürün seçince KDV grubu otomatik gelir. Matrah/KDV/Toplam anlık hesaplanır (server yeniden hesaplar).</small>
+            <table class="bo-table" id="linesTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:26%">Ürün</th>
+                        <th style="width:10%">Miktar</th>
+                        <th style="width:12%">Fiyat</th>
+                        <th style="width:14%">İskonto %</th>
+                        <th style="width:16%">KDV Grubu</th>
+                        <th class="ar" style="width:8%">Matrah</th>
+                        <th class="ar" style="width:8%">KDV</th>
+                        <th class="ar" style="width:8%">Toplam</th>
+                        <th class="ar" style="width:2%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="linesBody">
+                @for (int i = 0; i < Model.Lines.Count; i++)
+                {
+                    var l = Model.Lines[i];
+                    <tr class="line-row">
+                        <td>
+                            <select name="Lines[@i].ProductId" class="field line-prod">
+                                @foreach (var opt in Model.ProductOptions)
+                                {
+                                    <option value="@opt.Value" selected="@(opt.Value == l.ProductId.ToString())">@opt.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input name="Lines[@i].Qty" value="@l.Qty.ToString(inv)" type="number" step="0.001" min="0" class="field line-qty" /></td>
+                        <td><input name="Lines[@i].UnitPrice" value="@l.UnitPrice.ToString(inv)" type="number" step="0.01" min="0" class="field line-price" /></td>
+                        <td>
+                            <input name="Lines[@i].Disc1" value="@l.Disc1.ToString(inv)" type="number" step="0.01" min="0" max="100" class="field line-disc" style="width:60%;display:inline-block" />
+                            <button type="button" class="btn btn-sm btn-ghost line-disc-btn" onclick="openDiscounts(this)" title="Zincirli iskonto (10'a kadar)">%…</button>
+                            <input type="hidden" name="Lines[@i].Disc2" value="@l.Disc2.ToString(inv)" class="line-disc2" />
+                            <input type="hidden" name="Lines[@i].Disc3" value="@l.Disc3.ToString(inv)" class="line-disc3" />
+                            <input type="hidden" name="Lines[@i].Disc4" value="@l.Disc4.ToString(inv)" class="line-disc4" />
+                            <input type="hidden" name="Lines[@i].Disc5" value="@l.Disc5.ToString(inv)" class="line-disc5" />
+                            <input type="hidden" name="Lines[@i].Disc6" value="@l.Disc6.ToString(inv)" class="line-disc6" />
+                            <input type="hidden" name="Lines[@i].Disc7" value="@l.Disc7.ToString(inv)" class="line-disc7" />
+                            <input type="hidden" name="Lines[@i].Disc8" value="@l.Disc8.ToString(inv)" class="line-disc8" />
+                            <input type="hidden" name="Lines[@i].Disc9" value="@l.Disc9.ToString(inv)" class="line-disc9" />
+                            <input type="hidden" name="Lines[@i].Disc10" value="@l.Disc10.ToString(inv)" class="line-disc10" />
+                        </td>
+                        <td>
+                            <select name="Lines[@i].TaxGroupId" class="field line-tax">
+                                @foreach (var opt in Model.TaxOptions)
+                                {
+                                    <option value="@opt.Value" selected="@(opt.Value == l.TaxGroupId.ToString())">@opt.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td class="ar line-net">0,00</td>
+                        <td class="ar line-taxamt">0,00</td>
+                        <td class="ar line-total">0,00</td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeLine(this)">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addLine()" style="margin-top:8px">+ Satır Ekle</button>
+        </div>
+
+        <div class="bo-count" id="totals" style="margin-top:12px">
+            Ara Toplam: <b id="tGross">0,00</b> · İskonto: <b id="tDisc">0,00</b> ·
+            Matrah: <b id="tNet">0,00</b> · KDV: <b id="tTax">0,00</b> · GENEL: <b id="tGrand">0,00</b>
+        </div>
+        @* Döviz çevrim satırı (WPF DocumentEditWindow UpdateFx): GENEL toplamın diğer dövizdeki karşılığı — salt görsel. *@
+        <div class="bo-count" id="fxLine" style="margin-top:4px"></div>
+
+        @if (!Model.ReadOnlyDoc)
+        {
+            <div class="frm-actions">
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+                <button type="submit" asp-page-handler="SavePost" class="btn btn-primary">Kaydet ve İşle</button>
+                <button type="submit" asp-page-handler="SavePrint" class="btn btn-primary">🖨 Kaydet ve Yazdır</button>
+                <a href="/BackOffice/Documents?type=@((int)Model.Type)" class="btn btn-ghost">Vazgeç</a>
+            </div>
+        }
+    </form>
+</div>
+
+@* Zincirli iskonto modali (WPF DiscountsDialog): 10'a kadar iskonto; Disc1 satırda görünür + burada hepsi düzenlenir. *@
+<div id="discModal" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+    <div class="bo-card" style="max-width:520px;width:92%;max-height:90vh;overflow:auto">
+        <h3 style="margin-top:0">Zincirli İskonto (10'a kadar)</h3>
+        <p class="hint">Sırayla çarpımsal uygulanır (%10 +%5 → 0,90 × 0,95). 0 = uygulanmaz.</p>
+        <div id="discGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0"></div>
+        <div class="frm-actions">
+            <button type="button" class="btn btn-primary" onclick="applyDiscounts()">Uygula</button>
+            <button type="button" class="btn btn-ghost" onclick="closeDiscounts()">Vazgeç</button>
+        </div>
+    </div>
+</div>
+
+@if (Model.CanPrint)
+{
+    var pd = Model.PrintDoc!;
+    <div class="doc-print">
+        <div class="doc-print-head">
+            <div class="doc-print-company">@Model.PrintCompanyName</div>
+            @if (!string.IsNullOrWhiteSpace(Model.PrintBranchName))
+            {
+                <div class="doc-print-branch">@Model.PrintBranchName</div>
+            }
+            <div class="doc-print-type">@pd.DocTypeText</div>
+        </div>
+
+        <table class="doc-print-info">
+            <tr><td>Fiş No</td><td><b>@pd.FisNo</b></td><td>Tarih</td><td>@pd.DateText</td></tr>
+            <tr>
+                <td>Belge No</td><td>@pd.BelgeNo</td>
+                <td>Belge Tarihi</td><td>@(pd.BelgeTarihi?.ToString("dd.MM.yyyy"))</td>
+            </tr>
+            @if (!string.IsNullOrWhiteSpace(pd.CustomerName))
+            {
+                <tr><td>Cari</td><td colspan="3">@pd.CustomerName</td></tr>
+            }
+            @if (!string.IsNullOrWhiteSpace(pd.ProjectCode))
+            {
+                <tr><td>Proje</td><td colspan="3">@pd.ProjectCode</td></tr>
+            }
+        </table>
+
+        <table class="doc-print-lines">
+            <thead>
+                <tr>
+                    <th>#</th><th>Ürün</th>
+                    <th class="ar">Miktar</th><th class="ar">Fiyat</th>
+                    <th class="ar">İsk %</th><th class="ar">KDV %</th>
+                    <th class="ar">Matrah</th><th class="ar">KDV</th><th class="ar">Toplam</th>
+                </tr>
+            </thead>
+            <tbody>
+            @{ int pn = 0; }
+            @foreach (var l in Model.PrintLines)
+            {
+                pn++;
+                <tr>
+                    <td>@pn</td>
+                    <td>@(l.ProductName ?? l.ProductCode)</td>
+                    <td class="ar">@l.Qty.ToString("N2")</td>
+                    <td class="ar">@l.UnitPrice.ToString("N2")</td>
+                    <td class="ar">@l.Disc1.ToString("N1")</td>
+                    <td class="ar">@l.TaxRate.ToString("N1")</td>
+                    <td class="ar">@l.LineNet.ToString("N2")</td>
+                    <td class="ar">@l.LineTax.ToString("N2")</td>
+                    <td class="ar">@l.LineTotal.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div class="doc-print-totals">
+            <div>Matrah: <b>@pd.SubTotal.ToString("N2")</b></div>
+            <div>İskonto: <b>@pd.DiscountTotal.ToString("N2")</b></div>
+            <div>KDV: <b>@pd.TaxTotal.ToString("N2")</b></div>
+            <div class="grand">GENEL TOPLAM (KDV dahil): <b>@pd.GrandTotal.ToString("N2")</b></div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(pd.Note))
+        {
+            <div class="doc-print-note">Not: @pd.Note</div>
+        }
+    </div>
+
+    <style>
+        .doc-print { display: none; }
+        @@media print {
+            .no-print, .bo-header, .bo-nav { display: none !important; }
+            .bo-shell, .bo-main { display: block; margin: 0; padding: 0; }
+            .doc-print { display: block; font-family: 'Segoe UI', Arial, sans-serif; color: #000; }
+            .doc-print-head { text-align: center; margin-bottom: 16px; }
+            .doc-print-company { font-size: 20px; font-weight: bold; }
+            .doc-print-branch { font-size: 12px; color: #555; }
+            .doc-print-type { font-size: 15px; font-weight: bold; margin-top: 6px; }
+            .doc-print-info { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
+            .doc-print-info td { padding: 3px 6px; }
+            .doc-print-info td:nth-child(odd) { color: #555; width: 14%; }
+            .doc-print-lines { width: 100%; border-collapse: collapse; font-size: 12px; }
+            .doc-print-lines th, .doc-print-lines td { border-bottom: 0.5px solid #bbb; padding: 4px 6px; text-align: left; }
+            .doc-print-lines th { border-bottom: 1px solid #000; }
+            .doc-print-lines .ar, .doc-print-totals { text-align: right; }
+            .doc-print-totals { margin-top: 12px; font-size: 12px; }
+            .doc-print-totals div { margin: 2px 0; }
+            .doc-print-totals .grand { font-size: 14px; font-weight: bold; margin-top: 6px; }
+            .doc-print-note { margin-top: 14px; font-size: 11px; color: #555; }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        const WH_BY_BRANCH = @Html.Raw(Model.WarehousesByBranchJson);
+        const PROD_TAX = @Html.Raw(Model.ProductTaxMapJson);
+        const TAX_RATES = @Html.Raw(Model.TaxRatesJson);
+        const ADDR_BY_CUSTOMER = @Html.Raw(Model.AddressesByCustomerJson);
+        const IS_PURCHASE = @(Model.IsPurchase ? "true" : "false");
+        const PROD_OPTS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.ProductOptions.Select(o => new { v = o.Value, t = o.Text })));
+        const TAX_OPTS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.TaxOptions.Select(o => new { v = o.Value, t = o.Text })));
+        // Döviz çevrim (WPF UpdateFx): en güncel USD/EUR satış kuru + currencyId→kod haritası. Salt görsel.
+        const FX_USD = @Html.Raw((Model.FxUsd?.ToString(inv)) ?? "null");
+        const FX_EUR = @Html.Raw((Model.FxEur?.ToString(inv)) ?? "null");
+        const CUR_CODES = @Html.Raw(Model.CurrencyCodesJson);
+
+        function num(el) { const n = parseFloat((el.value || '0').replace(',', '.')); return isNaN(n) ? 0 : n; }
+        function fmt(n) { return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function docDate() { return (document.querySelector('input[name="DocDate"]')?.value) || ''; }
+
+        // KDV oranı: evrak tarihine göre uygun aralık (server EffectiveRate ile aynı mantık).
+        function effRate(groupId) {
+            const rates = TAX_RATES[groupId];
+            if (!rates || !rates.length) return 0;
+            const d = docDate();
+            const match = rates
+                .filter(r => (!d || r.s <= d) && (!r.e || r.e >= d))
+                .sort((a, b) => (a.s < b.s ? 1 : -1));
+            return match.length ? parseFloat(match[0].r) : 0;
+        }
+
+        // Satırın 10 iskonto değeri (Disc1 görünür input, Disc2..Disc10 gizli inputlar).
+        function rowDiscs(row) {
+            const ds = [num(row.querySelector('.line-disc'))];
+            for (let k = 2; k <= 10; k++) ds.push(num(row.querySelector('.line-disc' + k)));
+            return ds;
+        }
+
+        function recalcRow(row) {
+            const qty = num(row.querySelector('.line-qty'));
+            const price = num(row.querySelector('.line-price'));
+            const tg = row.querySelector('.line-tax').value;
+            const gross = qty * price;
+            // Zincirli (çarpımsal) iskonto — Core DocumentLine.Recalc birebir.
+            let net = gross;
+            rowDiscs(row).forEach(d => { if (d > 0) net *= (1 - d / 100); });
+            const rate = effRate(tg);
+            const tax = net * rate / 100;
+            row.querySelector('.line-net').textContent = fmt(net);
+            row.querySelector('.line-taxamt').textContent = fmt(tax);
+            row.querySelector('.line-total').textContent = fmt(net + tax);
+            return { gross, disc: gross - net, net, tax, total: net + tax };
+        }
+
+        function recalcAll() {
+            let g = 0, d = 0, n = 0, t = 0, tot = 0;
+            document.querySelectorAll('#linesBody .line-row').forEach(row => {
+                const r = recalcRow(row);
+                g += r.gross; d += r.disc; n += r.net; t += r.tax; tot += r.total;
+            });
+            document.getElementById('tGross').textContent = fmt(g);
+            document.getElementById('tDisc').textContent = fmt(d);
+            document.getElementById('tNet').textContent = fmt(n);
+            document.getElementById('tTax').textContent = fmt(t);
+            document.getElementById('tGrand').textContent = fmt(tot);
+            updateFx(tot);
+        }
+
+        // WPF UpdateFx birebir: TRY ise ≈ USD/EUR, USD/EUR ise ≈ TRY karşılığı. Salt görsel bilgi.
+        function updateFx(grand) {
+            const el = document.getElementById('fxLine');
+            if (!el) return;
+            const sel = document.querySelector('select[name="CurrencyId"]');
+            const code = (sel ? CUR_CODES[sel.value] : null) || 'TRY';
+            const parts = [];
+            if (code.toUpperCase() === 'TRY') {
+                if (FX_USD > 0) parts.push('≈ ' + fmt(grand / FX_USD) + ' USD');
+                if (FX_EUR > 0) parts.push('≈ ' + fmt(grand / FX_EUR) + ' EUR');
+            } else if (code.toUpperCase() === 'USD' && FX_USD > 0) parts.push('≈ ' + fmt(grand * FX_USD) + ' TRY');
+            else if (code.toUpperCase() === 'EUR' && FX_EUR > 0) parts.push('≈ ' + fmt(grand * FX_EUR) + ' TRY');
+            el.textContent = parts.length ? 'Diğer döviz: ' + parts.join('   ') : '';
+        }
+
+        function reindex() {
+            document.querySelectorAll('#linesBody .line-row').forEach((row, i) => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/Lines\[\d+\]/, 'Lines[' + i + ']');
+                });
+            });
+        }
+
+        function bindRow(row) {
+            row.querySelectorAll('.line-qty,.line-price,.line-disc,.line-tax').forEach(el =>
+                el.addEventListener('input', recalcAll));
+            const prod = row.querySelector('.line-prod');
+            prod.addEventListener('change', () => {
+                const map = PROD_TAX[prod.value];
+                if (map) {
+                    const tg = IS_PURCHASE ? map.purchase : map.sales;
+                    row.querySelector('.line-tax').value = (tg || 0).toString();
+                }
+                recalcAll();
+            });
+        }
+
+        function addLine() {
+            const body = document.getElementById('linesBody');
+            const i = body.querySelectorAll('.line-row').length;
+            const prodOpts = PROD_OPTS.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
+            const taxOpts = TAX_OPTS.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
+            const tr = document.createElement('tr');
+            tr.className = 'line-row';
+            tr.innerHTML =
+                `<td><select name="Lines[${i}].ProductId" class="field line-prod">${prodOpts}</select></td>` +
+                `<td><input name="Lines[${i}].Qty" value="1" type="number" step="0.001" min="0" class="field line-qty" /></td>` +
+                `<td><input name="Lines[${i}].UnitPrice" value="0" type="number" step="0.01" min="0" class="field line-price" /></td>` +
+                `<td>` +
+                    `<input name="Lines[${i}].Disc1" value="0" type="number" step="0.01" min="0" max="100" class="field line-disc" style="width:60%;display:inline-block" />` +
+                    `<button type="button" class="btn btn-sm btn-ghost line-disc-btn" onclick="openDiscounts(this)" title="Zincirli iskonto (10'a kadar)">%…</button>` +
+                    `<input type="hidden" name="Lines[${i}].Disc2" value="0" class="line-disc2" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc3" value="0" class="line-disc3" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc4" value="0" class="line-disc4" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc5" value="0" class="line-disc5" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc6" value="0" class="line-disc6" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc7" value="0" class="line-disc7" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc8" value="0" class="line-disc8" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc9" value="0" class="line-disc9" />` +
+                    `<input type="hidden" name="Lines[${i}].Disc10" value="0" class="line-disc10" />` +
+                `</td>` +
+                `<td><select name="Lines[${i}].TaxGroupId" class="field line-tax">${taxOpts}</select></td>` +
+                `<td class="ar line-net">0,00</td><td class="ar line-taxamt">0,00</td><td class="ar line-total">0,00</td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeLine(this)">Sil</button></td>`;
+            body.appendChild(tr);
+            bindRow(tr);
+            recalcAll();
+        }
+
+        function removeLine(btn) {
+            btn.closest('.line-row')?.remove();
+            reindex();
+            recalcAll();
+        }
+
+        // ---------- Zincirli iskonto modali (WPF DiscountsDialog) ----------
+        let _discRow = null;
+        function openDiscounts(btn) {
+            _discRow = btn.closest('.line-row');
+            const ds = rowDiscs(_discRow);
+            const grid = document.getElementById('discGrid');
+            grid.innerHTML = ds.map((d, k) =>
+                `<label style="font-size:12px">İskonto ${k + 1} %` +
+                `<input type="number" step="0.01" min="0" max="100" value="${d}" class="field disc-in" data-k="${k}" /></label>`
+            ).join('');
+            document.getElementById('discModal').style.display = 'flex';
+        }
+        function applyDiscounts() {
+            if (!_discRow) return;
+            document.querySelectorAll('#discGrid .disc-in').forEach(inp => {
+                const k = parseInt(inp.getAttribute('data-k'), 10);
+                const v = (parseFloat((inp.value || '0').replace(',', '.')) || 0);
+                if (k === 0) _discRow.querySelector('.line-disc').value = v;
+                else _discRow.querySelector('.line-disc' + (k + 1)).value = v;
+            });
+            closeDiscounts();
+            recalcAll();
+        }
+        function closeDiscounts() { document.getElementById('discModal').style.display = 'none'; _discRow = null; }
+        document.getElementById('discModal')?.addEventListener('click', e => {
+            if (e.target.id === 'discModal') closeDiscounts();
+        });
+
+        // ---------- Cari → Adres (WPF LoadAddresses) ----------
+        function fillAddr(customerId, selectedId) {
+            const sel = document.getElementById('addrSel');
+            if (!sel) return;
+            const list = ADDR_BY_CUSTOMER[customerId] || [];
+            const opts = ['<option value="0">(Adres yok)</option>']
+                .concat(list.map(a => `<option value="${a.v}"${a.v == selectedId ? ' selected' : ''}>${a.t}</option>`));
+            sel.innerHTML = opts.join('');
+        }
+        document.getElementById('custSel')?.addEventListener('change', e => fillAddr(e.target.value, 0));
+
+        // Şube değişince depoları süz (WPF ReloadWarehouses).
+        function fillWh(sel, branchId) {
+            const list = WH_BY_BRANCH[branchId] || [];
+            sel.innerHTML = list.map(w => `<option value="${w.v}">${w.t}</option>`).join('');
+        }
+        document.getElementById('branchSel')?.addEventListener('change', e =>
+            fillWh(document.getElementById('whSel'), e.target.value));
+        document.getElementById('tbranchSel')?.addEventListener('change', e =>
+            fillWh(document.getElementById('twhSel'), e.target.value));
+
+        document.querySelector('input[name="DocDate"]')?.addEventListener('change', recalcAll);
+        document.querySelector('select[name="CurrencyId"]')?.addEventListener('change', recalcAll);   // WPF Currency_Changed → FX güncelle
+        document.querySelectorAll('#linesBody .line-row').forEach(bindRow);
+        recalcAll();
+
+        // ?print=1 ile açıldıysa baskı diyaloğunu otomatik aç (Index "Yazdır" bağlantısı).
+        @if (Model.CanPrint && Model.Print)
+        {
+            <text>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</text>
+        }
+    </script>
+}

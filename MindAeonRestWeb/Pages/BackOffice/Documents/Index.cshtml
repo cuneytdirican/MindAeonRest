@@ -1,0 +1,102 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Documents.IndexModel
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "_BackOfficeLayout";
+    var qs = new { type = (int)Model.Type, From = Model.From?.ToString("yyyy-MM-dd"), To = Model.To?.ToString("yyyy-MM-dd"), Q = Model.Q };
+}
+
+<div class="bo-page-head">
+    <h1>📄 @Model.Title</h1>
+    <div>
+        @if (Model.SourceType is not null)
+        {
+            <a class="btn btn-ghost" href="/BackOffice/Documents/Convert?type=@((int)Model.Type)">⇪ @Model.SourceType.Value.ToTr()'den</a>
+        }
+        <a class="btn btn-primary" href="/BackOffice/Documents/Edit?type=@((int)Model.Type)">+ Yeni</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert-success">@Model.Message</div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error">@Model.Error</div> }
+
+<form method="get" class="bo-filter">
+    <input type="hidden" name="type" value="@((int)Model.Type)" />
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <input type="text" name="Q" value="@Model.Q" placeholder="Fiş / Belge No / Cari ara..." class="field" />
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Fiş No</th><th>Tarih</th><th>Belge No</th><th>Cari</th><th>Proje</th>
+                <th class="ar">Tutar</th><th>Durum</th><th class="ar">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var d in Model.Items)
+        {
+            var editable = d.Status == DocStatus.Taslak;
+            <tr class="@(d.Status == DocStatus.Iptal ? "row-deleted" : "")">
+                <td><b>@d.FisNo</b></td>
+                <td>@d.DateText</td>
+                <td>@d.BelgeNo</td>
+                <td>@d.CustomerName</td>
+                <td>@d.ProjectCode</td>
+                <td class="ar">@d.GrandTotalText</td>
+                <td>
+                    @switch (d.Status)
+                    {
+                        case DocStatus.Taslak: <span class="badge-off">Taslak</span> break;
+                        case DocStatus.Iptal: <span class="badge-del">İptal</span> break;
+                        default: <span class="badge-ok">@d.StatusText</span> break;
+                    }
+                </td>
+                <td class="ar">
+                    <a class="btn btn-sm" href="/BackOffice/Documents/Edit?type=@((int)Model.Type)&id=@d.Id">
+                        @(editable ? "Düzenle" : "İncele")
+                    </a>
+                    <a class="btn btn-sm" href="/BackOffice/Documents/Edit?type=@((int)Model.Type)&id=@d.Id&print=1">🖨 Yazdır</a>
+                    @if (Model.IsTransfer && (d.Status == DocStatus.Onaylandi || d.Status == DocStatus.KismenKapandi))
+                    {
+                        <a class="btn btn-sm btn-primary" href="/BackOffice/Documents/Receive?id=@d.Id">📥 Teslim Al</a>
+                    }
+                    @if (editable)
+                    {
+                        <form method="post" asp-page-handler="Process" style="display:inline"
+                              onsubmit="return confirm('@d.FisNo @Model.PostLabel.ToLower()? (@Model.PostEffect)')">
+                            <input type="hidden" name="Type" value="@((int)Model.Type)" />
+                            <input type="hidden" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="Q" value="@Model.Q" />
+                            <input type="hidden" name="id" value="@d.Id" />
+                            <button class="btn btn-sm btn-primary" type="submit">@Model.PostLabel</button>
+                        </form>
+                    }
+                    else if (d.Status != DocStatus.Iptal)
+                    {
+                        <form method="post" asp-page-handler="CancelDoc" style="display:inline"
+                              onsubmit="return confirm('@d.FisNo iptal edilsin mi? (defter kayıtları geri alınacak)')">
+                            <input type="hidden" name="Type" value="@((int)Model.Type)" />
+                            <input type="hidden" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="Q" value="@Model.Q" />
+                            <input type="hidden" name="id" value="@d.Id" />
+                            <button class="btn btn-sm btn-danger" type="submit">İptal</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count evrak</div>

@@ -1,0 +1,325 @@
+<Window x:Class="MindAeonRest.Views.ProductEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MindAeonRest.Views"
+        Title="Ürün" Height="780" Width="840" MinHeight="640" MinWidth="720"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" Margin="14"
+            Effect="{StaticResource DialogShadow}">
+        <Grid Margin="34,28,34,26">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock x:Name="TitleText" Text="Yeni Ürün" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <TextBlock Text="Stok kartı tanımı. Birim, vergi grubu ve kategori seçimlerinde + ile ekleme yapabilirsiniz."
+                           FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,5,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,20,0,0">
+                <StackPanel Margin="0,0,8,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="ÜRÜN KODU" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="CodeBox" Style="{StaticResource InputTextBox}" CharacterCasing="Upper" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="ÜRÜN ADI" Style="{StaticResource FieldLabel}" />
+                            <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="AÇIKLAMA" Style="{StaticResource FieldLabel}" Margin="2,16,0,6" />
+                    <TextBox x:Name="DescBox" Style="{StaticResource InputTextBox}" Height="64" TextWrapping="Wrap"
+                             AcceptsReturn="True" VerticalContentAlignment="Top" Padding="14,10" />
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="ANA BİRİM" Style="{StaticResource FieldLabel}" />
+                            <views:EntityPicker x:Name="UnitPicker" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="TAKİP DETAYI" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="TrackingCombo" Style="{StaticResource InputComboBox}"
+                                      ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value" Tag="Seçiniz">
+                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="SATIŞ VERGİ GRUBU" Style="{StaticResource FieldLabel}" />
+                            <views:EntityPicker x:Name="SalesTaxPicker" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="ALIŞ VERGİ GRUBU" Style="{StaticResource FieldLabel}" />
+                            <views:EntityPicker x:Name="PurchaseTaxPicker" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="İADE VERGİ GRUBU" Style="{StaticResource FieldLabel}" />
+                            <views:EntityPicker x:Name="ReturnTaxPicker" />
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox x:Name="ActiveCheck" Content="Ürün aktif" Style="{StaticResource ThemedCheckBox}" Margin="2,18,0,0" IsChecked="True" />
+                    <CheckBox x:Name="SpicyCheck" Content="🌶 Acı (mutfak ekranında rozet)" Style="{StaticResource ThemedCheckBox}" Margin="2,10,0,0" />
+
+                    <TextBlock Text="KATEGORİLER" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,8">
+                        <StackPanel>
+                            <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="CategoryList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Style="{StaticResource ThemedCheckBox}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <Button Content="+ Yeni Kategori" Style="{StaticResource GhostButton}" Width="160" HorizontalAlignment="Left" Margin="0,8,0,0" Click="AddCategory_Click" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- FİYATLAR (kategorilerden hemen sonra, kullanıcı en çok burayı kullanıyor) -->
+                    <TextBlock Text="FİYATLAR" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Fiyat Ekle" Style="{StaticResource GhostButton}" Width="120" Click="AddPrice_Click" />
+                                <Button Content="Düzenle" Style="{StaticResource GhostButton}" Width="100" Margin="8,0,0,0" Click="EditPrice_Click" />
+                                <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="90" Margin="8,0,0,0" Click="RemovePrice_Click" />
+                            </StackPanel>
+                            <DataGrid x:Name="PricesGrid" Height="130" Margin="0,10,0,0" Style="{StaticResource DataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                                      HorizontalScrollBarVisibility="Auto">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tip" Binding="{Binding PriceTypeText}" Width="70" />
+                                    <DataGridTextColumn Header="Birim" Binding="{Binding UnitName}" Width="90" />
+                                    <DataGridTextColumn Header="Fiyat" Binding="{Binding PriceText}" Width="130" />
+                                    <DataGridTextColumn Header="Liste" Binding="{Binding ListPriceText}" Width="110" />
+                                    <DataGridTextColumn Header="KDV" Binding="{Binding TaxInclText}" Width="70" />
+                                    <DataGridTextColumn Header="Şube" Binding="{Binding ScopeText}" Width="*" MinWidth="120" />
+                                    <DataGridTextColumn Header="Geçerlilik" Binding="{Binding PeriodText}" Width="*" MinWidth="160" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- RESİMLER -->
+                    <TextBlock Text="RESİMLER (kiosk)" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Resim Ekle" Style="{StaticResource GhostButton}" Width="120" Click="AddImage_Click" />
+                                <Button Content="Ana Yap" Style="{StaticResource GhostButton}" Width="100" Margin="8,0,0,0" Click="SetMainImage_Click" />
+                                <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="90" Margin="8,0,0,0" Click="RemoveImage_Click" />
+                            </StackPanel>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,10,0,0">
+                                <ListBox x:Name="ImageList" Background="Transparent" BorderThickness="0" Height="104">
+                                    <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="bd" Width="90" Height="90" Margin="0,0,8,0" CornerRadius="6" BorderThickness="2" BorderBrush="Transparent">
+                                                <Grid>
+                                                    <Image Source="{Binding Preview}" Stretch="UniformToFill" />
+                                                    <Border x:Name="badge" VerticalAlignment="Top" HorizontalAlignment="Left" Background="{DynamicResource AccentBrush}"
+                                                            Visibility="Collapsed" CornerRadius="6,0,6,0" Padding="5,1">
+                                                        <TextBlock Text="ANA" FontSize="9" FontWeight="Bold" Foreground="#1A1208" />
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsMain}" Value="True">
+                                                    <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                    <Setter TargetName="badge" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- AÇIKLAMALAR -->
+                    <TextBlock Text="AÇIKLAMALAR (kiosk/mutfak için hazır notlar)" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="DescInput" Grid.Column="0" Style="{StaticResource InputTextBox}" KeyDown="DescInput_KeyDown" />
+                                <Button Grid.Column="2" Content="Ekle" Style="{StaticResource GhostButton}" Width="90" Height="46" Click="AddDesc_Click" />
+                            </Grid>
+                            <ScrollViewer MaxHeight="120" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                                <ListBox x:Name="DescList" Background="Transparent" BorderThickness="0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding Description}" Foreground="{DynamicResource TextBrush}" Padding="2" /></DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </ScrollViewer>
+                            <Button Content="Seçiliyi Sil" Style="{StaticResource GhostButton}" Width="120" HorizontalAlignment="Left" Margin="0,8,0,0" Click="RemoveDesc_Click" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BİRİMLER -->
+                    <TextBlock Text="BİRİMLER" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Birim Ekle" Style="{StaticResource GhostButton}" Width="120" Click="AddUnit_Click" />
+                                <Button Content="Düzenle" Style="{StaticResource GhostButton}" Width="100" Margin="8,0,0,0" Click="EditUnit_Click" />
+                                <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="90" Margin="8,0,0,0" Click="RemoveUnit_Click" />
+                            </StackPanel>
+                            <DataGrid x:Name="UnitsGrid" Height="120" Margin="0,10,0,0" Style="{StaticResource DataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Birim" Binding="{Binding UnitName}" Width="*" />
+                                    <DataGridTextColumn Header="Ana" Binding="{Binding IsMainText}" Width="60" />
+                                    <DataGridTextColumn Header="Çevrim (1/2)" Binding="{Binding ConvText}" Width="*" />
+                                    <DataGridTextColumn Header="En" Binding="{Binding Width}" Width="0.7*" />
+                                    <DataGridTextColumn Header="Boy" Binding="{Binding Length}" Width="0.7*" />
+                                    <DataGridTextColumn Header="Yük." Binding="{Binding Height}" Width="0.7*" />
+                                    <DataGridTextColumn Header="Ağırlık" Binding="{Binding Weight}" Width="0.7*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BARKODLAR -->
+                    <TextBlock Text="BARKODLAR" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Barkod Ekle" Style="{StaticResource GhostButton}" Width="120" Click="AddBarcode_Click" />
+                                <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="90" Margin="8,0,0,0" Click="RemoveBarcode_Click" />
+                            </StackPanel>
+                            <DataGrid x:Name="BarcodesGrid" Height="100" Margin="0,10,0,0" Style="{StaticResource DataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Barkod" Binding="{Binding Barcode}" Width="2*" />
+                                    <DataGridTextColumn Header="Birim" Binding="{Binding UnitName}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- SEÇENEKLER (Varyant) -->
+                    <TextBlock Text="SEÇENEKLER (Varyant: Boyut, Sıcaklık, Porsiyon…)" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="Aynı GRUP'taki seçenekler POS'ta tek seçimli sorulur (ör. Boyut: Küçük/Orta/Büyük). Fiyat farkı satış fiyatına eklenir." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Seçenek Ekle" Style="{StaticResource GhostButton}" Width="130" Click="AddOption_Click" />
+                                <Button Content="Düzenle" Style="{StaticResource GhostButton}" Width="100" Margin="8,0,0,0" Click="EditOption_Click" />
+                                <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="90" Margin="8,0,0,0" Click="RemoveOption_Click" />
+                            </StackPanel>
+                            <DataGrid x:Name="OptionsGrid" Height="130" Margin="0,10,0,0" Style="{StaticResource DataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Grup" Binding="{Binding GroupName}" Width="*" />
+                                    <DataGridTextColumn Header="Seçenek" Binding="{Binding Name}" Width="*" />
+                                    <DataGridTextColumn Header="Fiyat Farkı" Binding="{Binding DeltaText}" Width="*" />
+                                    <DataGridTextColumn Header="Varsayılan" Binding="{Binding DefaultText}" Width="100" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- REÇETE / MENÜ -->
+                    <TextBlock Text="REÇETE / MENÜ BİLEŞENLERİ" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="Bu ürün bir menü ise içindeki stok kartlarını (bileşenleri) ekleyin." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Bileşen Ekle" Style="{StaticResource GhostButton}" Width="130" Click="AddRecipe_Click" />
+                                <Button Content="Düzenle" Style="{StaticResource GhostButton}" Width="100" Margin="8,0,0,0" Click="EditRecipe_Click" />
+                                <Button Content="Kaldır" Style="{StaticResource GhostButton}" Width="90" Margin="8,0,0,0" Click="RemoveRecipe_Click" />
+                            </StackPanel>
+                            <DataGrid x:Name="RecipeGrid" Height="120" Margin="0,10,0,0" Style="{StaticResource DataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Bileşen" Binding="{Binding ComponentName}" Width="2*" />
+                                    <DataGridTextColumn Header="Miktar" Binding="{Binding QuantityText}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ŞUBE TÜKETİM DEPOLARI -->
+                    <TextBlock Text="ŞUBE TÜKETİM DEPOLARI" Style="{StaticResource FieldLabel}" Margin="2,18,0,6" />
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="Her şube için ürünün hangi depodan tüketileceğini (reçete/stok düşümü) atayın." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="ConsumeBranchCombo" Grid.Column="0" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}"
+                                          SelectedValuePath="Value" Tag="Şube" SelectionChanged="ConsumeBranch_Changed">
+                                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <ComboBox x:Name="ConsumeWarehouseCombo" Grid.Column="2" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}"
+                                          SelectedValuePath="Value" Tag="Depo">
+                                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Grid.Column="4" Content="Ata" Style="{StaticResource GhostButton}" Width="80" Click="AssignConsume_Click" />
+                            </Grid>
+                            <DataGrid x:Name="ConsumeGrid" Height="110" Margin="0,10,0,0" Style="{StaticResource DataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Şube" Binding="{Binding BranchName}" Width="*" />
+                                    <DataGridTextColumn Header="Tüketim Deposu" Binding="{Binding WarehouseText}" Width="2*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="2,14,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2" Margin="0,18,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="1.4*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

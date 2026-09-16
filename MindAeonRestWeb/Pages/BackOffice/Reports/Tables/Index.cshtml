@@ -1,0 +1,151 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.Tables.IndexModel
+@{
+    ViewData["Title"] = "Masa Raporları";
+    Layout = "_BackOfficeLayout";
+    var qs = new Dictionary<string, string?>
+    {
+        ["BranchId"] = Model.BranchId?.ToString(),
+        ["ZoneId"] = Model.ZoneId?.ToString(),
+        ["From"] = Model.From?.ToString("yyyy-MM-dd"),
+        ["To"] = Model.To?.ToString("yyyy-MM-dd"),
+    };
+    string TabUrl(string tab)
+    {
+        var pairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+        pairs.Add($"Tab={tab}");
+        return "/BackOffice/Reports/Tables?" + string.Join("&", pairs);
+    }
+}
+
+@{
+    var csvPairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+    csvPairs.Add($"Tab={Model.Tab}");
+    var csvUrl = "/BackOffice/Reports/Tables?handler=Csv&" + string.Join("&", csvPairs);
+}
+<div class="bo-page-head">
+    <h1>🪑 Masa Raporları</h1>
+    <div class="bo-actions no-print">
+        <a class="btn btn-ghost" href="@csvUrl">⬇ CSV İndir</a>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+    </div>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field">
+        @foreach (var b in Model.BranchOptions)
+        {
+            <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+        }
+    </select>
+    <select name="ZoneId" class="field">
+        @foreach (var z in Model.ZoneOptions)
+        {
+            <option value="@z.Value" selected="@(Model.ZoneId == z.Value)">@z.Text</option>
+        }
+    </select>
+    @if (Model.HistoryTab)
+    {
+        <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+        <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    }
+    <input type="hidden" name="Tab" value="@Model.Tab" />
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+<div class="bo-tabs" style="margin:12px 0;">
+    <a class="btn @(Model.HistoryTab ? "" : "btn-primary")" href="@TabUrl("live")">🟢 ANLIK DURUM</a>
+    <a class="btn @(Model.HistoryTab ? "btn-primary" : "")" href="@TabUrl("history")">📊 GEÇMİŞ PERFORMANS</a>
+</div>
+
+@if (!Model.HistoryTab)
+{
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Lokasyon</th><th>Masa</th><th class="ar">Kişilik</th><th>Durum</th>
+                    <th>Açık Adisyon</th><th>Açılış</th><th>Süre</th>
+                    <th class="ar">Kişi</th><th class="ar">Tutar</th><th>Garson</th><th>Not</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Live.Count == 0)
+            {
+                <tr><td colspan="11" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var r in Model.Live)
+            {
+                <tr>
+                    <td>@r.ZoneName</td>
+                    <td><b>@r.TableCode</b></td>
+                    <td class="ar">@r.Seats</td>
+                    <td>@r.State</td>
+                    <td>@r.OrderCode</td>
+                    <td>@r.OpenedText</td>
+                    <td>@r.DurationText</td>
+                    <td class="ar">@r.CoversText</td>
+                    <td class="ar">@r.TotalText</td>
+                    <td>@r.WaiterName</td>
+                    <td>@r.Info</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-card">
+        <b>Masa:</b> @Model.LiveCount &nbsp;·&nbsp;
+        <b>🔴 Dolu:</b> @Model.DoluCount &nbsp;·&nbsp;
+        <b>🟢 Boş:</b> @Model.BosCount &nbsp;·&nbsp;
+        <b>🟠 Rezerve:</b> @Model.RezerveCount &nbsp;·&nbsp;
+        <b>Açık adisyon tutarı:</b> @Model.AcikCiro.ToString("N2") ₺
+    </div>
+}
+else
+{
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Lokasyon</th><th>Masa</th><th class="ar">Kişilik</th><th class="ar">Adisyon (devir)</th>
+                    <th class="ar">Ciro</th><th class="ar">Ort. Fiş</th><th class="ar">Toplam Kişi</th>
+                    <th class="ar">İptal</th><th class="ar">Koltuk Başı Ciro</th><th>Son Kullanım</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.History.Count == 0)
+            {
+                <tr><td colspan="10" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var r in Model.History)
+            {
+                <tr>
+                    <td>@r.ZoneName</td>
+                    <td><b>@r.TableCode</b></td>
+                    <td class="ar">@r.Seats</td>
+                    <td class="ar">@r.AdisyonCount</td>
+                    <td class="ar">@r.RevenueText</td>
+                    <td class="ar">@r.AvgTicketText</td>
+                    <td class="ar">@r.Covers</td>
+                    <td class="ar">@r.CancelCount</td>
+                    <td class="ar">@r.RevPerSeatText</td>
+                    <td>@r.LastUsedText</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-card">
+        <b>Masa:</b> @Model.HistTableCount &nbsp;·&nbsp;
+        <b>Toplam adisyon (devir):</b> @Model.HistAdisyon &nbsp;·&nbsp;
+        <b>Toplam ciro:</b> @Model.HistCiro.ToString("N2") ₺ &nbsp;·&nbsp;
+        <b>Toplam kişi:</b> @Model.HistCovers &nbsp;·&nbsp;
+        <b>İptal:</b> @Model.HistCancels &nbsp;·&nbsp;
+        <b>Ort. fiş:</b> @Model.HistOrtFis.ToString("N2") ₺
+    </div>
+}
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Excel / PDF dışa aktarım masaüstü (WPF) uygulamasına özeldir. Web'de CSV indirme (⬇ CSV İndir) ile yazdır/PDF için tarayıcının "Yazdır" penceresi (🖨 Yazdır) kullanılabilir.
+    Anlık durum sayfası açıldığı andaki masa doluluğunu gösterir; güncellemek için "Göster" ile yenileyin.
+</p>

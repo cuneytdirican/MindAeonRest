@@ -1,0 +1,29 @@
+@page
+@model TwoFactorChallengeModel
+@{
+    ViewData["Title"] = "İki Adımlı Doğrulama";
+    Layout = "_Layout";
+}
+
+<section class="auth">
+    <div class="auth-card">
+        <h1>İki Adımlı Doğrulama</h1>
+        <p class="muted">@Model.Who</p>
+        <p class="muted">Authenticator uygulamanızdaki 6 haneli kodu girin.</p>
+
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert-error">@Model.Error</div>
+        }
+
+        <form method="post" autocomplete="off">
+            <label>Doğrulama Kodu</label>
+            <input asp-for="Code" class="field" inputmode="numeric" autocomplete="one-time-code"
+                   pattern="[0-9]*" maxlength="6" spellcheck="false" autofocus required />
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Doğrula</button>
+        </form>
+
+        <a class="back-link" href="/Login">← Girişe dön</a>
+    </div>
+</section>

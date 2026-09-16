@@ -1,0 +1,75 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.DeliverySettings.IndexModel
+@{
+    ViewData["Title"] = "Paket / Yemek Sitesi Ayarları";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🛵 Paket / Yemek Sitesi Ayarları</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">Trendyol / Getir / Yemeksepeti / Migros — her şube için ayrı tanımlanır. API anahtarları şifreli saklanır.</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form" style="margin-bottom:14px;">
+    <form method="get">
+        <div class="frm-row">
+            <label>Şube</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field" onchange="this.form.submit()"></select>
+            <small class="hint">Ayarlar seçili şube için gösterilir/kaydedilir.</small>
+        </div>
+        <noscript><div class="frm-actions"><button type="submit" class="btn">Şubeyi Getir</button></div></noscript>
+    </form>
+</div>
+
+@if (Model.BranchId > 0 && Model.Rows.Count > 0)
+{
+    <div class="bo-card bo-form">
+        <form method="post">
+            <input type="hidden" asp-for="BranchId" />
+            <table class="bo-table">
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Mağaza/Store ID</th>
+                        <th>API Key</th>
+                        <th>Secret</th>
+                        <th style="text-align:center;">Aktif</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Rows.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@Model.Rows[i].PlatformText</strong>
+                                <input type="hidden" asp-for="Rows[i].Platform" />
+                                <input type="hidden" asp-for="Rows[i].PlatformText" />
+                            </td>
+                            <td><input asp-for="Rows[i].StoreId" class="field" autocomplete="off" /></td>
+                            <td><input asp-for="Rows[i].ApiKey" class="field" autocomplete="off" /></td>
+                            <td><input asp-for="Rows[i].SecretKey" class="field" autocomplete="off" /></td>
+                            <td style="text-align:center;"><input asp-for="Rows[i].IsEnabled" type="checkbox" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="frm-actions">
+                <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+            </div>
+        </form>
+    </div>
+}
+else if (Model.BranchOptions.Count == 0)
+{
+    <div class="bo-card"><em class="hint">Tanımlı şube bulunamadı.</em></div>
+}

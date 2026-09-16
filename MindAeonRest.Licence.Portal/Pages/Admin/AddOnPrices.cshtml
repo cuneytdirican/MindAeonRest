@@ -1,0 +1,122 @@
+@page
+@using System.Text.Json
+@model MindAeonRest.Licence.Portal.Pages.Admin.AddOnPricesModel
+@{
+    ViewData["Title"] = "Add-on Fiyatları — MindAeon";
+    var modulesJson = JsonSerializer.Serialize(Model.Modules.Select(m => new { bit = m.Bit, name = m.Name }));
+}
+@await Html.PartialAsync("_Breadcrumb", ("Finans", "/Admin", "Add-on Fiyatları"))
+
+<div class="card" x-data="addonPrices()" x-on:edit-addon="openEdit($event.detail)">
+    <div class="page-head flex items-center justify-between" style="margin-bottom:var(--sp-4);">
+        <div>
+            <h1 style="margin-bottom:var(--sp-1);">Add-on Fiyatları</h1>
+            <div class="subtitle">Ek modül, kullanıcı, terminal ve şube birim fiyatları.</div>
+        </div>
+        <button type="button" class="btn btn-primary" x-on:click="openCreate()"><i data-lucide="plus"></i> Yeni Fiyat</button>
+    </div>
+
+    <div id="addonTable">
+        @await Html.PartialAsync("_AddOnPricesTable", Model)
+    </div>
+
+    <!-- Create / Edit modalı -->
+    <template x-if="modal">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title" x-text="modal === 'edit' ? 'Fiyat Düzenle' : 'Yeni Fiyat'"></h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form x-bind:hx-post="modal === 'edit' ? '/Admin/AddOnPrices?handler=Update' : '/Admin/AddOnPrices?handler=Create'"
+                      hx-target="#addonTable" hx-swap="innerHTML" x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <template x-if="modal === 'edit'"><input type="hidden" name="id" x-bind:value="form.id" /></template>
+                    <div class="modal__body">
+                        <div class="form-field">
+                            <label>Tür</label>
+                            <select name="kind" x-model.number="form.kind" x-on:change="onKindChange()">
+                                <option value="0">Modül</option>
+                                <option value="1">Kullanıcı</option>
+                                <option value="2">Terminal/Kiosk</option>
+                                <option value="3">Şube</option>
+                            </select>
+                        </div>
+
+                        <!-- Modül seçimi (sadece Kind=Modül) -->
+                        <template x-if="form.kind === 0">
+                            <div class="form-field">
+                                <label>Modül</label>
+                                <select x-model="selectedBit" x-on:change="onModuleChange()">
+                                    <option value="">— Modül seçin —</option>
+                                    <template x-for="m in modules" :key="m.bit">
+                                        <option x-bind:value="m.bit" x-text="m.name"></option>
+                                    </template>
+                                </select>
+                                <div class="hint">Seçilen modülün bit değeri ve adı otomatik doldurulur.</div>
+                            </div>
+                        </template>
+
+                        <input type="hidden" name="featureBit" x-bind:value="form.featureBit" />
+
+                        <div class="grid grid-2">
+                            <div class="form-field">
+                                <label>Ad</label>
+                                <input type="text" name="name" x-model="form.name" x-bind:readonly="form.kind === 0" required />
+                            </div>
+                            <div class="form-field"><label>Birim Fiyat</label><input type="number" step="0.01" min="0" name="unitPrice" x-model="form.unitPrice" /></div>
+                        </div>
+                        <div class="grid grid-2">
+                            <div class="form-field"><label>Para Birimi</label><input type="text" name="currencyCode" x-model="form.currencyCode" maxlength="3" /></div>
+                            <div class="form-field">
+                                <label class="flex items-center gap-2" style="flex-direction:row;">
+                                    <input type="checkbox" name="isActive" value="true" x-model="form.isActive" style="width:auto;" /> Satışa açık
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+        function addonPrices() {
+            return {
+                modal: null,
+                modules: @Html.Raw(modulesJson),
+                selectedBit: '',
+                form: { id: 0, kind: 0, featureBit: 0, name: '', unitPrice: 0, currencyCode: 'TRY', isActive: true },
+                openCreate() {
+                    this.form = { id: 0, kind: 0, featureBit: 0, name: '', unitPrice: 0, currencyCode: 'TRY', isActive: true };
+                    this.selectedBit = '';
+                    this.modal = 'create';
+                    this.$nextTick(() => window.lucide && lucide.createIcons());
+                },
+                openEdit(d) {
+                    this.form = { id: d.id, kind: d.kind, featureBit: d.featureBit, name: d.name, unitPrice: d.unitPrice, currencyCode: d.currencyCode, isActive: d.isActive };
+                    this.selectedBit = d.kind === 0 ? String(d.featureBit) : '';
+                    this.modal = 'edit';
+                    this.$nextTick(() => window.lucide && lucide.createIcons());
+                },
+                onKindChange() {
+                    if (this.form.kind !== 0) { this.form.featureBit = 0; this.selectedBit = ''; }
+                    else { this.onModuleChange(); }
+                },
+                onModuleChange() {
+                    var m = this.modules.find(x => String(x.bit) === String(this.selectedBit));
+                    if (m) { this.form.featureBit = m.bit; this.form.name = m.name; }
+                    else { this.form.featureBit = 0; }
+                },
+                close() { this.modal = null; }
+            };
+        }
+    </script>
+}

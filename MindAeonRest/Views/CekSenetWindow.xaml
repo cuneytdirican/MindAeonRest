@@ -1,0 +1,43 @@
+<Window x:Class="MindAeonRest.Views.CekSenetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Çek / Senet Portföyü" Height="660" Width="1040" MinHeight="520" MinWidth="860"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="22,18,22,18">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock Text="Çek / Senet Portföyü" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <Button Content="✕" Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Foreground="{DynamicResource TextMutedBrush}" BorderThickness="0" Cursor="Hand" Click="Cancel_Click" />
+            </Grid>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
+                <Button Content="＋ Yeni Çek/Senet" Style="{StaticResource GhostButton}" Width="160" Click="Add_Click" />
+                <TextBlock Text="YÖN:" VerticalAlignment="Center" Margin="16,0,6,0" Foreground="{DynamicResource TextMutedBrush}" />
+                <ComboBox x:Name="DirFilter" Width="160" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" SelectionChanged="DirFilter_Changed" />
+                <TextBlock Text="DURUM:" VerticalAlignment="Center" Margin="16,0,6,0" Foreground="{DynamicResource TextMutedBrush}" />
+                <ComboBox x:Name="StatusCombo" Width="160" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" />
+                <Button Content="Durumu Uygula" Style="{StaticResource GhostButton}" Width="140" Margin="8,0,0,0" Click="ApplyStatus_Click" />
+                <Button Content="🔄 Yenile" Style="{StaticResource GhostButton}" Width="100" Margin="8,0,0,0" Click="Refresh_Click" />
+            </StackPanel>
+
+            <DataGrid x:Name="Grid" Grid.Row="2" Margin="0,14,0,0" Style="{StaticResource DataGridStyle}"
+                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                      AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Tür" Binding="{Binding KindText}" Width="80" />
+                    <DataGridTextColumn Header="Yön" Binding="{Binding DirectionText}" Width="90" />
+                    <DataGridTextColumn Header="Cari" Binding="{Binding CustomerName}" Width="2*" />
+                    <DataGridTextColumn Header="Seri/No" Binding="{Binding Serial}" Width="*" />
+                    <DataGridTextColumn Header="Banka" Binding="{Binding BankName}" Width="*" />
+                    <DataGridTextColumn Header="Tutar" Binding="{Binding AmountText}" Width="110" />
+                    <DataGridTextColumn Header="Düzenleme" Binding="{Binding IssueText}" Width="100" />
+                    <DataGridTextColumn Header="Vade" Binding="{Binding DueText}" Width="100" />
+                    <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="120" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Border>
+</Window>

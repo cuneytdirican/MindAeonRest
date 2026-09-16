@@ -1,0 +1,51 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.EInvoice.IndexModel
+@{
+    ViewData["Title"] = "e-Fatura Ayarları";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 e-Fatura / e-Arşiv Ayarları</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">Eklenti modül · EDM veya Uyumsoft entegrasyonu. Ayarlar şirket geneli tek kayıttır; kullanıcı/parola şifreli saklanır.</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Sağlayıcı</label>
+            <select asp-for="Provider" asp-items="Model.ProviderOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Kullanıcı Adı</label>
+            <input asp-for="Username" class="field" autocomplete="off" />
+        </div>
+        <div class="frm-row">
+            <label>Parola</label>
+            <input asp-for="Password" class="field" type="password" autocomplete="new-password" />
+        </div>
+        <div class="frm-row">
+            <label>Test Ortamı</label>
+            <input asp-for="IsTest" type="checkbox" />
+            <small class="hint">Test modunda gerçek gönderim yapılmaz (simülasyon).</small>
+        </div>
+        <div class="frm-row">
+            <label>Modül Etkin</label>
+            <input asp-for="IsEnabled" type="checkbox" />
+            <small class="hint">Etkinleştirilirse faturalar gönderilebilir.</small>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+        </div>
+    </form>
+</div>

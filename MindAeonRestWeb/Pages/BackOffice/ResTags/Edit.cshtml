@@ -1,0 +1,61 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.ResTags.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Etiket" : $"Etiket · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🏷 @(Model.IsNew ? "Yeni Etiket" : "Etiket Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/ResTags">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Etiket Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+            <small class="hint">Doğum Günü, İş Yemeği gibi; ekranda renkli görünür.</small>
+        </div>
+        <div class="frm-row">
+            <label>Renk</label>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <input asp-for="Color" type="color" style="width:52px;height:34px;padding:0;border:none;background:none;cursor:pointer" />
+                <select id="palette" class="field" style="max-width:200px">
+                    <option value="">— Hazır renkler —</option>
+                    @foreach (var (hex, name) in MindAeonRestWeb.Pages.BackOffice.ResTags.EditModel.Palette)
+                    {
+                        <option value="@hex" selected="@(string.Equals(Model.Color, hex, StringComparison.OrdinalIgnoreCase))">@name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/ResTags" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+        // Palet seçimi renk kutusunu doldurur.
+        const pal = document.getElementById('palette'), col = document.querySelector('input[name="Color"]');
+        pal?.addEventListener('change', e => { if (e.target.value) col.value = e.target.value; });
+    </script>
+}

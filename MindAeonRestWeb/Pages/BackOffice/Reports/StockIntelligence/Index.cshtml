@@ -1,0 +1,143 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.StockIntelligence.IndexModel
+@{
+    ViewData["Title"] = "Stok Zekâsı";
+    Layout = "_BackOfficeLayout";
+    string CsvUrl()
+    {
+        var pairs = new List<string> { "handler=Csv" };
+        if (Model.BranchId is int b) pairs.Add($"BranchId={b}");
+        if (Model.WarehouseId is int w) pairs.Add($"WarehouseId={w}");
+        if (Model.From is DateTime f) pairs.Add($"From={f:yyyy-MM-dd}");
+        if (Model.To is DateTime t) pairs.Add($"To={t:yyyy-MM-dd}");
+        return "/BackOffice/Reports/StockIntelligence?" + string.Join("&", pairs);
+    }
+    var rep = Model.Report;
+}
+
+<div class="bo-page-head">
+    <h1>🧠 Stok Zekâsı</h1>
+    <a class="btn btn-ghost" href="@CsvUrl()">⬇ CSV İndir</a>
+    <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+</div>
+
+@if (TempData["SiMessage"] is string okMsg)
+{
+    <div class="bo-card" style="border-left:4px solid #2E7D32;">✅ @okMsg</div>
+}
+@if (TempData["SiError"] is string errMsg)
+{
+    <div class="bo-card" style="border-left:4px solid #C62828;">⚠ @errMsg</div>
+}
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field">
+        <option value="0" selected="@(Model.BranchId == 0)">Tüm Şubeler</option>
+        @foreach (var b in Model.BranchOptions)
+        {
+            <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+        }
+    </select>
+    <select name="WarehouseId" class="field">
+        <option value="">Tüm Depolar</option>
+        @foreach (var w in Model.WarehouseOptions)
+        {
+            <option value="@w.Value" selected="@(Model.WarehouseId == w.Value)">@w.Text</option>
+        }
+    </select>
+    <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+<div class="bo-card" style="display:flex;flex-wrap:wrap;gap:18px;">
+    <div><b>Teorik Maliyet:</b> @rep.TotalTheoreticalCost.ToString("N2") ₺</div>
+    <div><b>Gerçek Maliyet:</b> @rep.TotalActualCost.ToString("N2") ₺</div>
+    <div style="color:#C62828;"><b>Toplam Sapma (Fire/Kayıp):</b> @rep.TotalVarianceCost.ToString("N2") ₺</div>
+</div>
+
+<div class="bo-card">
+    <h3 style="margin:0 0 8px;">📊 Teorik vs Gerçek Tüketim Sapması</h3>
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kod</th><th>Bileşen</th>
+                <th class="ar">Teorik</th><th class="ar">Gerçek</th><th class="ar">Sapma</th>
+                <th class="ar">Birim Mal.</th><th class="ar">Sapma Maliyet</th><th class="ar">Sapma %</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (rep.Rows.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Seçili aralıkta tüketim/hareket kaydı yok.</td></tr>
+        }
+        @foreach (var r in rep.Rows)
+        {
+            <tr>
+                <td>@r.Code</td>
+                <td>@r.Name</td>
+                <td class="ar">@r.TheoreticalQtyText</td>
+                <td class="ar">@r.ActualQtyText</td>
+                <td class="ar" style="color:@(r.IsLoss ? "#C62828" : "#2E7D32");font-weight:600;">@r.VarianceQtyText</td>
+                <td class="ar">@r.UnitCost.ToString("N4")</td>
+                <td class="ar" style="color:@(r.IsLoss ? "#C62828" : "#2E7D32");font-weight:600;">@r.VarianceCostText</td>
+                <td class="ar">%@r.VariancePercent.ToString("N1")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="bo-hint" style="margin-top:6px;color:var(--muted,#888);font-size:12px;">
+        Teorik = satılan ürünlerin reçeteye göre öngörülen bileşen tüketimi. Gerçek = fiili stok çıkışı
+        (satış + fire + sayım farkı). Pozitif sapma (kırmızı) = reçetenin üzerinde tüketim → fire/kayıp/porsiyon aşımı.
+    </div>
+</div>
+
+<div class="bo-card">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h3 style="margin:0;">⚠ Düşük Stok (@Model.LowStock.Count kalem)</h3>
+        @if (Model.BranchId is int selB && selB != 0)
+        {
+            <form method="post" asp-page-handler="Reorder" style="margin-left:auto;"
+                  onsubmit="return confirm('Düşük-stok ürünlerden alış siparişi TASLAĞI oluşturulsun mu?');">
+                <input type="hidden" name="BranchId" value="@Model.BranchId" />
+                @if (Model.WarehouseId is int wv) { <input type="hidden" name="WarehouseId" value="@wv" /> }
+                <input type="hidden" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+                <input type="hidden" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+                <button type="submit" class="btn btn-primary" @(Model.LowStock.Count == 0 ? "disabled" : "")>
+                    🧾 Sipariş Taslağı Oluştur
+                </button>
+            </form>
+        }
+        else
+        {
+            <span style="margin-left:auto;color:var(--muted,#888);font-size:12px;">Taslak için tek şube seçin.</span>
+        }
+    </div>
+    <table class="bo-table" style="margin-top:8px;">
+        <thead>
+            <tr><th>Kod</th><th>Ürün</th><th class="ar">Bakiye</th><th class="ar">Min. Stok</th>
+                <th class="ar">Önerilen Sipariş</th><th class="ar">Birim Maliyet</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.LowStock.Count == 0)
+        {
+            <tr><td colspan="6" class="empty">Düşük-stok ürün yok (MinStock tanımlı ürünler eşiğin üzerinde).</td></tr>
+        }
+        @foreach (var it in Model.LowStock)
+        {
+            <tr>
+                <td>@it.Code</td>
+                <td>@it.Name</td>
+                <td class="ar" style="color:#C62828;font-weight:600;">@it.BalanceText</td>
+                <td class="ar">@it.MinStockText</td>
+                <td class="ar" style="font-weight:600;">@it.SuggestedQtyText</td>
+                <td class="ar">@it.AvgCost.ToString("N4")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="bo-hint" style="margin-top:6px;color:var(--muted,#888);font-size:12px;">
+        MinStock, Ürün kartındaki minimum stok eşiğidir. Taslak: her kalem için önerilen miktar = eşik − bakiye,
+        birim fiyat = ortalama maliyet (tahmini). Taslak kaydedilmeden defter/stok etkilenmez.
+    </div>
+</div>

@@ -1,0 +1,165 @@
+@page
+@using MindAeonRest.Licence.Data
+@using MindAeonRest.Licensing
+@model MindAeonRest.Licence.Portal.Pages.Musteri.IndexModel
+@{
+    ViewData["Title"] = "Müşteri Paneli — MindAeon";
+    var lic = Model.License;
+}
+@await Html.PartialAsync("_Breadcrumb", ("Müşteri", "/Musteri", "Panel"))
+
+<div class="page-head">
+    <h1>Hoş geldiniz</h1>
+    <div class="subtitle">Lisansınız, kullanımınız, ödemeleriniz ve destek talepleriniz tek bakışta.</div>
+</div>
+
+<!-- KPI şeridi -->
+<div class="grid grid-4 mb-0" style="margin-bottom:var(--sp-5)">
+    <div class="kpi">
+        <div class="kpi__label">Lisans Durumu</div>
+        @if (lic is not null)
+        {
+            <div class="kpi__value" style="font-size:var(--fs-xl)">
+                <span class="badge @CustomerUi.LicenseBadge(lic.Status)"><span class="dot"></span>@CustomerUi.LicenseLabel(lic.Status)</span>
+            </div>
+            <div class="text-muted text-sm">@lic.PackageName paketi</div>
+        }
+        else
+        {
+            <div class="kpi__value" style="font-size:var(--fs-xl)">—</div>
+            <div class="text-muted text-sm">Lisans bilgisi yok</div>
+        }
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Kalan Süre</div>
+        @if (lic is null)
+        {
+            <div class="kpi__value">—</div>
+        }
+        else if (lic.IsPerpetual)
+        {
+            <div class="kpi__value" style="font-size:var(--fs-xl)">Süresiz</div>
+            <div class="text-muted text-sm">Bitiş tarihi yok</div>
+        }
+        else
+        {
+            var dl = lic.DaysLeft ?? 0;
+            <div class="kpi__value">@dl<span style="font-size:var(--fs-md);font-weight:500;color:var(--text-3)"> gün</span></div>
+            <div class="text-muted text-sm">@lic.ExpiresUtc!.Value.ToLocalTime().ToString("dd.MM.yyyy")</div>
+        }
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Toplam Ödenen</div>
+        <div class="kpi__value money net">@CustomerUi.Money(Model.TotalPaid) ₺</div>
+        <div class="text-muted text-sm">@(Model.PendingPayments) bekleyen ödeme</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Açık Destek</div>
+        <div class="kpi__value">@Model.OpenTickets</div>
+        <div class="text-muted text-sm">@Model.Tickets.Count toplam talep</div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <!-- Lisans özet kartı -->
+    <div class="card">
+        <div class="card__head">
+            <h2 class="card__title">Lisansım</h2>
+            <a class="btn btn-sm" href="/Musteri/Lisanslarim"><i data-lucide="arrow-up-right"></i>Detay</a>
+        </div>
+        @if (lic is null)
+        {
+            <div class="flex items-center gap-3" style="padding:var(--sp-4) 0">
+                <i data-lucide="key-round" style="color:var(--text-3)"></i>
+                <div>
+                    <div style="font-weight:600">Henüz aktif lisans görüntülenemiyor</div>
+                    <div class="text-muted text-sm">Lisans detayları için "Lisansım" sayfasını ziyaret edin.</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="flex items-center gap-3" style="margin-bottom:var(--sp-4)">
+                <div class="avatar" style="border-radius:var(--radius);width:44px;height:44px"><i data-lucide="key-round"></i></div>
+                <div>
+                    <div style="font-weight:700;font-size:var(--fs-lg)">@lic.PackageName</div>
+                    <div class="text-muted text-sm tabular">Lisans No: @lic.LicenseCode</div>
+                </div>
+            </div>
+            <div class="grid grid-2" style="gap:var(--sp-3)">
+                <div>
+                    <div class="text-muted text-sm">Şube limiti</div>
+                    <div style="font-weight:600">@(lic.MaxBranches == int.MaxValue ? "Sınırsız" : lic.MaxBranches.ToString())</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">Kullanıcı limiti</div>
+                    <div style="font-weight:600">@(lic.MaxUsers == int.MaxValue ? "Sınırsız" : lic.MaxUsers.ToString())</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Son kullanım kartı -->
+    <div class="card">
+        <div class="card__head">
+            <h2 class="card__title">Son Kullanım</h2>
+            <a class="btn btn-sm" href="/Musteri/Kullanimim"><i data-lucide="arrow-up-right"></i>Detay</a>
+        </div>
+        @if (Model.LatestUsage is null)
+        {
+            <div class="flex items-center gap-3" style="padding:var(--sp-4) 0">
+                <i data-lucide="activity" style="color:var(--text-3)"></i>
+                <div>
+                    <div style="font-weight:600">Kullanım raporu yok</div>
+                    <div class="text-muted text-sm">Masaüstü uygulaması rapor gönderdikçe burada görünür.</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            var u = Model.LatestUsage;
+            <div class="text-muted text-sm" style="margin-bottom:var(--sp-3)">Dönem: <strong style="color:var(--text-1)">@u.Period</strong> · @u.ReportedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+            <div class="grid grid-3" style="gap:var(--sp-3)">
+                <div><div class="text-muted text-sm">Şube</div><div style="font-weight:700;font-size:var(--fs-xl)">@u.BranchCount</div></div>
+                <div><div class="text-muted text-sm">Kullanıcı</div><div style="font-weight:700;font-size:var(--fs-xl)">@u.UserCount</div></div>
+                <div><div class="text-muted text-sm">Kiosk</div><div style="font-weight:700;font-size:var(--fs-xl)">@u.KioskCount</div></div>
+            </div>
+            <div style="margin-top:var(--sp-4)">
+                <div class="text-muted text-sm">Dönem cirosu</div>
+                <div class="money net" style="font-size:var(--fs-xl);font-weight:700">@CustomerUi.Money(u.Revenue) ₺</div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Son destek talepleri -->
+<div class="card" style="margin-top:var(--sp-5)">
+    <div class="card__head">
+        <h2 class="card__title">Son Destek Talepleri</h2>
+        <a class="btn btn-sm" href="/Musteri/Destek"><i data-lucide="life-buoy"></i>Tümü</a>
+    </div>
+    @if (!Model.Tickets.Any())
+    {
+        <div class="text-muted text-sm" style="padding:var(--sp-3) 0">Henüz destek talebi açılmadı.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Konu</th><th>Durum</th><th>Öncelik</th><th>Güncelleme</th></tr></thead>
+                <tbody>
+                @foreach (var t in Model.Tickets.OrderByDescending(t => t.UpdatedUtc ?? t.CreatedUtc).Take(5))
+                {
+                    <tr>
+                        <td><a href="/Musteri/Destek?id=@t.Id">@t.Subject</a></td>
+                        <td><span class="badge @CustomerUi.TicketBadge(t.Status)"><span class="dot"></span>@CustomerUi.TicketLabel(t.Status)</span></td>
+                        <td><span class="badge @CustomerUi.PriorityBadge(t.Priority)">@CustomerUi.PriorityLabel(t.Priority)</span></td>
+                        <td class="tabular">@((t.UpdatedUtc ?? t.CreatedUtc).ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+@section Scripts { <script>lucide.createIcons();</script> }

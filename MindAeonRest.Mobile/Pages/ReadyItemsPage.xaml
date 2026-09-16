@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:m="clr-namespace:MindAeonRest.Mobile.Models"
+             x:Class="MindAeonRest.Mobile.Pages.ReadyItemsPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Background}">
+    <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" StrokeThickness="0" Padding="12,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Text="‹ Geri" Clicked="Back_Clicked" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold" Padding="0" />
+                <Label Grid.Column="1" Text="🔔 Hazır Ürünler" FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                <Button Grid.Column="2" Text="↻" FontSize="20" Clicked="Refresh_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="9" Padding="10,2" />
+            </Grid>
+        </Border>
+        <RefreshView Grid.Row="1" x:Name="Refresher" Refreshing="Refresh_Clicked">
+            <CollectionView x:Name="ItemsView" Margin="8">
+                <CollectionView.EmptyView>
+                    <Label Text="Şu an hazır ürün yok." Style="{StaticResource Muted}" HorizontalOptions="Center" Margin="0,50,0,0" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="m:KdsLineDto">
+                        <Border StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Success}" StrokeThickness="1" Padding="0" Margin="0,0,0,8">
+                            <Grid ColumnDefinitions="6,*,Auto">
+                                <BoxView BackgroundColor="{StaticResource Success}" />
+                                <VerticalStackLayout Grid.Column="1" Padding="12,10" Spacing="2">
+                                    <Label Text="{Binding ProductName}" TextColor="{StaticResource TextColor}" FontSize="16" FontAttributes="Bold" />
+                                    <Label Text="{Binding TableCodes, StringFormat='Masa: {0}'}" Style="{StaticResource Muted}" />
+                                    <Label Text="{Binding Qty, StringFormat='Adet: {0:0.##}'}" TextColor="{StaticResource Accent}" FontSize="13" />
+                                </VerticalStackLayout>
+                                <Button Grid.Column="2" Text="Teslim Et" Clicked="Deliver_Clicked" Style="{StaticResource PrimaryButton}"
+                                        VerticalOptions="Center" Margin="0,0,10,0" Padding="14,6" HeightRequest="44" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

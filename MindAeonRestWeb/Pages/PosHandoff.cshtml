@@ -1,0 +1,9 @@
+@page
+@model MindAeonRestWeb.Pages.PosHandoffModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8" /><title>POS'a yönlendiriliyor…</title></head>
+<body style="font-family:system-ui;background:#0f1115;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh">
+    <p>POS ekranı açılıyor… <a style="color:#f5a623" href="@Model.Target">Otomatik yönlenmezse tıklayın</a></p>
+    <script>location.replace(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Target)));</script>
+</body></html>

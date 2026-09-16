@@ -1,0 +1,244 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SystemDefinitions.IndexModel
+@{
+    ViewData["Title"] = "Sistem Tanımları";
+    Layout = "_BackOfficeLayout";
+
+    string TabUrl(string kind) => kind switch
+    {
+        "cities" => $"/BackOffice/SystemDefinitions?Kind=cities&CountryId={Model.CountryId}",
+        "districts" => $"/BackOffice/SystemDefinitions?Kind=districts&CountryId={Model.CountryId}&CityId={Model.CityId}",
+        _ => $"/BackOffice/SystemDefinitions?Kind={kind}"
+    };
+    string Active(string kind) => Model.Kind == kind ? "btn-primary" : "";
+}
+
+<div class="bo-page-head">
+    <h1>🗂 Sistem Tanımları</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">Tüm şirketlerce ortak kullanılan tanımlar. Yalnız yöneticiler düzenleyebilir.</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-filter" style="gap:8px;">
+    <a class="btn @Active("countries")" href="@TabUrl("countries")">Ülkeler</a>
+    <a class="btn @Active("cities")" href="@TabUrl("cities")">Şehirler</a>
+    <a class="btn @Active("districts")" href="@TabUrl("districts")">İlçeler</a>
+    <a class="btn @Active("units")" href="@TabUrl("units")">Ana Birimler</a>
+</div>
+
+@* ===================== ÜLKELER ===================== *@
+@if (Model.Kind == "countries")
+{
+    <div class="bo-card bo-form" style="margin-bottom:14px;">
+        <form method="post" asp-page-handler="AddCountry" class="bo-filter" style="margin:0;">
+            <input type="text" name="code" placeholder="Kod" class="field" style="max-width:120px;" autocomplete="off" />
+            <input type="text" name="name" placeholder="Ülke Adı" class="field" required autocomplete="off" />
+            <button type="submit" class="btn btn-primary">+ Yeni Ülke</button>
+        </form>
+    </div>
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead><tr><th>ID</th><th>Kod</th><th>Ülke Adı</th><th>Durum</th><th class="ar">İşlem</th></tr></thead>
+            <tbody>
+            @if (Model.Countries.Count == 0) { <tr><td colspan="5" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var x in Model.Countries)
+            {
+                <tr class="@(x.IsDeleted ? "row-deleted" : "")">
+                    <td>@x.Id</td><td><b>@x.Code</b></td><td>@x.Name</td>
+                    <td>@if (x.IsDeleted) { <span class="badge-del">Silinmiş</span> } else { <span class="badge-ok">Aktif</span> }</td>
+                    <td class="ar">
+                        <form method="post" asp-page-handler="ToggleDelete" style="display:inline"
+                              onsubmit="return @(x.IsDeleted ? "true" : "confirm('Silinsin (pasifleştirilsin) mi?')")">
+                            <input type="hidden" name="kind" value="countries" />
+                            <input type="hidden" name="id" value="@x.Id" />
+                            <input type="hidden" name="deleted" value="@(x.IsDeleted ? "false" : "true")" />
+                            <input type="hidden" name="countryId" value="@Model.CountryId" />
+                            <input type="hidden" name="cityId" value="@Model.CityId" />
+                            <button class="btn btn-sm @(x.IsDeleted ? "" : "btn-danger")" type="submit">@(x.IsDeleted ? "Geri Al" : "Sil")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.Countries.Count kayıt</div>
+}
+
+@* ===================== ŞEHİRLER ===================== *@
+@if (Model.Kind == "cities")
+{
+    <div class="bo-card" style="margin-bottom:14px;">
+        <form method="get" class="bo-filter" style="margin:0;">
+            <input type="hidden" name="Kind" value="cities" />
+            <label>Ülke:</label>
+            <select name="CountryId" class="field" onchange="this.form.submit()">
+                <option value="">— Ülke seçin —</option>
+                @foreach (var c in Model.CountryOptions)
+                {
+                    <option value="@c.Id" selected="@(Model.CountryId == c.Id)">@c.Name</option>
+                }
+            </select>
+            <noscript><button type="submit" class="btn">Göster</button></noscript>
+        </form>
+    </div>
+
+    @if (Model.CountryId is not null)
+    {
+        <div class="bo-card bo-form" style="margin-bottom:14px;">
+            <form method="post" asp-page-handler="AddCity" class="bo-filter" style="margin:0;">
+                <input type="hidden" name="countryId" value="@Model.CountryId" />
+                <input type="text" name="plate" placeholder="Plaka" class="field" style="max-width:120px;" autocomplete="off" />
+                <input type="text" name="name" placeholder="Şehir Adı" class="field" required autocomplete="off" />
+                <button type="submit" class="btn btn-primary">+ Yeni Şehir</button>
+            </form>
+        </div>
+        <div class="bo-card">
+            <table class="bo-table">
+                <thead><tr><th>ID</th><th>Plaka</th><th>Şehir Adı</th><th>Durum</th><th class="ar">İşlem</th></tr></thead>
+                <tbody>
+                @if (Model.Cities.Count == 0) { <tr><td colspan="5" class="empty">Kayıt yok.</td></tr> }
+                @foreach (var x in Model.Cities)
+                {
+                    <tr class="@(x.IsDeleted ? "row-deleted" : "")">
+                        <td>@x.Id</td><td><b>@x.PlateCode</b></td><td>@x.Name</td>
+                        <td>@if (x.IsDeleted) { <span class="badge-del">Silinmiş</span> } else { <span class="badge-ok">Aktif</span> }</td>
+                        <td class="ar">
+                            <form method="post" asp-page-handler="ToggleDelete" style="display:inline"
+                                  onsubmit="return @(x.IsDeleted ? "true" : "confirm('Silinsin (pasifleştirilsin) mi?')")">
+                                <input type="hidden" name="kind" value="cities" />
+                                <input type="hidden" name="id" value="@x.Id" />
+                                <input type="hidden" name="deleted" value="@(x.IsDeleted ? "false" : "true")" />
+                                <input type="hidden" name="countryId" value="@Model.CountryId" />
+                                <input type="hidden" name="cityId" value="@Model.CityId" />
+                                <button class="btn btn-sm @(x.IsDeleted ? "" : "btn-danger")" type="submit">@(x.IsDeleted ? "Geri Al" : "Sil")</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="bo-count">@Model.Cities.Count kayıt</div>
+    }
+    else { <div class="bo-card"><span class="empty">Şehirleri görmek için önce ülke seçin.</span></div> }
+}
+
+@* ===================== İLÇELER ===================== *@
+@if (Model.Kind == "districts")
+{
+    <div class="bo-card" style="margin-bottom:14px;">
+        <form method="get" class="bo-filter" style="margin:0;">
+            <input type="hidden" name="Kind" value="districts" />
+            <label>Ülke:</label>
+            <select name="CountryId" class="field" onchange="this.form.submit()">
+                <option value="">— Ülke seçin —</option>
+                @foreach (var c in Model.CountryOptions)
+                {
+                    <option value="@c.Id" selected="@(Model.CountryId == c.Id)">@c.Name</option>
+                }
+            </select>
+            <label>Şehir:</label>
+            <select name="CityId" class="field" onchange="this.form.submit()" disabled="@(Model.CountryId is null)">
+                <option value="">— Şehir seçin —</option>
+                @foreach (var c in Model.CityOptions)
+                {
+                    <option value="@c.Id" selected="@(Model.CityId == c.Id)">@c.Name</option>
+                }
+            </select>
+            <noscript><button type="submit" class="btn">Göster</button></noscript>
+        </form>
+    </div>
+
+    @if (Model.CityId is not null)
+    {
+        <div class="bo-card bo-form" style="margin-bottom:14px;">
+            <form method="post" asp-page-handler="AddDistrict" class="bo-filter" style="margin:0;">
+                <input type="hidden" name="countryId" value="@Model.CountryId" />
+                <input type="hidden" name="cityId" value="@Model.CityId" />
+                <input type="text" name="name" placeholder="İlçe Adı" class="field" required autocomplete="off" />
+                <button type="submit" class="btn btn-primary">+ Yeni İlçe</button>
+            </form>
+        </div>
+        <div class="bo-card">
+            <table class="bo-table">
+                <thead><tr><th>ID</th><th>İlçe Adı</th><th>Durum</th><th class="ar">İşlem</th></tr></thead>
+                <tbody>
+                @if (Model.Districts.Count == 0) { <tr><td colspan="4" class="empty">Kayıt yok.</td></tr> }
+                @foreach (var x in Model.Districts)
+                {
+                    <tr class="@(x.IsDeleted ? "row-deleted" : "")">
+                        <td>@x.Id</td><td>@x.Name</td>
+                        <td>@if (x.IsDeleted) { <span class="badge-del">Silinmiş</span> } else { <span class="badge-ok">Aktif</span> }</td>
+                        <td class="ar">
+                            <form method="post" asp-page-handler="ToggleDelete" style="display:inline"
+                                  onsubmit="return @(x.IsDeleted ? "true" : "confirm('Silinsin (pasifleştirilsin) mi?')")">
+                                <input type="hidden" name="kind" value="districts" />
+                                <input type="hidden" name="id" value="@x.Id" />
+                                <input type="hidden" name="deleted" value="@(x.IsDeleted ? "false" : "true")" />
+                                <input type="hidden" name="countryId" value="@Model.CountryId" />
+                                <input type="hidden" name="cityId" value="@Model.CityId" />
+                                <button class="btn btn-sm @(x.IsDeleted ? "" : "btn-danger")" type="submit">@(x.IsDeleted ? "Geri Al" : "Sil")</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="bo-count">@Model.Districts.Count kayıt</div>
+    }
+    else { <div class="bo-card"><span class="empty">İlçeleri görmek için ülke ve şehir seçin.</span></div> }
+}
+
+@* ===================== ANA BİRİMLER ===================== *@
+@if (Model.Kind == "units")
+{
+    <div class="bo-card bo-form" style="margin-bottom:14px;">
+        <form method="post" asp-page-handler="AddUnit" class="bo-filter" style="margin:0;">
+            <input type="text" name="code" placeholder="Kod" class="field" style="max-width:120px;" autocomplete="off" />
+            <input type="text" name="name" placeholder="Birim Adı" class="field" required autocomplete="off" />
+            <button type="submit" class="btn btn-primary">+ Yeni Birim</button>
+        </form>
+    </div>
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead><tr><th>ID</th><th>Kod</th><th>Birim Adı</th><th>Durum</th><th class="ar">İşlem</th></tr></thead>
+            <tbody>
+            @if (Model.Units.Count == 0) { <tr><td colspan="5" class="empty">Kayıt yok.</td></tr> }
+            @foreach (var x in Model.Units)
+            {
+                <tr class="@(x.IsDeleted ? "row-deleted" : "")">
+                    <td>@x.Id</td><td><b>@x.Code</b></td><td>@x.Name</td>
+                    <td>
+                        @if (x.IsDeleted) { <span class="badge-del">Silinmiş</span> }
+                        else if (x.IsActive) { <span class="badge-ok">Aktif</span> }
+                        else { <span class="badge-off">Pasif</span> }
+                    </td>
+                    <td class="ar">
+                        <form method="post" asp-page-handler="ToggleDelete" style="display:inline"
+                              onsubmit="return @(x.IsDeleted ? "true" : "confirm('Silinsin (pasifleştirilsin) mi?')")">
+                            <input type="hidden" name="kind" value="units" />
+                            <input type="hidden" name="id" value="@x.Id" />
+                            <input type="hidden" name="deleted" value="@(x.IsDeleted ? "false" : "true")" />
+                            <input type="hidden" name="countryId" value="@Model.CountryId" />
+                            <input type="hidden" name="cityId" value="@Model.CityId" />
+                            <button class="btn btn-sm @(x.IsDeleted ? "" : "btn-danger")" type="submit">@(x.IsDeleted ? "Geri Al" : "Sil")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.Units.Count kayıt</div>
+}

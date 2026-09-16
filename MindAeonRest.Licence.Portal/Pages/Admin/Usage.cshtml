@@ -1,0 +1,65 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.UsageModel
+@{
+    ViewData["Title"] = "Kullanım — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetim", "/Admin", "Kullanım"))
+
+<div class="page-head">
+    <h1>Kullanım Raporları</h1>
+    <div class="subtitle">Masaüstünden gelen periyodik şube/kullanıcı/ciro raporları.</div>
+</div>
+
+<div class="grid grid-3">
+    <div class="kpi">
+        <div class="kpi__label">Toplam Ciro (raporlanan)</div>
+        <div class="kpi__value money net">@Model.TotalRevenue.ToString("N2")</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Toplam Şube</div>
+        <div class="kpi__value">@Model.TotalBranches</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Toplam Kiosk</div>
+        <div class="kpi__value">@Model.TotalKiosks</div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Şirket Kodu</th>
+                    <th>Dönem</th>
+                    <th class="num">Şube</th>
+                    <th class="num">Kullanıcı</th>
+                    <th class="num">Kiosk</th>
+                    <th class="num">Ciro</th>
+                    <th>Rapor Zamanı</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-muted" style="text-align:center; padding:var(--sp-6);">Kullanım raporu yok.</td></tr>
+                }
+                @foreach (var u in Model.Items)
+                {
+                    <tr>
+                        <td style="font-weight:600; font-variant-numeric:tabular-nums;">@u.CompanyCode</td>
+                        <td><span class="badge primary">@(u.Period ?? "—")</span></td>
+                        <td class="num">@u.BranchCount</td>
+                        <td class="num">@u.UserCount</td>
+                        <td class="num">@u.KioskCount</td>
+                        <td class="num money net">@u.Revenue.ToString("N2")</td>
+                        <td class="text-sm">@u.ReportedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@section Scripts {
+    <script>document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));</script>
+}

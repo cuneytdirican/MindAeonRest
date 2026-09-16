@@ -1,0 +1,41 @@
+@model MindAeonRest.Licence.Portal.Pages.Admin.BusinessesModel
+
+<div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Unvan</th>
+                <th>Şirket Kodu</th>
+                <th>Bayi</th>
+                <th>Şehir</th>
+                <th>İletişim</th>
+                <th class="num">Aktif Lisans</th>
+                <th>Kayıt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="text-muted" style="text-align:center; padding:var(--sp-6);">İşletme bulunamadı.</td></tr>
+            }
+            @foreach (var b in Model.Items)
+            {
+                <tr>
+                    <td style="font-weight:600;">@b.Title</td>
+                    <td style="font-variant-numeric:tabular-nums;">@b.CompanyCode</td>
+                    <td>@(b.DealerName ?? "—")</td>
+                    <td>@(b.City ?? "—")</td>
+                    <td class="text-sm">
+                        @if (!string.IsNullOrWhiteSpace(b.Email)) { <div>@b.Email</div> }
+                        @if (!string.IsNullOrWhiteSpace(b.Phone)) { <div class="text-muted">@b.Phone</div> }
+                        @if (string.IsNullOrWhiteSpace(b.Email) && string.IsNullOrWhiteSpace(b.Phone)) { <span class="text-muted">—</span> }
+                    </td>
+                    <td class="num">
+                        <span class="badge @(b.ActiveLicenseCount > 0 ? "success" : "")">@b.ActiveLicenseCount</span>
+                    </td>
+                    <td>@b.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

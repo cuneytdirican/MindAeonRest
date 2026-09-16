@@ -1,0 +1,91 @@
+<Window x:Class="MindAeonRest.Views.LockScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:helpers="clr-namespace:MindAeonRest.Helpers"
+        Title="Kilitli" WindowStyle="None" WindowState="Maximized" ResizeMode="NoResize"
+        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}" Closing="Window_Closing" KeyDown="Window_KeyDown">
+    <Window.Resources>
+        <helpers:ByteImageConverter x:Key="Img" />
+    </Window.Resources>
+
+    <Grid>
+        <!-- Afili ama TEMAYA uyumlu: arka plan tema rengi + accent ışıltılar -->
+        <Ellipse Width="900" Height="900" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-300,-360,0,0" Opacity="0.18">
+            <Ellipse.Fill><RadialGradientBrush><GradientStop Color="{DynamicResource AccentColor}" Offset="0" /><GradientStop Color="#00000000" Offset="1" /></RadialGradientBrush></Ellipse.Fill>
+        </Ellipse>
+        <Ellipse Width="820" Height="820" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-260,-300" Opacity="0.16">
+            <Ellipse.Fill><RadialGradientBrush><GradientStop Color="{DynamicResource AccentDarkColor}" Offset="0" /><GradientStop Color="#00000000" Offset="1" /></RadialGradientBrush></Ellipse.Fill>
+        </Ellipse>
+
+        <!-- Üst: canlı saat + tarih -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,54,0,0">
+            <TextBlock x:Name="ClockText" Text="00:00" FontSize="76" FontWeight="Thin" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center">
+                <TextBlock.Effect><DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="34" ShadowDepth="0" Opacity="0.5" /></TextBlock.Effect>
+            </TextBlock>
+            <TextBlock x:Name="DateText" FontSize="17" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+        </StackPanel>
+
+        <!-- Orta: marka + kilit kartı -->
+        <Border Width="460" CornerRadius="22" Padding="36,30" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+            <Border.Effect><DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="42" ShadowDepth="0" Opacity="0.35" /></Border.Effect>
+            <StackPanel>
+                <!-- Logo / marka rozeti -->
+                <Grid Width="96" Height="96" HorizontalAlignment="Center">
+                    <Ellipse>
+                        <Ellipse.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="{DynamicResource AccentColor}" Offset="0" /><GradientStop Color="{DynamicResource AccentDarkColor}" Offset="1" /></LinearGradientBrush></Ellipse.Fill>
+                        <Ellipse.Effect><DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="26" ShadowDepth="0" Opacity="0.6" /></Ellipse.Effect>
+                    </Ellipse>
+                    <Image x:Name="LogoImage" Width="86" Height="86" Stretch="UniformToFill" Visibility="Collapsed">
+                        <Image.Clip><EllipseGeometry Center="43,43" RadiusX="43" RadiusY="43" /></Image.Clip>
+                    </Image>
+                    <TextBlock x:Name="LogoLetter" Text="M" FontSize="52" FontWeight="Bold" Foreground="#1A1208" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                    <TextBlock Text="MindAeon" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                    <TextBlock Text="Rest" FontSize="28" FontWeight="Thin" Foreground="{DynamicResource AccentBrush}" />
+                </StackPanel>
+                <TextBlock Text="Restoran · Adisyon · Ön Muhasebe" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                <TextBlock x:Name="VersionText" Text="Sürüm 7.0" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,3,0,0" />
+
+                <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,20,0,18" />
+
+                <TextBlock Text="🔒  EKRAN KİLİTLİ" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" />
+                <TextBlock Text="Kilitleyen" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,14,0,2" />
+                <TextBlock x:Name="UserNameText" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" />
+
+                <!-- Şifre + klavye -->
+                <Grid Margin="0,18,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" CornerRadius="10" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <PasswordBox x:Name="PwdBox" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextBrush}" FontSize="20"
+                                     Padding="14,0" Height="50" VerticalContentAlignment="Center" KeyDown="Pwd_KeyDown" />
+                    </Border>
+                    <Button Grid.Column="2" Content="⌨" FontSize="22" Width="54" Height="52" Cursor="Hand"
+                            Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Click="Keyboard_Click" ToolTip="Sanal klavye" />
+                </Grid>
+
+                <Button x:Name="UnlockBtn" Content="KİLİDİ AÇ" Height="52" Margin="0,14,0,0" Cursor="Hand"
+                        FontSize="16" FontWeight="Bold" Foreground="#1A1208" Click="Unlock_Click">
+                    <Button.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="{DynamicResource AccentColor}" Offset="0" /><GradientStop Color="{DynamicResource AccentDarkColor}" Offset="1" /></LinearGradientBrush></Button.Background>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" CornerRadius="10" Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.9" /></Trigger>
+                                <Trigger Property="IsPressed" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.8" /></Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12.5" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,12,0,0" Visibility="Collapsed" />
+                <TextBlock x:Name="HintText" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

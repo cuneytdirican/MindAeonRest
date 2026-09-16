@@ -1,0 +1,108 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.TaxGroups.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Vergi Grubu" : $"Vergi Grubu · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 @(Model.IsNew ? "Yeni Vergi Grubu" : "Vergi Grubu Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/TaxGroups">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Grup Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+
+        <div class="frm-row">
+            <label>KDV Oranları</label>
+            <small class="hint">Oranlar tarih aralıklı tanımlanır (yıl içi değişiklikler için). Bitiş boş = süresiz.</small>
+            <table class="bo-table" id="ratesTable" style="margin-top:8px">
+                <thead>
+                    <tr><th style="width:22%">Tip</th><th style="width:18%">Oran (%)</th><th style="width:24%">Başlangıç</th><th style="width:24%">Bitiş</th><th class="ar" style="width:12%">—</th></tr>
+                </thead>
+                <tbody id="ratesBody">
+                @for (int i = 0; i < Model.Rates.Count; i++)
+                {
+                    <tr class="rate-row">
+                        <td>
+                            <select name="Rates[@i].VatType" class="field">
+                                @foreach (var (val, text) in MindAeonRestWeb.Pages.BackOffice.TaxGroups.EditModel.VatTypeOptions)
+                                {
+                                    <option value="@val" selected="@(Model.Rates[i].VatType == val)">@text</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input name="Rates[@i].Rate" value="@Model.Rates[i].Rate.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" /></td>
+                        <td><input name="Rates[@i].StartDate" value="@Model.Rates[i].StartDate" type="date" class="field" /></td>
+                        <td><input name="Rates[@i].EndDate" value="@Model.Rates[i].EndDate" type="date" class="field" /></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRate(this)">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addRate()" style="margin-top:8px">+ Oran Ekle</button>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/TaxGroups" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        const VAT_OPTIONS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            MindAeonRestWeb.Pages.BackOffice.TaxGroups.EditModel.VatTypeOptions.Select(o => new { v = o.Value, t = o.Text })));
+        const DEFAULT_VAT = @((int)MindAeonRest.Models.VatType.Satis);
+
+        function reindex() {
+            document.querySelectorAll('#ratesBody .rate-row').forEach((row, i) => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/Rates\[\d+\]/, 'Rates[' + i + ']');
+                });
+            });
+        }
+
+        function addRate() {
+            const body = document.getElementById('ratesBody');
+            const i = body.querySelectorAll('.rate-row').length;
+            const opts = VAT_OPTIONS.map(o => `<option value="${o.v}" ${o.v === DEFAULT_VAT ? 'selected' : ''}>${o.t}</option>`).join('');
+            const y = new Date().getFullYear();
+            const tr = document.createElement('tr');
+            tr.className = 'rate-row';
+            tr.innerHTML =
+                `<td><select name="Rates[${i}].VatType" class="field">${opts}</select></td>` +
+                `<td><input name="Rates[${i}].Rate" value="0" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td><input name="Rates[${i}].StartDate" value="${y}-01-01" type="date" class="field" /></td>` +
+                `<td><input name="Rates[${i}].EndDate" value="${y}-12-31" type="date" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRate(this)">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function removeRate(btn) {
+            btn.closest('.rate-row')?.remove();
+            reindex();
+        }
+    </script>
+}

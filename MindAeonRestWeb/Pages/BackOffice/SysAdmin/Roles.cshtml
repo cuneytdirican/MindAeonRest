@@ -1,0 +1,136 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SysAdmin.RolesModel
+@{
+    ViewData["Title"] = "Roller (Sistem Yönetimi)";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🛡️ Roller</h1>
+    <a class="btn btn-ghost" href="/BackOffice/SysAdmin/Tenants">← Şirketler</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert-success">@Model.Message</div>
+}
+
+<div class="bo-card bo-hint" style="margin-bottom:12px">
+    Roller <strong>sistem veritabanında</strong> tutulur ve yalnız <strong>Sistem Yöneticisi (SysAdmin)</strong>
+    tarafından yönetilir. <strong>Sistem rolleri</strong> (SysAdmin, Yönetici, Kasiyer, Garson, Mutfak…) için
+    <em>ad değiştirilemez</em>; açıklama ve AI yetkisi düzenlenebilir. Rol silme yoktur.
+</div>
+
+@* ---- Düzenleme paneli (aynı sayfada) — ?edit=Id ---- *@
+@if (Model.EditRole is { } er)
+{
+    var locked = MindAeonRestWeb.Pages.BackOffice.SysAdmin.RolesModel.IsBuiltIn(er.Name);
+    <div class="bo-card bo-form" style="margin-bottom:14px">
+        <div class="bo-page-head" style="margin-bottom:12px">
+            <h1 style="font-size:18px">✏️ Rolü Düzenle <small class="muted">(@er.Name)</small></h1>
+            <a class="btn btn-ghost btn-sm" href="/BackOffice/SysAdmin/Roles">Kapat</a>
+        </div>
+        <form method="post" asp-page-handler="Update">
+            <input type="hidden" name="id" value="@er.Id" />
+            <div class="frm-row">
+                <label>Rol Adı @(locked ? "" : "*")</label>
+                @if (locked)
+                {
+                    <input name="name" class="field" value="@er.Name" readonly
+                           title="Sistem rolü — adı değiştirilemez" />
+                    <small class="hint">🔒 Sistem rolü: ad değiştirilemez. Yalnız açıklama düzenlenebilir.</small>
+                }
+                else
+                {
+                    <input name="name" class="field" value="@er.Name" required maxlength="100"
+                           autocomplete="off" />
+                }
+            </div>
+            <div class="frm-row">
+                <label>Açıklama</label>
+                <input name="description" class="field" value="@er.Description" maxlength="250"
+                       placeholder="Rolün kısa açıklaması" autocomplete="off" />
+            </div>
+            <div class="frm-row">
+                <label></label>
+                <div style="display:flex;gap:8px">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <a class="btn btn-ghost" href="/BackOffice/SysAdmin/Roles">İptal</a>
+                </div>
+            </div>
+        </form>
+    </div>
+}
+
+@* ---- Yeni Rol ---- *@
+<div class="bo-card bo-form" style="margin-bottom:14px">
+    <h3 style="margin:0 0 10px">➕ Yeni Rol</h3>
+    <form method="post" asp-page-handler="Create">
+        <div class="frm-row">
+            <label>Rol Adı *</label>
+            <input name="name" class="field" required maxlength="100"
+                   placeholder="Örn: Depo Sorumlusu" autocomplete="off" />
+            <small class="hint">Benzersiz olmalı; sistem rol adlarıyla çakışamaz.</small>
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <input name="description" class="field" maxlength="250"
+                   placeholder="Rolün kısa açıklaması" autocomplete="off" />
+        </div>
+        <div class="frm-row">
+            <label></label>
+            <button type="submit" class="btn btn-primary">Rol Ekle</button>
+        </div>
+    </form>
+</div>
+
+@* ---- Liste ---- *@
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Rol</th>
+                <th>Açıklama</th>
+                <th>Tür</th>
+                <th>AI Yetkisi</th>
+                <th class="ar">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="5" class="empty">Kayıtlı rol yok.</td></tr>
+        }
+        @foreach (var r in Model.Items)
+        {
+            var isBuiltIn = MindAeonRestWeb.Pages.BackOffice.SysAdmin.RolesModel.IsBuiltIn(r.Name);
+            <tr>
+                <td><b>@r.Name</b></td>
+                <td>@r.Description</td>
+                <td>
+                    @if (isBuiltIn) { <span class="badge-off">🔒 Sistem</span> }
+                    else { <span class="badge-ok">Özel</span> }
+                </td>
+                <td>
+                    @if (r.CanUseAi) { <span class="badge-ok">✓ AI Yetkili</span> }
+                    else { <span class="badge-off">—</span> }
+                </td>
+                <td class="ar">
+                    <a class="btn btn-sm" href="/BackOffice/SysAdmin/Roles?edit=@r.Id">Düzenle</a>
+                    <form method="post" asp-page-handler="SetAi" style="display:inline">
+                        <input type="hidden" name="id" value="@r.Id" />
+                        <button class="btn btn-sm" type="submit" title="AI Hub yetkisini aç/kapat">
+                            🧠 AI @(r.CanUseAi ? "Kapat" : "Aç")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count rol</div>

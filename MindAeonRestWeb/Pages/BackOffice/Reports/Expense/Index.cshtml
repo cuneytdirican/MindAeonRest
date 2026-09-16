@@ -1,0 +1,114 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.Expense.IndexModel
+@{
+    ViewData["Title"] = "Gider Raporu";
+    Layout = "_BackOfficeLayout";
+    var qs = new Dictionary<string, string?>
+    {
+        ["BranchId"] = Model.BranchId?.ToString(),
+        ["ExpenseTypeId"] = Model.ExpenseTypeId?.ToString(),
+        ["From"] = Model.From?.ToString("yyyy-MM-dd"),
+        ["To"] = Model.To?.ToString("yyyy-MM-dd"),
+    };
+    var csvPairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+    var csvUrl = "/BackOffice/Reports/Expense?handler=Csv" + (csvPairs.Count > 0 ? "&" + string.Join("&", csvPairs) : "");
+}
+
+<div class="bo-page-head">
+    <h1>📉 Gider Raporu</h1>
+    <div class="bo-actions no-print">
+        <a class="btn btn-ghost" href="@csvUrl">⬇ CSV İndir</a>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+    </div>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field">
+        @foreach (var b in Model.BranchOptions)
+        {
+            <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+        }
+    </select>
+    <select name="ExpenseTypeId" class="field">
+        @foreach (var t in Model.TypeOptions)
+        {
+            <option value="@t.Value" selected="@(Model.ExpenseTypeId == t.Value)">@t.Text</option>
+        }
+    </select>
+    <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Tarih</th><th>Şube</th><th>Gider Tipi</th><th>Personel</th>
+                <th>Açıklama</th><th>Ödeme</th><th class="ar">Tutar</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="7" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var e in Model.Rows)
+        {
+            <tr>
+                <td>@e.DateText</td>
+                <td>@Model.BranchName(e.BranchId)</td>
+                <td>@e.ExpenseTypeName</td>
+                <td>@e.PersonnelName</td>
+                <td>@e.Description</td>
+                <td>@e.PayText</td>
+                <td class="ar">@e.Amount.ToString("N2")</td>
+            </tr>
+        }
+        </tbody>
+        @if (Model.Rows.Count > 0)
+        {
+            <tfoot>
+                <tr>
+                    <td colspan="6"><b>DÖNEM TOPLAMI (@Model.Count kayıt)</b></td>
+                    <td class="ar"><b>@Model.Total.ToString("N2") ₺</b></td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>
+
+@if (Model.Rows.Count > 0)
+{
+    <div class="bo-card">
+        <h3 style="margin:0 0 8px;">Gider Tipine Göre Kırılım</h3>
+        <table class="bo-table">
+            <thead>
+                <tr><th>Gider Tipi</th><th class="ar">Adet</th><th class="ar">Toplam</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var g in Model.ByType)
+            {
+                <tr>
+                    <td>@g.Type</td>
+                    <td class="ar">@g.Count</td>
+                    <td class="ar">@g.Total.ToString("N2") ₺</td>
+                </tr>
+            }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td><b>TOPLAM</b></td>
+                    <td class="ar"><b>@Model.Count</b></td>
+                    <td class="ar"><b>@Model.Total.ToString("N2") ₺</b></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Excel / PDF dışa aktarım masaüstü (WPF) uygulamasına özeldir. Web'de CSV indirme (⬇ CSV İndir) ile
+    yazdır/PDF için tarayıcının "Yazdır" penceresi (🖨 Yazdır) kullanılabilir.
+    Tutarlar seçili dönemdeki gider fişlerinden (Kasa/Banka çıkışı) hesaplanır.
+</p>

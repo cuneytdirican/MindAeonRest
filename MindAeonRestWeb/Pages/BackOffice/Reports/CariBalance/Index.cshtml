@@ -1,0 +1,79 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.CariBalance.IndexModel
+@{
+    ViewData["Title"] = "Cari Bakiye Listesi";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>💰 Cari Bakiye Listesi</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Reports/CariBalance?handler=Csv&From=@(Model.From?.ToString("yyyy-MM-dd"))&To=@(Model.To?.ToString("yyyy-MM-dd"))&Q=@Uri.EscapeDataString(Model.Q ?? "")&Filter=@Model.Filter">⬇ CSV İndir</a>
+    <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+</div>
+
+<form method="get" class="bo-filter">
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod / ünvan ara..." class="field" />
+    <select name="Filter" class="field">
+        <option value="" selected="@(Model.Filter == "")">Tümü</option>
+        <option value="debit" selected="@(Model.Filter == "debit")">Borçlu (bakiye &gt; 0)</option>
+        <option value="credit" selected="@(Model.Filter == "credit")">Alacaklı (bakiye &lt; 0)</option>
+    </select>
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+<p class="bo-hint" style="margin:4px 0 12px;color:var(--muted,#888);font-size:12px;">
+    Tarih boş bırakılırsa tüm hareketler üzerinden güncel bakiye hesaplanır.
+</p>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kod</th><th>Cari</th><th>Tip</th><th>Döviz</th>
+                <th class="ar">Borç</th><th class="ar">Alacak</th><th class="ar">Bakiye</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var c in Model.Rows)
+        {
+            <tr>
+                <td><b>@c.Code</b></td>
+                <td>@c.Name</td>
+                <td>@c.TypeText</td>
+                <td>@c.CurrencyCode</td>
+                <td class="ar">@c.Debt.ToString("N2")</td>
+                <td class="ar">@c.Credit.ToString("N2")</td>
+                <td class="ar">@c.Balance.ToString("N2")</td>
+                <td><a class="btn btn-ghost" href="/BackOffice/CariHareket?customerId=@c.CustomerId">Ekstre →</a></td>
+            </tr>
+        }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4"><b>Toplam (@Model.Count satır)</b></td>
+                <td class="ar"><b>@Model.TotalDebt.ToString("N2")</b></td>
+                <td class="ar"><b>@Model.TotalCredit.ToString("N2")</b></td>
+                <td class="ar"><b>@Model.TotalBalance.ToString("N2")</b></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="bo-card">
+    <b>Cari:</b> @Model.Count &nbsp;·&nbsp;
+    <b>Toplam Borç:</b> @Model.TotalDebt.ToString("N2") ₺ &nbsp;·&nbsp;
+    <b>Toplam Alacak:</b> @Model.TotalCredit.ToString("N2") ₺ &nbsp;·&nbsp;
+    <b>Döviz bazında bakiye:</b>
+    @string.Join("  ·  ", Model.BalanceByCurrency.Select(x => $"{x.Cur}: {x.Balance:N2}"))
+</div>
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Excel / PDF dışa aktarım masaüstü (WPF) uygulamasına özeldir. Web'de CSV indirme (⬇ CSV İndir) ile yazdır/PDF için tarayıcının "Yazdır" penceresi (🖨 Yazdır) kullanılabilir.
+</p>

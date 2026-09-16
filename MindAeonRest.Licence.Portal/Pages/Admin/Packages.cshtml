@@ -1,0 +1,85 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.PackagesModel
+@{
+    ViewData["Title"] = "Paket Fiyatları — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Finans", "/Admin", "Paket Fiyatları"))
+
+<div class="card" x-data="priceMatrix()" x-on:edit-price="openEdit($event.detail)">
+    <div class="page-head flex items-center justify-between" style="margin-bottom:var(--sp-4);">
+        <div>
+            <h1 style="margin-bottom:var(--sp-1);">Paket Fiyatları</h1>
+            <div class="subtitle">Paket × süre taban fiyat matrisi. Marj bayilere göre ayrıca uygulanır.</div>
+        </div>
+        <button type="button" class="btn btn-primary" x-on:click="openCreate()"><i data-lucide="plus"></i> Yeni Fiyat</button>
+    </div>
+
+    <div id="priceTable">
+        @await Html.PartialAsync("_PackagesTable", Model)
+    </div>
+
+    <!-- Create / Edit modalı -->
+    <template x-if="modal">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title" x-text="modal === 'edit' ? 'Fiyat Düzenle' : 'Yeni Fiyat'"></h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form x-bind:hx-post="modal === 'edit' ? '/Admin/Packages?handler=Update' : '/Admin/Packages?handler=Create'"
+                      hx-target="#priceTable" hx-swap="innerHTML" x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <template x-if="modal === 'edit'"><input type="hidden" name="id" x-bind:value="form.id" /></template>
+                    <div class="modal__body">
+                        <div class="grid grid-2">
+                            <div class="form-field">
+                                <label>Paket</label>
+                                <select name="package" x-model.number="form.package">
+                                    <option value="0">Lite</option>
+                                    <option value="1">Standart</option>
+                                    <option value="2">Enterprise</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Süre</label>
+                                <select name="duration" x-model.number="form.duration">
+                                    <option value="0">Süresiz</option>
+                                    <option value="1">Aylık</option>
+                                    <option value="2">Yıllık</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-2">
+                            <div class="form-field"><label>Taban Fiyat</label><input type="number" step="0.01" min="0" name="basePrice" x-model="form.basePrice" /></div>
+                            <div class="form-field"><label>Para Birimi</label><input type="text" name="currencyCode" x-model="form.currencyCode" maxlength="3" /></div>
+                        </div>
+                        <div class="form-field">
+                            <label class="flex items-center gap-2" style="flex-direction:row;">
+                                <input type="checkbox" name="isActive" value="true" x-model="form.isActive" style="width:auto;" /> Satışa açık
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+        function priceMatrix() {
+            return {
+                modal: null,
+                form: { id: 0, package: 0, duration: 0, basePrice: 0, currencyCode: 'TRY', isActive: true },
+                openCreate() { this.form = { id: 0, package: 0, duration: 0, basePrice: 0, currencyCode: 'TRY', isActive: true }; this.modal = 'create'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+                openEdit(d) { this.form = { id: d.id, package: d.package, duration: d.duration, basePrice: d.basePrice, currencyCode: d.currencyCode, isActive: d.isActive }; this.modal = 'edit'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+                close() { this.modal = null; }
+            };
+        }
+    </script>
+}

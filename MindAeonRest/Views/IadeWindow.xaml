@@ -1,0 +1,60 @@
+<Window x:Class="MindAeonRest.Views.IadeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="İade (Ödeme Sonrası)" Height="640" Width="900" MinHeight="520" MinWidth="760"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="22,18,22,18">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <StackPanel>
+                    <TextBlock Text="İade (Ödeme Sonrası)" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                    <TextBlock Text="Kapanmış siparişten satır iadesi → negatif fiş + stok/nakit iadesi" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
+                </StackPanel>
+                <Button Content="✕" Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Foreground="{DynamicResource TextMutedBrush}" BorderThickness="0" Cursor="Hand" Click="Cancel_Click" />
+            </Grid>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
+                <TextBlock Text="Tarih:" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <DatePicker x:Name="DateBox" Width="150" Height="38" SelectedDateChanged="Date_Changed" />
+            </StackPanel>
+
+            <Grid Grid.Row="2" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+
+                <DockPanel Grid.Column="0">
+                    <TextBlock DockPanel.Dock="Top" Text="KAPANMIŞ SİPARİŞLER" Style="{StaticResource FieldLabel}" Margin="2,0,0,6" />
+                    <DataGrid x:Name="OrdersGrid" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                              SelectionChanged="Order_Changed">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kod" Binding="{Binding Code}" Width="*" />
+                            <DataGridTextColumn Header="Müşteri" Binding="{Binding CustomerName}" Width="2*" />
+                            <DataGridTextColumn Header="Tutar" Binding="{Binding TotalText}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+
+                <DockPanel Grid.Column="2">
+                    <TextBlock DockPanel.Dock="Top" Text="SATIRLAR (iade için seçin)" Style="{StaticResource FieldLabel}" Margin="2,0,0,6" />
+                    <Grid DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="📄 e-Fatura Gönder" Style="{StaticResource GhostButton}" Click="EInvoice_Click" />
+                        <Button Grid.Column="2" x:Name="RefundButton" Content="↩ SEÇİLİ SATIRI İADE ET" Style="{StaticResource PrimaryButton}" Click="Refund_Click" />
+                    </Grid>
+                    <DataGrid x:Name="LinesGrid" Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ürün" Binding="{Binding ProductName}" Width="2*" />
+                            <DataGridTextColumn Header="Adet" Binding="{Binding QtyText}" Width="70" />
+                            <DataGridTextColumn Header="Tutar" Binding="{Binding LineTotalText}" Width="*" />
+                            <DataGridTextColumn Header="Durum" Binding="{Binding StatusText}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

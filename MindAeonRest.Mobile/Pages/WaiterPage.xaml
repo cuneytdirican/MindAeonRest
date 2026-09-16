@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:m="clr-namespace:MindAeonRest.Mobile.Models"
+             xmlns:local="clr-namespace:MindAeonRest.Mobile"
+             x:Class="MindAeonRest.Mobile.Pages.WaiterPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Background}">
+    <ContentPage.Resources>
+        <local:StatusToColorConverter x:Key="StatusColor" />
+        <local:StatusToTextColorConverter x:Key="StatusText" />
+        <local:AmountTextConverter x:Key="AmountText" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="0">
+        <!-- Başlık (gradyan) -->
+        <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" StrokeThickness="0" Padding="16,14">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <VerticalStackLayout>
+                    <Label Text="Masalar" FontSize="20" FontAttributes="Bold" TextColor="White" />
+                    <Label x:Name="SubTitle" FontSize="12.5" TextColor="#F4E9F2" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" x:Name="ReadyBtn" Text="🔔 Hazır" Clicked="Ready_Clicked" BackgroundColor="{StaticResource Success}" TextColor="White" FontAttributes="Bold" CornerRadius="9" Padding="12,4" Margin="0,0,8,0" />
+                <Button Grid.Column="2" Text="↻" FontSize="20" Clicked="Refresh_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="9" Padding="10,4" Margin="0,0,8,0" />
+                <Button Grid.Column="3" Text="Çıkış" Clicked="Logout_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="9" Padding="12,4" />
+            </Grid>
+        </Border>
+
+        <!-- Lokasyon sekmeleri -->
+        <CollectionView Grid.Row="1" x:Name="ZonesView" SelectionMode="Single" SelectionChanged="Zone_Selected" Margin="8,8,8,0" HeightRequest="48">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="m:ZoneDto">
+                    <Border StrokeShape="RoundRectangle 10" BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource BorderColor}" Padding="16,8">
+                        <Label Text="{Binding Name}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" VerticalOptions="Center" />
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Masa kartları -->
+        <RefreshView Grid.Row="2" x:Name="Refresher" Refreshing="Refresh_Clicked">
+            <CollectionView x:Name="TablesView" Margin="8" SelectionMode="Single" SelectionChanged="Table_Selected">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="3" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.EmptyView>
+                    <Label Text="Bu lokasyonda masa yok." Style="{StaticResource Muted}" HorizontalOptions="Center" Margin="0,40,0,0" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="m:TableCardDto">
+                        <Border StrokeShape="RoundRectangle 14" Stroke="{StaticResource BorderColor}" StrokeThickness="1"
+                                BackgroundColor="{Binding Status, Converter={StaticResource StatusColor}}" Padding="10" HeightRequest="94">
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="{Binding Display}" TextColor="{Binding Status, Converter={StaticResource StatusText}}" FontAttributes="Bold" FontSize="16" HorizontalOptions="Center" />
+                                <Label Text="{Binding Amount, Converter={StaticResource AmountText}}" TextColor="{Binding Status, Converter={StaticResource StatusText}}" FontSize="13" FontAttributes="Bold" HorizontalOptions="Center" />
+                                <Label Text="{Binding WaiterName}" TextColor="{Binding Status, Converter={StaticResource StatusText}}" Opacity="0.85" FontSize="11" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

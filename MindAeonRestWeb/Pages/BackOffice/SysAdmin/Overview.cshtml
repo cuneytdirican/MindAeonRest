@@ -1,0 +1,216 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SysAdmin.OverviewModel
+@{
+    ViewData["Title"] = "Pano (Süper Admin)";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📈 Süper Admin Panosu</h1>
+    <a class="btn btn-ghost btn-sm" href="/BackOffice/SysAdmin/Tenants">🏢 Şirketler</a>
+</div>
+
+<div class="bo-card bo-hint" style="margin-bottom:12px">
+    Bu pano yalnız <strong>Sistem Yöneticisi (SysAdmin)</strong> içindir ve <strong>salt-okumadır</strong> —
+    hiçbir değişiklik yapılmaz. Sistem geneli sayımlar, kiracı lisans özeti ve sağlık bilgisi burada toplanır.
+</div>
+
+@* ===================== (A) SAYIM KARTLARI ===================== *@
+@if (!string.IsNullOrEmpty(Model.CountsError))
+{
+    <div class="bo-alert" style="margin-bottom:12px">
+        ⚠ Sayımlar yüklenemedi (aşağıdaki değerler eksik/0 olabilir): @Model.CountsError
+    </div>
+}
+<div class="dash-kpis">
+    <div class="kpi">
+        <div class="lbl">Şirketler</div>
+        <div class="val">@Model.CompaniesTotal</div>
+        <div class="bo-hint" style="margin:4px 0 0">
+            <span class="badge-ok">@Model.CompaniesActive aktif</span> ·
+            <span class="badge-off">@Model.CompaniesInactive pasif</span>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="lbl">Kullanıcılar</div>
+        <div class="val">@Model.UsersTotal</div>
+        <div class="bo-hint" style="margin:4px 0 0">
+            <span class="badge-ok">@Model.UsersActive aktif</span> ·
+            <span class="badge-off">@Model.UsersInactive pasif</span>
+        </div>
+    </div>
+    <div class="kpi loy">
+        <div class="lbl">Süper Admin (aktif)</div>
+        <div class="val">@Model.SysAdminCount</div>
+        <div class="bo-hint" style="margin:4px 0 0">çapraz-tenant yetki</div>
+    </div>
+    <div class="kpi">
+        <div class="lbl">Şubeler (tüm şirketler)</div>
+        <div class="val">@Model.BranchesTotal</div>
+        <div class="bo-hint" style="margin:4px 0 0">toplam</div>
+    </div>
+</div>
+
+@* ===================== (C) SİSTEM SAĞLIK ===================== *@
+<div class="dash-card" style="margin-bottom:22px">
+    <h3>🩺 Sistem Sağlık</h3>
+    <table class="bo-table">
+        <tbody>
+            <tr>
+                <td style="width:220px"><b>Sistem DB Bağlantısı</b></td>
+                <td>
+                    @if (Model.DbOk)
+                    {
+                        <span class="badge-ok">Bağlantı OK</span>
+                    }
+                    else
+                    {
+                        <span class="badge-del">HATA</span>
+                        @if (!string.IsNullOrEmpty(Model.DbError))
+                        {
+                            <span class="muted" style="margin-left:8px">@Model.DbError</span>
+                        }
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><b>Ortam</b></td>
+                <td><code>@Model.Environment</code></td>
+            </tr>
+            <tr>
+                <td><b>Uygulama Sürümü</b></td>
+                <td><code>@Model.AppVersion</code></td>
+            </tr>
+            <tr>
+                <td><b>Merkezi Host (CentralHost)</b></td>
+                <td>
+                    @if (Model.CentralHost) { <span class="badge-ok">Açık (SaaS)</span> }
+                    else { <span class="badge-off">Kapalı</span> }
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@* ===================== (B) LİSANS ÖZETİ ===================== *@
+<div class="bo-alert" style="margin-bottom:12px">
+    🔐 Lisanslar <strong>Lisans Portalı</strong>'ndan yönetilir; bu tablo salt-okuma özettir.
+    @if (Model.PortalUrl is { } purl)
+    {
+        <a href="@purl" target="_blank" rel="noopener">Portal'ı aç</a>
+    }
+    else
+    {
+        <em>(Portal adresi yapılandırılmamış)</em>
+    }
+</div>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kod</th>
+                <th>Unvan</th>
+                <th>Paket</th>
+                <th>Durum</th>
+                <th>Bitiş</th>
+                <th class="ar">Kul.</th>
+                <th class="ar">Şube</th>
+                <th class="ar">Terminal</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Licenses.Count == 0)
+        {
+            <tr><td colspan="8" class="empty">Kayıtlı şirket yok.</td></tr>
+        }
+        @foreach (var l in Model.Licenses)
+        {
+            <tr class="@(l.CompanyActive ? "" : "row-deleted")">
+                <td><b>@l.Code</b></td>
+                <td>@l.Name</td>
+                <td>@l.Package</td>
+                <td>
+                    @if (l.IsExpired)
+                    {
+                        <span class="badge-del">@l.StateText</span>
+                    }
+                    else if (l.IsSoon)
+                    {
+                        <span style="color:var(--accent);font-weight:700;font-size:12px">@l.StateText</span>
+                    }
+                    else if (l.IsUsable)
+                    {
+                        <span class="badge-ok">@l.StateText</span>
+                    }
+                    else
+                    {
+                        <span class="badge-off">@l.StateText</span>
+                    }
+                </td>
+                <td>
+                    @if (l.ExpiresUtc is { } e)
+                    {
+                        @if (l.IsExpired)
+                        {
+                            <span class="badge-del">@e.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        }
+                        else if (l.IsSoon)
+                        {
+                            <span style="color:var(--accent);font-weight:700">@e.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        }
+                        else
+                        {
+                            <text>@e.ToLocalTime().ToString("dd.MM.yyyy")</text>
+                        }
+                    }
+                    else
+                    {
+                        <span class="muted">Süresiz</span>
+                    }
+                </td>
+                <td class="ar">@(l.MaxUsers == int.MaxValue ? "∞" : l.MaxUsers.ToString())</td>
+                <td class="ar">@(l.MaxBranches == int.MaxValue ? "∞" : l.MaxBranches.ToString())</td>
+                <td class="ar">@(l.MaxKiosks == int.MaxValue ? "∞" : l.MaxKiosks.ToString())</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Licenses.Count şirket · lisans özeti</div>
+
+@* ===================== (D) SON DENETİM KAYITLARI ===================== *@
+<div class="dash-card" style="margin-top:22px">
+    <div class="bo-page-head" style="margin-bottom:12px">
+        <h3 style="margin:0">🕵 Son Denetim Kayıtları</h3>
+        <a class="btn btn-ghost btn-sm" href="/BackOffice/AuditTrail">Denetim İzi'ne git</a>
+    </div>
+    @if (Model.RecentAudit is { Count: > 0 })
+    {
+        <table class="bo-table">
+            <thead>
+                <tr><th>Zaman</th><th>Kullanıcı</th><th>İşlem</th><th>Varlık</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var a in Model.RecentAudit)
+            {
+                <tr>
+                    <td>@a.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@(a.UserName ?? "—")</td>
+                    <td>@a.Action</td>
+                    <td>@a.EntityType@(a.EntityId is { } id ? $" #{id}" : "")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        <div class="bo-hint" style="margin-top:6px">Aktif şirketin son kayıtları. Tam liste için Denetim İzi ekranına gidin.</div>
+    }
+    else if (!string.IsNullOrEmpty(Model.AuditError))
+    {
+        <div class="dash-empty">Denetim kayıtları okunamadı — <a href="/BackOffice/AuditTrail">Denetim İzi</a> ekranını kullanın.</div>
+    }
+    else
+    {
+        <div class="dash-empty">Gösterilecek denetim kaydı yok.</div>
+    }
+</div>

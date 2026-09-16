@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MindAeonRest.Mobile.Pages.LoginPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Background}">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Gradyan başlık (magenta→mor) -->
+        <Border Grid.Row="0" Background="{StaticResource BrandBrush}" StrokeThickness="0" Padding="24,46,24,28">
+            <Border.StrokeShape><RoundRectangle CornerRadius="0,0,28,28" /></Border.StrokeShape>
+            <VerticalStackLayout Spacing="2">
+                <Label Text="MindAeon REST" FontSize="28" FontAttributes="Bold" TextColor="White" />
+                <Label Text="Hoş geldiniz — giriş yapın" FontSize="14" TextColor="#F4E9F2" />
+            </VerticalStackLayout>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16,-24,16,16" MaximumWidthRequest="600" HorizontalOptions="Center">
+                <Border Style="{StaticResource Card}" Padding="18">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="ŞİRKET KODU" Style="{StaticResource FieldLabel}" />
+                        <Border BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="10,0">
+                            <Entry x:Name="CompanyCodeEntry" TextColor="{StaticResource TextColor}" BackgroundColor="Transparent" PlaceholderColor="{StaticResource TextMuted}"
+                                   Placeholder="Şirket kodu" ReturnType="Next" />
+                        </Border>
+
+                        <Label Text="KULLANICI ADI" Style="{StaticResource FieldLabel}" Margin="2,12,0,2" />
+                        <Border BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="10,0">
+                            <Entry x:Name="UsernameEntry" TextColor="{StaticResource TextColor}" BackgroundColor="Transparent" PlaceholderColor="{StaticResource TextMuted}"
+                                   Placeholder="Kullanıcı adı" ReturnType="Next" />
+                        </Border>
+
+                        <Label Text="PAROLA" Style="{StaticResource FieldLabel}" Margin="2,12,0,2" />
+                        <Border BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="10,0">
+                            <Entry x:Name="PasswordEntry" TextColor="{StaticResource TextColor}" BackgroundColor="Transparent" PlaceholderColor="{StaticResource TextMuted}"
+                                   IsPassword="True" Placeholder="••••••••" Completed="Login_Clicked" />
+                        </Border>
+
+                        <!-- Yalnız çok şubeli girişte (needBranch) görünür -->
+                        <VerticalStackLayout x:Name="BranchSection" IsVisible="False" Spacing="6">
+                            <Label Text="ŞUBE" Style="{StaticResource FieldLabel}" Margin="2,12,0,2" />
+                            <Border BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource BorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="8,0">
+                                <Picker x:Name="BranchPicker" TextColor="{StaticResource TextColor}" TitleColor="{StaticResource TextMuted}"
+                                        Title="Şube seçin" ItemDisplayBinding="{Binding Name}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Label x:Name="ErrorLabel" TextColor="{StaticResource Danger}" IsVisible="False" FontAttributes="Bold" Margin="2,8,0,0" />
+                        <Button x:Name="LoginBtn" Text="GİRİŞ YAP" Style="{StaticResource PrimaryButton}" Clicked="Login_Clicked" Margin="0,12,0,0" />
+                        <Button Text="Gelişmiş Sunucu Ayarı" Style="{StaticResource GhostButton}" Clicked="Config_Clicked" Margin="0,2,0,0" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

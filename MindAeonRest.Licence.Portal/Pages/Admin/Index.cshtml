@@ -1,0 +1,176 @@
+@page
+@using System.Text.Json
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Yönetici Paneli — MindAeon";
+    var d = Model.Data;
+    var trendJson = JsonSerializer.Serialize(d.RevenueTrend.Select(t => new { t.Period, t.Gross, t.Margin, t.Net }));
+    var distJson = JsonSerializer.Serialize(d.PackageDistribution.Select(s => new { name = s.Name, value = s.Count }));
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetici", "/Admin", "Panel"))
+
+<div class="page-head">
+    <h1>Yönetici Paneli</h1>
+    <div class="subtitle">Genel bakış — bayiler, lisanslar, talepler ve finans.</div>
+</div>
+
+<!-- KPI kartları -->
+<div class="grid grid-4">
+    <div class="kpi">
+        <div class="kpi__label">Aktif Bayi</div>
+        <div class="kpi__value">@d.TotalDealers</div>
+        <div class="kpi__delta"><i data-lucide="store"></i> Portföy</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">İşletme</div>
+        <div class="kpi__value">@d.TotalBusinesses</div>
+        <div class="kpi__delta"><i data-lucide="building-2"></i> Toplam kayıt</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Aktif Lisans</div>
+        <div class="kpi__value">@d.ActiveLicenses</div>
+        <div class="kpi__delta up"><i data-lucide="key-round"></i> Yürürlükte</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bekleyen Talep</div>
+        <div class="kpi__value">@d.PendingRequests</div>
+        <div class="kpi__delta @(d.PendingRequests > 0 ? "down" : "")">
+            <i data-lucide="inbox"></i> @(d.PendingRequests > 0 ? "İşlem bekliyor" : "Temiz")
+        </div>
+    </div>
+</div>
+
+<!-- Finans özeti -->
+<div class="grid grid-4 mt-4">
+    <div class="kpi">
+        <div class="kpi__label">Brüt Tahsilat</div>
+        <div class="kpi__value money gross">@d.GrossPaid.ToString("N2") <span class="text-sm text-muted">@d.Currency</span></div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bayi Marjı</div>
+        <div class="kpi__value money margin">@d.MarginPaid.ToString("N2") <span class="text-sm text-muted">@d.Currency</span></div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Net (Biz)</div>
+        <div class="kpi__value money net">@d.NetPaid.ToString("N2") <span class="text-sm text-muted">@d.Currency</span></div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Bekleyen Tahsilat</div>
+        <div class="kpi__value money">@d.PendingGross.ToString("N2") <span class="text-sm text-muted">@d.Currency</span></div>
+    </div>
+</div>
+
+<!-- Grafikler -->
+<div class="grid mt-4" style="grid-template-columns: 2fr 1fr;">
+    <div class="card">
+        <div class="card__head">
+            <h3 class="card__title">Ciro / Marj Trendi (6 ay)</h3>
+            <span class="badge primary"><span class="dot"></span> @d.Currency</span>
+        </div>
+        <div id="trendChart" style="height:300px;"></div>
+    </div>
+    <div class="card">
+        <div class="card__head">
+            <h3 class="card__title">Paket Dağılımı</h3>
+        </div>
+        <div id="distChart" style="height:300px;"></div>
+    </div>
+</div>
+
+<!-- Son aktivite + açık destek -->
+<div class="grid grid-2 mt-4">
+    <div class="card">
+        <div class="card__head">
+            <h3 class="card__title">Son Hareketler</h3>
+            <a class="btn btn-ghost btn-sm" href="/Admin/Requests"><i data-lucide="arrow-right"></i> Talepler</a>
+        </div>
+        @if (d.RecentActivity.Count == 0)
+        {
+            <p class="text-muted mb-0">Henüz hareket yok.</p>
+        }
+        else
+        {
+            <div class="timeline">
+                @foreach (var a in d.RecentActivity)
+                {
+                    <div class="timeline__item">
+                        <div class="timeline__time">@a.WhenUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</div>
+                        <div class="timeline__title">@a.Title</div>
+                        <div class="text-sm text-muted">
+                            <span class="badge @a.Tone"><span class="dot"></span> @a.Subtitle</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <div class="card">
+        <div class="card__head">
+            <h3 class="card__title">Operasyon Durumu</h3>
+            <a class="btn btn-ghost btn-sm" href="/Admin/Tickets"><i data-lucide="life-buoy"></i> Destek</a>
+        </div>
+        <div class="flex items-center justify-between" style="padding:var(--sp-3) 0; border-bottom:1px solid var(--border);">
+            <span class="text-muted">Açık destek talebi</span>
+            <span class="badge @(d.OpenTickets > 0 ? "warning" : "success")"><span class="dot"></span> @d.OpenTickets</span>
+        </div>
+        <div class="flex items-center justify-between" style="padding:var(--sp-3) 0; border-bottom:1px solid var(--border);">
+            <span class="text-muted">Bekleyen lisans talebi</span>
+            <span class="badge @(d.PendingRequests > 0 ? "warning" : "success")"><span class="dot"></span> @d.PendingRequests</span>
+        </div>
+        <div class="flex items-center justify-between" style="padding:var(--sp-3) 0;">
+            <span class="text-muted">Aktif lisans / işletme</span>
+            <span class="badge info"><span class="dot"></span> @d.ActiveLicenses / @d.TotalBusinesses</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const trend = @Html.Raw(trendJson);
+            const dist = @Html.Raw(distJson);
+            const css = getComputedStyle(document.documentElement);
+            const c = n => css.getPropertyValue(n).trim();
+
+            function axisLabel() {
+                return { color: c('--text-3'), fontFamily: 'Inter' };
+            }
+
+            const trendEl = document.getElementById('trendChart');
+            if (trendEl && window.echarts) {
+                const ch = echarts.init(trendEl);
+                ch.setOption({
+                    grid: { left: 48, right: 16, top: 36, bottom: 28 },
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['Brüt', 'Marj', 'Net'], textStyle: { color: c('--text-2') }, top: 0 },
+                    xAxis: { type: 'category', data: trend.map(t => t.Period), axisLabel: axisLabel(), axisLine: { lineStyle: { color: c('--border') } } },
+                    yAxis: { type: 'value', axisLabel: axisLabel(), splitLine: { lineStyle: { color: c('--border') } } },
+                    series: [
+                        { name: 'Brüt', type: 'line', smooth: true, data: trend.map(t => t.Gross), itemStyle: { color: c('--text-2') }, areaStyle: { opacity: 0.05 } },
+                        { name: 'Marj', type: 'line', smooth: true, data: trend.map(t => t.Margin), itemStyle: { color: c('--accent') } },
+                        { name: 'Net', type: 'line', smooth: true, data: trend.map(t => t.Net), itemStyle: { color: c('--primary') }, areaStyle: { opacity: 0.12 } }
+                    ]
+                });
+                window.addEventListener('resize', () => ch.resize());
+            }
+
+            const distEl = document.getElementById('distChart');
+            if (distEl && window.echarts) {
+                const ch = echarts.init(distEl);
+                ch.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: 0, textStyle: { color: c('--text-2') } },
+                    color: [c('--primary'), c('--accent'), c('--info'), c('--warning')],
+                    series: [{
+                        type: 'pie', radius: ['52%', '74%'], center: ['50%', '44%'],
+                        avoidLabelOverlap: false,
+                        label: { show: false }, labelLine: { show: false },
+                        data: dist.length ? dist : [{ name: 'Veri yok', value: 1 }]
+                    }]
+                });
+                window.addEventListener('resize', () => ch.resize());
+            }
+        })();
+    </script>
+}

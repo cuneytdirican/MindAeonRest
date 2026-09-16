@@ -1,0 +1,47 @@
+@{
+    var title = ViewData["Title"] as string;
+    var theme = Context.Request.Cookies["mar.theme"] ?? "dark";
+}
+<!DOCTYPE html>
+<html lang="tr" data-theme="@theme">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(string.IsNullOrEmpty(title) ? "MindAeonRest — Restoran & Cafe & Bar Otomasyonu" : title + " · MindAeonRest")</title>
+    <meta name="description" content="MindAeonRest — restoran, cafe ve bar için modern, bulut tabanlı adisyon ve otomasyon sistemi. Kurulum yok, her cihazdan çalışır." />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap header-inner">
+            <a class="brand" href="/">🍽️ <span>MindAeonRest</span></a>
+            <nav class="site-nav">
+                <a href="/#ozellikler">Özellikler</a>
+                <a href="/#fiyat">Fiyatlar</a>
+                <a href="/#sss">SSS</a>
+                <a href="/#iletisim">İletişim</a>
+                <div class="theme-switch" title="Tema">
+                    <button type="button" data-theme-set="dark" title="Koyu">🌙</button>
+                    <button type="button" data-theme-set="light" title="Açık">☀️</button>
+                    <button type="button" data-theme-set="ocean" title="Okyanus">🌊</button>
+                </div>
+                <a class="btn btn-login" href="/Login">Giriş Yap</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap footer-inner">
+            <div>© @DateTime.Now.Year MindAeonRest · Mobilteg</div>
+            <div class="muted">Restoran · Cafe · Bar Otomasyonu</div>
+        </div>
+    </footer>
+
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

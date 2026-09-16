@@ -1,0 +1,200 @@
+@page
+@using MindAeonRest.Licence.Data
+@using MindAeonRest.Licensing
+@model MindAeonRest.Licence.Portal.Pages.Musteri.LisanslarimModel
+@{
+    ViewData["Title"] = "Lisansım — MindAeon";
+    var lic = Model.License;
+}
+@await Html.PartialAsync("_Breadcrumb", ("Müşteri", "/Musteri", "Lisansım"))
+
+<div class="page-head">
+    <h1>Lisansım</h1>
+    <div class="subtitle">Paketiniz, etkin modüller, limitler ve kalan süre.</div>
+</div>
+
+@if (lic is null)
+{
+    <div class="card">
+        <div class="flex items-center gap-3">
+            <div class="avatar" style="border-radius:var(--radius);width:44px;height:44px"><i data-lucide="key-round"></i></div>
+            <div>
+                <div style="font-weight:700;font-size:var(--fs-lg)">Aktif lisans görüntülenemiyor</div>
+                <div class="text-muted text-sm">Hesabınıza bağlı bir lisans bulunamadı ya da görüntüleme yetkisi sınırlı. Yeni lisans için destek ekibimizle iletişime geçebilirsiniz.</div>
+            </div>
+        </div>
+        <div style="margin-top:var(--sp-4)">
+            <a class="btn btn-primary" href="/Musteri/Destek"><i data-lucide="life-buoy"></i>Destek Talebi Oluştur</a>
+        </div>
+    </div>
+}
+else
+{
+    var features = lic.Features;
+    <div class="grid grid-2">
+        <!-- Ana lisans kartı -->
+        <div class="card" style="grid-column:1 / -1">
+            <div class="card__head">
+                <div class="flex items-center gap-3">
+                    <div class="avatar" style="border-radius:var(--radius);width:48px;height:48px;font-size:var(--fs-lg)"><i data-lucide="badge-check"></i></div>
+                    <div>
+                        <div class="flex items-center gap-2" style="flex-wrap:wrap">
+                            <span style="font-weight:700;font-size:var(--fs-2xl)">@lic.PackageName</span>
+                            <span class="badge @CustomerUi.LicenseBadge(lic.Status)"><span class="dot"></span>@CustomerUi.LicenseLabel(lic.Status)</span>
+                        </div>
+                        <div class="text-muted text-sm tabular">Lisans No: @lic.LicenseCode · Şirket: @lic.CompanyCode</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <a class="btn" href="/Musteri/Lisanslarim?handler=Download&id=@lic.Id">
+                        <i data-lucide="download"></i>Token İndir
+                    </a>
+                    <button class="btn btn-primary" type="button" onclick="window.dispatchEvent(new CustomEvent('open-upgrade'))">
+                        <i data-lucide="arrow-up-circle"></i>Yükseltme Talebi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Geri sayım + limitler -->
+            <div class="grid grid-3" style="margin-top:var(--sp-3)">
+                <div>
+                    <div class="text-muted text-sm" style="margin-bottom:var(--sp-2)">Kalan Süre</div>
+                    @if (lic.IsPerpetual)
+                    {
+                        <div style="font-weight:700;font-size:var(--fs-xl)">Süresiz</div>
+                        <div class="text-muted text-sm">Bitiş tarihi yok</div>
+                    }
+                    else
+                    {
+                        var dl = lic.DaysLeft ?? 0;
+                        var warn = dl <= 30;
+                        var crit = dl <= 7;
+                        <div style="font-weight:700;font-size:var(--fs-2xl);color:@(crit ? "var(--danger)" : warn ? "var(--warning)" : "var(--text-1)")">
+                            @dl<span style="font-size:var(--fs-md);font-weight:500;color:var(--text-3)"> gün</span>
+                        </div>
+                        <div class="text-muted text-sm">@lic.ExpiresUtc!.Value.ToLocalTime().ToString("dd MMMM yyyy")</div>
+                        @if (warn)
+                        {
+                            <div class="badge @(crit ? "danger" : "warning")" style="margin-top:var(--sp-2)">
+                                <i data-lucide="alert-triangle" style="width:14px;height:14px"></i>
+                                @(crit ? "Lisansınız çok yakında doluyor" : "Yenileme zamanı yaklaşıyor")
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between" style="margin-bottom:var(--sp-2)">
+                        <span class="text-muted text-sm">Şube</span>
+                        <span class="text-sm tabular">@(Model.LatestUsage?.BranchCount ?? 0) / @(lic.MaxBranches == int.MaxValue ? "∞" : lic.MaxBranches.ToString())</span>
+                    </div>
+                    @{
+                        var bUsed = Model.LatestUsage?.BranchCount ?? 0;
+                        var bPct = lic.MaxBranches == int.MaxValue ? (bUsed > 0 ? 12 : 4) : (lic.MaxBranches > 0 ? Math.Min(100, (int)Math.Round(100.0 * bUsed / lic.MaxBranches)) : 0);
+                    }
+                    <div class="progress"><div class="progress__bar" style="width:@(bPct)%"></div></div>
+                    <div class="text-muted text-sm" style="margin-top:var(--sp-2)">Limit: @(lic.MaxBranches == int.MaxValue ? "Sınırsız" : lic.MaxBranches + " şube")</div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between" style="margin-bottom:var(--sp-2)">
+                        <span class="text-muted text-sm">Kullanıcı</span>
+                        <span class="text-sm tabular">@(Model.LatestUsage?.UserCount ?? 0) / @(lic.MaxUsers == int.MaxValue ? "∞" : lic.MaxUsers.ToString())</span>
+                    </div>
+                    @{
+                        var uUsed = Model.LatestUsage?.UserCount ?? 0;
+                        var uPct = lic.MaxUsers == int.MaxValue ? (uUsed > 0 ? 12 : 4) : (lic.MaxUsers > 0 ? Math.Min(100, (int)Math.Round(100.0 * uUsed / lic.MaxUsers)) : 0);
+                    }
+                    <div class="progress"><div class="progress__bar" style="width:@(uPct)%"></div></div>
+                    <div class="text-muted text-sm" style="margin-top:var(--sp-2)">Limit: @(lic.MaxUsers == int.MaxValue ? "Sınırsız" : lic.MaxUsers + " kullanıcı")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Özellik (Feature flag) grid -->
+        <div class="card" style="grid-column:1 / -1">
+            <div class="card__head">
+                <h2 class="card__title">Etkin Modüller</h2>
+                <span class="text-muted text-sm">@CustomerUi.AllFeatures.Count(f => features.HasFlag(f)) / @CustomerUi.AllFeatures.Length modül etkin</span>
+            </div>
+            <div class="grid grid-3" style="gap:var(--sp-3)">
+                @foreach (var f in CustomerUi.AllFeatures)
+                {
+                    var info = CustomerUi.FeatureInfo(f);
+                    var on = features.HasFlag(f);
+                    <div class="flex items-center gap-3" style="padding:var(--sp-3);border:1px solid var(--border);border-radius:var(--radius-sm);background:@(on ? "color-mix(in srgb, var(--success) 7%, transparent)" : "var(--surface-2)");opacity:@(on ? "1" : ".6")">
+                        <div style="width:34px;height:34px;border-radius:var(--radius-sm);display:grid;place-items:center;background:@(on ? "color-mix(in srgb, var(--success) 16%, transparent)" : "var(--surface-3)");color:@(on ? "var(--success)" : "var(--text-3)")">
+                            <i data-lucide="@info.Icon" style="width:18px;height:18px"></i>
+                        </div>
+                        <div style="flex:1 1 auto;min-width:0">
+                            <div style="font-weight:600;font-size:var(--fs-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@info.Label</div>
+                            <div class="text-sm" style="color:@(on ? "var(--success)" : "var(--text-3)")">@(on ? "Aktif" : "Pasif")</div>
+                        </div>
+                        <i data-lucide="@(on ? "check" : "minus")" style="width:16px;height:16px;color:@(on ? "var(--success)" : "var(--text-3)")"></i>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Lisans geçmişi -->
+    @if (Model.History.Count > 1)
+    {
+        <div class="card" style="margin-top:var(--sp-5)">
+            <div class="card__head"><h2 class="card__title">Lisans Geçmişi</h2></div>
+            <div class="timeline">
+                @foreach (var h in Model.History)
+                {
+                    <div class="timeline__item">
+                        <div class="timeline__time">@h.IssuedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                        <div class="timeline__title">
+                            @h.PackageName
+                            <span class="badge @CustomerUi.LicenseBadge(h.Status)" style="margin-left:var(--sp-2)">@CustomerUi.LicenseLabel(h.Status)</span>
+                        </div>
+                        <div class="text-muted text-sm tabular">No: @h.LicenseCode · @(h.IsPerpetual ? "Süresiz" : "Bitiş: " + h.ExpiresUtc!.Value.ToLocalTime().ToString("dd.MM.yyyy"))</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Yükseltme talebi modalı (Alpine) -->
+    <div id="upgradeModal" x-data="{ open:false }" @@open-upgrade.window="open=true" x-cloak>
+        <template x-if="open">
+            <div class="modal-backdrop" @@click.self="open=false" @@keydown.escape.window="open=false">
+                <div class="modal" @@upgrade:done.window="setTimeout(()=>open=false, 1400)">
+                    <div class="modal__head">
+                        <h3 class="modal__title">Lisans Yükseltme Talebi</h3>
+                        <button class="btn btn-ghost btn-icon" type="button" @@click="open=false" aria-label="Kapat"><i data-lucide="x"></i></button>
+                    </div>
+                    <form hx-post="/Musteri/Lisanslarim?handler=Upgrade" hx-target="#upgradeResult" hx-swap="innerHTML">
+                        @Html.AntiForgeryToken()
+                        <div class="modal__body">
+                            <p class="text-muted text-sm">Yükseltmek istediğiniz paketi seçin. Talebiniz destek ekibimize iletilir; fiyat ve süreçle ilgili sizinle iletişime geçilir.</p>
+                            <div class="form-field">
+                                <label for="pkgSel">Hedef Paket</label>
+                                <select id="pkgSel" name="package">
+                                    <option value="1" selected>Standart</option>
+                                    <option value="2">Enterprise</option>
+                                </select>
+                                <span class="hint">Mevcut paketiniz: <strong>@lic.PackageName</strong></span>
+                            </div>
+                            <div id="upgradeResult"></div>
+                        </div>
+                        <div class="modal__foot">
+                            <button class="btn" type="button" @@click="open=false">Vazgeç</button>
+                            <button class="btn btn-primary" type="submit">
+                                <i data-lucide="send"></i>Talebi Gönder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+    </div>
+}
+
+@section Scripts {
+    <style>[x-cloak]{display:none!important}</style>
+    <script>lucide.createIcons();</script>
+}

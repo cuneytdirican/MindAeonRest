@@ -1,0 +1,85 @@
+@page
+@using MindAeonRest.Helpers
+@model MindAeonRestWeb.Pages.BackOffice.SystemManagement.IndexModel
+@{
+    ViewData["Title"] = "Sistem Yönetimi";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🛠 Sistem Yönetimi</h1>
+</div>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th colspan="2">Sürüm</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Web Uygulaması Sürümü</td><td>@Model.AppVersion</td></tr>
+            <tr><td>.NET Çalışma Ortamı</td><td>@Model.RuntimeVersion</td></tr>
+            <tr><td>Çatı (Framework)</td><td>@Model.FrameworkDescription</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="bo-card" style="margin-top:16px">
+    <table class="bo-table">
+        <thead>
+            <tr><th colspan="2">Ortam</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Makine Adı</td><td>@Model.MachineName</td></tr>
+            <tr><td>İşletim Sistemi</td><td>@Model.OsVersion</td></tr>
+            <tr>
+                <td>Mimari</td>
+                <td>
+                    @if (Model.Is64BitProcess)
+                    {
+                        <span class="badge-ok">64-bit işlem</span>
+                    }
+                    else
+                    {
+                        <span class="badge-off">32-bit işlem</span>
+                    }
+                    &nbsp;/&nbsp;
+                    @if (Model.Is64BitOs)
+                    {
+                        <span class="badge-ok">64-bit OS</span>
+                    }
+                    else
+                    {
+                        <span class="badge-off">32-bit OS</span>
+                    }
+                </td>
+            </tr>
+            <tr><td>İşlem Başlangıcı</td><td>@Model.StartTimeText</td></tr>
+            <tr><td>Çalışma Süresi</td><td>@Model.UptimeText</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="bo-card" style="margin-top:16px">
+    <table class="bo-table">
+        <thead>
+            <tr><th colspan="2">Kiracı / Oturum</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Şirket</td><td>@Model.CompanyText</td></tr>
+            <tr><td>Şube</td><td>@Model.BranchText</td></tr>
+            <tr><td>KIOSK No</td><td>@Model.KioskNoText</td></tr>
+            <tr><td>Lisans Paketi</td><td>@Model.LicensePackageText</td></tr>
+            <tr><td>Oturum Rolleri</td><td>@Model.UserText</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="bo-card bo-form" style="margin-top:16px">
+    <div class="frm-row">
+        <label>Güncelleme Bilgisi</label>
+        <div class="hint">
+            Web sürümü sunucuya (IIS) dağıtım ile güncellenir; masaüstü (WPF) istemcileri otomatik güncellenir.
+            Bu ekran salt-okunur bir bilgi panelidir ve herhangi bir güncelleme işlemi yürütmez.
+        </div>
+    </div>
+</div>

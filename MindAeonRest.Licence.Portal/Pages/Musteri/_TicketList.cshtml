@@ -1,0 +1,26 @@
+@using MindAeonRest.Licence.Data
+@model List<MindAeonRest.Licence.Portal.Pages.Musteri.TicketVm>
+@if (!Model.Any())
+{
+    <div class="text-muted text-sm" style="padding:var(--sp-4)">Henüz destek talebiniz yok. Yeni bir talep oluşturun.</div>
+}
+else
+{
+    <div style="display:flex;flex-direction:column">
+        @foreach (var t in Model)
+        {
+            <a href="/Musteri/Destek?id=@t.Id"
+               style="display:block;padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:inherit">
+                <div class="flex items-center justify-between" style="gap:var(--sp-3)">
+                    <span style="font-weight:600;font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@t.Subject</span>
+                    <span class="badge @CustomerUi.TicketBadge(t.Status)" style="flex:0 0 auto"><span class="dot"></span>@CustomerUi.TicketLabel(t.Status)</span>
+                </div>
+                <div class="flex items-center justify-between" style="margin-top:4px">
+                    <span class="text-muted text-sm tabular">#@t.Id · @((t.UpdatedUtc ?? t.CreatedUtc).ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</span>
+                    <span class="badge @CustomerUi.PriorityBadge(t.Priority)">@CustomerUi.PriorityLabel(t.Priority)</span>
+                </div>
+            </a>
+        }
+    </div>
+}
+<script>if (window.lucide) lucide.createIcons();</script>

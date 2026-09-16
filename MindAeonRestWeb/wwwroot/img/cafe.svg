@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Cafe - kahve">
+  <defs>
+    <linearGradient id="cbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241b16"/><stop offset="1" stop-color="#15100d"/></linearGradient>
+    <radialGradient id="cg" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#f5a623" stop-opacity=".35"/><stop offset="1" stop-color="#f5a623" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cup" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f5f8"/><stop offset="1" stop-color="#cfd6df"/></linearGradient>
+  </defs>
+  <rect width="400" height="300" rx="16" fill="url(#cbg)"/>
+  <ellipse cx="200" cy="120" rx="180" ry="120" fill="url(#cg)"/>
+  <!-- buhar -->
+  <g stroke="#d8c3a6" stroke-width="5" fill="none" stroke-linecap="round" opacity=".55">
+    <path d="M182 96 c-12 -14 12 -24 0 -40"/><path d="M212 92 c-12 -14 12 -24 0 -40"/>
+  </g>
+  <!-- tabak -->
+  <ellipse cx="200" cy="232" rx="120" ry="26" fill="#2c2119"/>
+  <ellipse cx="200" cy="228" rx="104" ry="20" fill="#3a2c20"/>
+  <!-- fincan -->
+  <path d="M132 150 h136 l-12 76 a28 28 0 0 1 -28 22 h-56 a28 28 0 0 1 -28 -22 Z" fill="url(#cup)"/>
+  <ellipse cx="200" cy="150" rx="68" ry="16" fill="#e7ebf1"/>
+  <ellipse cx="200" cy="150" rx="54" ry="11" fill="#5a3a1e"/>
+  <ellipse cx="200" cy="149" rx="30" ry="6" fill="#8a5a2e" opacity=".8"/>
+  <!-- kulp -->
+  <path d="M268 168 a34 30 0 0 1 0 56" fill="none" stroke="#e7ebf1" stroke-width="12"/>
+  <!-- kahve çekirdekleri -->
+  <g fill="#6b4423"><ellipse cx="96" cy="244" rx="12" ry="8" transform="rotate(-20 96 244)"/><ellipse cx="120" cy="252" rx="12" ry="8" transform="rotate(15 120 252)"/><ellipse cx="300" cy="248" rx="12" ry="8" transform="rotate(20 300 248)"/></g>
+  <g stroke="#3a2414" stroke-width="2"><line x1="96" y1="238" x2="96" y2="250"/><line x1="120" y1="246" x2="120" y2="258"/><line x1="300" y1="242" x2="300" y2="254"/></g>
+</svg>

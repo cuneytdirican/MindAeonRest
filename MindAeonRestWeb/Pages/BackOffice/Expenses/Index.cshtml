@@ -1,0 +1,47 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Expenses.IndexModel
+@{
+    ViewData["Title"] = "Giderler";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🧾 Giderler</h1>
+    <a class="btn btn-primary" href="/BackOffice/Expenses/Edit">+ Yeni Gider</a>
+</div>
+
+<form method="get" class="bo-filter">
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr>
+                <th>Kod</th><th>Tarih</th><th>Gider Tipi</th><th>Personel</th>
+                <th>Ödeme</th><th class="ar">Tutar</th><th>Açıklama</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="empty">Bu dönemde gider yok.</td></tr>
+        }
+        @foreach (var x in Model.Items)
+        {
+            <tr>
+                <td><b>@x.Code</b></td>
+                <td>@x.DateText</td>
+                <td>@(x.ExpenseTypeName ?? "—")</td>
+                <td>@(x.PersonnelName ?? "—")</td>
+                <td>@x.PayText</td>
+                <td class="ar">@x.AmountText</td>
+                <td>@(x.Description ?? "—")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count gider · Toplam: @Model.Total.ToString("N2")</div>

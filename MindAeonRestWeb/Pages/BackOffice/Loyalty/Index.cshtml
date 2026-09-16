@@ -1,0 +1,47 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Loyalty.IndexModel
+@{
+    ViewData["Title"] = "Sadakat Ayarları";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>⭐ Sadakat Ayarları</h1>
+</div>
+
+<p class="hint" style="margin:0 0 14px;">Müşteriler harcadıkça puan kazanır; puanlarını ödemede kullanabilir. Oranları buradan ayarlayın.</p>
+
+@if (!string.IsNullOrEmpty(Model.Saved))
+{
+    <div class="alert-error" style="background:rgba(46,160,67,.12);border-color:#2ea043;color:#7ee787;">@Model.Saved</div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card" style="margin-bottom:14px;">
+    <div>Toplam puan yükümlülüğü (bilgi): <strong>@Model.TotalLiability.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) ₺</strong></div>
+    <small class="hint">Σ(müşteri puanı) × harcama oranı.</small>
+</div>
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Sadakat programı aktif</label>
+        </div>
+        <div class="frm-row">
+            <label>Kazanım Oranı — ₺ başına kazanılan puan</label>
+            <input asp-for="EarnRate" class="field" autocomplete="off" required />
+            <small class="hint">Örn. 0,10 → harcanan her 1 ₺ için 0,10 puan kazanılır (100 ₺ → 10 puan).</small>
+        </div>
+        <div class="frm-row">
+            <label>Harcama Oranı — 1 puanın ₺ karşılığı</label>
+            <input asp-for="RedeemRate" class="field" autocomplete="off" required />
+            <small class="hint">Örn. 1 → 1 puan = 1 ₺. (0,5 → 1 puan = 0,50 ₺.)</small>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,33 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Giriş";
+    Layout = "_Layout";
+}
+
+<section class="auth">
+    <div class="auth-card">
+        <h1>İşletme Girişi</h1>
+        <p class="muted">Şirket kodunuz, kullanıcı adınız ve parolanızla giriş yapın.</p>
+
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert-error">@Model.Error</div>
+        }
+
+        <form method="post" autocomplete="off">
+            <label>Şirket Kodu</label>
+            <input asp-for="CompanyCode" class="field" autocapitalize="characters" spellcheck="false" required autofocus="@(!Model.Prefilled)" />
+
+            <label>Kullanıcı Adı</label>
+            <input asp-for="Username" class="field" spellcheck="false" required />
+
+            <label>Parola</label>
+            <input asp-for="Password" type="password" class="field" required autofocus="@(Model.Prefilled)" />
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Giriş Yap</button>
+        </form>
+
+        <a class="back-link" href="/">← Ana sayfa</a>
+    </div>
+</section>

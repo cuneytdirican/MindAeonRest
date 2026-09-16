@@ -1,0 +1,36 @@
+<Window x:Class="MindAeonRest.Views.TransferReceiveWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Transfer Teslim Al" Height="560" Width="820"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="22,16,22,16">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <StackPanel>
+                    <TextBlock Text="Transfer Teslim Al" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                    <TextBlock x:Name="SubText" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
+                </StackPanel>
+                <Button Content="✕" Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Foreground="{DynamicResource TextMutedBrush}" BorderThickness="0" Cursor="Hand" Click="Cancel_Click" />
+            </Grid>
+            <TextBlock Grid.Row="1" Text="Teslim alınan miktar kadar hedef depoya giriş yapılır." Margin="2,12,0,0" Foreground="{DynamicResource TextMutedBrush}" />
+            <DataGrid x:Name="Grid" Grid.Row="2" Margin="0,8,0,0" Style="{StaticResource DataGridStyle}"
+                      ColumnHeaderStyle="{StaticResource DataGridHeader}" CellStyle="{StaticResource DataGridCell}" RowStyle="{StaticResource DataGridRow}"
+                      AutoGenerateColumns="False" CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Ürün" Binding="{Binding ProductName}" Width="2*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Sevk Miktar" Binding="{Binding Qty, StringFormat=N2}" Width="*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Önceki Teslim" Binding="{Binding AlreadyReceived, StringFormat=N2}" Width="*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Kalan" Binding="{Binding Remaining, StringFormat=N2}" Width="*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Bu Teslim" Binding="{Binding ThisReceipt, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <Grid Grid.Row="3" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" Content="📥 TESLİM AL" Style="{StaticResource PrimaryButton}" Click="Ok_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

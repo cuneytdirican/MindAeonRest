@@ -1,0 +1,186 @@
+@page
+@using System.Globalization
+@using MindAeonRest.Licensing
+@model MindAeonRestWeb.Pages.BackOffice.IndexModel
+@{
+    ViewData["Title"] = "Özet";
+    Layout = "_BackOfficeLayout";
+    CultureInfo inv = CultureInfo.InvariantCulture;
+    string W(double p) => Math.Max(0, Math.Min(100, p)).ToString("0.##", inv);
+}
+
+<div class="bo-hero">
+    <div>
+        <h1>📊 Özet (Dashboard)</h1>
+        <p class="muted">@Model.Company · @(Model.ShowDashboard ? "işletmenin özeti" : "Hoş geldiniz")</p>
+    </div>
+    <div class="bo-hero-actions">
+        <a class="btn btn-primary btn-lg" href="@Model.PosUrl" target="_blank">🧾 POS'a Git</a>
+        <a class="btn btn-ghost btn-sm" href="/PosHandoff?mode=kiosk" target="_blank">🖥 Self-Servis Kiosk</a>
+    </div>
+</div>
+
+@if (Model.ShowDashboard && Model.Data is not null)
+{
+    var d = Model.Data;
+    var today = DateTime.Today;
+    (string title, List<MindAeonRest.Models.RankRow> rows, bool amount)[] ranks = new[]
+    {
+        ("🍔 En Çok Satan Ürünler", d.TopProducts, true),
+        ("🪑 En Çok Ciro Yapan Masalar", d.TopTables, true),
+        ("📍 En Çok Ciro Yapan Lokasyonlar", d.TopZones, true),
+        ("👤 Garson Performansı", d.Waiters, true),
+        ("💳 Kasiyer Performansı", d.Cashiers, true),
+        ("🎁 Kampanya Satışları", d.CampaignSales, true),
+        ("↩ En Çok İade Edilen Ürünler", d.Refunded, true),
+        ("✖ En Çok İptal Edilen Ürünler", d.Cancelled, false),
+    };
+
+    <form method="get" class="dash-filter">
+        <div class="field-wrap">
+            <label class="bo-hint">Başlangıç</label>
+            <input type="date" name="From" value="@Model.FromText" class="field" />
+        </div>
+        <div class="field-wrap">
+            <label class="bo-hint">Bitiş</label>
+            <input type="date" name="To" value="@Model.ToText" class="field" />
+        </div>
+        <div class="field-wrap">
+            <label class="bo-hint">Şube</label>
+            <select name="BranchId" class="field" asp-items="Model.BranchOptions"></select>
+        </div>
+        <button type="submit" class="btn btn-primary">Göster</button>
+        <div class="dash-quickdates">
+            <a class="btn btn-ghost btn-sm" href="?From=@today.ToString("yyyy-MM-dd")&To=@today.ToString("yyyy-MM-dd")&BranchId=@Model.BranchId">Bugün</a>
+            <a class="btn btn-ghost btn-sm" href="?From=@today.AddDays(-6).ToString("yyyy-MM-dd")&To=@today.ToString("yyyy-MM-dd")&BranchId=@Model.BranchId">7 Gün</a>
+            <a class="btn btn-ghost btn-sm" href="?From=@today.AddDays(-29).ToString("yyyy-MM-dd")&To=@today.ToString("yyyy-MM-dd")&BranchId=@Model.BranchId">30 Gün</a>
+        </div>
+    </form>
+
+    <div class="dash-kpis">
+        <div class="kpi pos"><div class="lbl">💰 Ciro</div><div class="val">@d.RevenueText</div></div>
+        <div class="kpi"><div class="lbl">🧾 Fiş Adedi</div><div class="val">@d.FisCount</div></div>
+        <div class="kpi"><div class="lbl">📊 Ort. Fiş</div><div class="val">@d.AvgText</div></div>
+        <div class="kpi"><div class="lbl">🏷 İskonto</div><div class="val">@d.DiscountText</div></div>
+        <div class="kpi neg"><div class="lbl">↩ İade</div><div class="val">@d.RefundText</div></div>
+        <div class="kpi neg"><div class="lbl">✖ İptal</div><div class="val">@d.CancelCount</div></div>
+        <div class="kpi pos"><div class="lbl">🍽 Açık Masa</div><div class="val">@d.OpenTables</div></div>
+        <div class="kpi"><div class="lbl">💵 Nakit</div><div class="val">@d.NakitText</div></div>
+        <div class="kpi"><div class="lbl">💳 Kart</div><div class="val">@d.KartText</div></div>
+        <div class="kpi"><div class="lbl">➕ Diğer</div><div class="val">@d.DigerText</div></div>
+        <div class="kpi gift"><div class="lbl">🎁 Hediye Çeki Yük.</div><div class="val">₺@Model.GiftLiability.ToString("N2")</div></div>
+        <div class="kpi loy"><div class="lbl">⭐ Puan Yük.</div><div class="val">₺@Model.LoyaltyLiability.ToString("N2")</div></div>
+    </div>
+
+    @if (d.Branches.Count > 0)
+    {
+        <div class="dash-card" style="margin-bottom:22px">
+            <h3>🏢 Şube Kırılımı</h3>
+            <table class="bo-table">
+                <thead><tr><th>Şube</th><th class="ar">Ciro</th><th class="ar">Fiş</th><th class="ar">Ort. Fiş</th><th class="ar">Açık Masa</th></tr></thead>
+                <tbody>
+                    @foreach (var b in d.Branches)
+                    {
+                        <tr><td>@b.Name</td><td class="ar">@b.RevenueText</td><td class="ar">@b.FisCount</td><td class="ar">@b.AvgText</td><td class="ar">@b.OpenTables</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="dash-cols">
+        <div class="dash-card">
+            <h3>⏰ Saatlik Yoğunluk (ciro)</h3>
+            @if (d.Hourly.Count == 0) { <div class="dash-empty">Veri yok</div> }
+            @foreach (var t in d.Hourly)
+            {
+                <div class="bar-row"><span class="bar-lbl">@t.Label</span><div class="bar-track"><div class="bar-fill" style="width:@W(t.BarWidth)%"></div></div><span class="bar-val">@t.ValueText</span></div>
+            }
+        </div>
+        <div class="dash-card">
+            <h3>📈 Günlük Ciro Trendi</h3>
+            @if (d.Daily.Count == 0) { <div class="dash-empty">Veri yok</div> }
+            @foreach (var t in d.Daily)
+            {
+                <div class="bar-row"><span class="bar-lbl">@t.Label</span><div class="bar-track"><div class="bar-fill" style="width:@W(t.BarWidth)%"></div></div><span class="bar-val">@t.ValueText</span></div>
+            }
+        </div>
+    </div>
+
+    <div class="dash-cols">
+        @foreach (var r in ranks)
+        {
+            <div class="dash-card">
+                <h3>@r.title</h3>
+                @if (r.rows.Count == 0) { <div class="dash-empty">Veri yok</div> }
+                @foreach (var row in r.rows)
+                {
+                    <div class="bar-row">
+                        <span class="bar-lbl">@row.Name</span>
+                        <div class="bar-track"><div class="bar-fill" style="width:@W(row.BarWidth)%;background:@row.Color"></div></div>
+                        <span class="bar-val">@(r.amount ? row.AmountText : row.CountText)</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="dash-card" style="margin-bottom:26px">
+        <h3>🎁 Şu An Geçerli Kampanyalar</h3>
+        @if (d.ActiveCampaigns.Count == 0)
+        {
+            <div class="dash-empty">Şu an geçerli kampanya yok.</div>
+        }
+        else
+        {
+            <table class="bo-table">
+                <thead><tr><th>Kampanya</th><th>Tür</th><th>Kapsam</th><th>Dönem</th></tr></thead>
+                <tbody>
+                    @foreach (var c in d.ActiveCampaigns)
+                    {
+                        <tr><td>@c.Name</td><td>@c.TypeText</td><td>@c.ScopeText</td><td>@c.PeriodText</td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+<h2 style="margin:0 0 14px;font-size:18px">⚡ Hızlı Erişim</h2>
+<div class="module-grid">
+    @{
+        (string ico, string name, string url, Feature? feat)[] modules = new[]
+        {
+            ("🍔","Ürün & Menü", "/BackOffice/Products", (Feature?)Feature.ProductBasic),
+            ("👥","Cari / Müşteri", "/BackOffice/Customers", (Feature?)Feature.BasicCustomer),
+            ("🏷️","Kampanyalar", "/BackOffice/Campaigns", (Feature?)Feature.Campaign),
+            ("📅","Rezervasyon", "/BackOffice/Reservations", (Feature?)Feature.Reservation),
+            ("👨‍🍳","Reyonlar (Mutfak)", "/BackOffice/Reyons", (Feature?)Feature.Kitchen),
+            ("📊","Raporlar", "/BackOffice/Reports/XZ", (Feature?)null),
+            ("💰","Finans (Kasa/Banka/POS)", "/BackOffice/Dekont", (Feature?)Feature.PreAccounting),
+            ("📦","Stok / Depo", "/BackOffice/Reports/Stock", (Feature?)Feature.AdvancedReports),
+            ("🧾","Evrak / Ön Muhasebe", "/BackOffice/Documents?type=15", (Feature?)Feature.PreAccounting),
+            ("⚙️","Sistem Tanımları", "/BackOffice/SystemDefinitions", (Feature?)null),
+        };
+    }
+    @foreach (var m in modules)
+    {
+        var licensed = m.feat is null || Model.Has(m.feat.Value);
+        if (licensed)
+        {
+            <a class="module-card" href="@m.url">
+                <div class="module-ico">@m.ico</div>
+                <div class="module-name">@m.name</div>
+                <div class="module-state"><span class="badge-soon">Aç →</span></div>
+            </a>
+        }
+        else
+        {
+            <div class="module-card locked">
+                <div class="module-ico">@m.ico</div>
+                <div class="module-name">@m.name</div>
+                <div class="module-state"><span class="badge-lock">🔒 Pakette yok</span></div>
+            </div>
+        }
+    }
+</div>

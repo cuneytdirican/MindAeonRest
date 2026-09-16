@@ -1,0 +1,279 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Campaigns.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Kampanya" : $"Kampanya · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+    var dayNames = new[] { "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz" };
+}
+
+<div class="bo-page-head">
+    <h1>🎁 @(Model.IsNew ? "Yeni Kampanya" : "Kampanya Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Campaigns">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Tip seçince ilgili alanları doldurun. Geçerlilik tarih/gün/saat ve şube bazlı çalışır.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Ad *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <textarea asp-for="Description" class="field" rows="2" maxlength="500"></textarea>
+        </div>
+
+        <div class="frm-row">
+            <label>Tip *</label>
+            <select asp-for="Type" asp-items="Model.TypeOptions" class="field" id="typeSelect" required></select>
+        </div>
+
+        <div class="frm-row" id="valueRow">
+            <label id="valueLabel">İndirim (%)</label>
+            <input name="Value" value="@Model.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" />
+        </div>
+
+        <div class="frm-row" id="catRow">
+            <label>Hedef Kategori</label>
+            <select asp-for="TargetCategoryId" asp-items="Model.CategoryOptions" class="field"></select>
+        </div>
+        <div class="frm-row" id="prodRow">
+            <label>Hedef Ürün</label>
+            <select asp-for="TargetProductId" asp-items="Model.ProductOptions" class="field"></select>
+        </div>
+        <div class="frm-row" id="minRow">
+            <label>Min. Sipariş Tutarı (₺)</label>
+            <input name="MinAmount" value="@Model.MinAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" />
+        </div>
+        <div class="frm-row" id="xyRow">
+            <label>X Al Y Öde</label>
+            <div style="display:flex; gap:8px; align-items:center">
+                <input name="BuyQty" value="@Model.BuyQty.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" placeholder="Kaç al" style="max-width:140px" />
+                <span>al</span>
+                <input name="PayQty" value="@Model.PayQty.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" placeholder="Kaç öde" style="max-width:140px" />
+                <span>öde</span>
+            </div>
+        </div>
+
+        <!-- HEDİYE / İKRAM: min tutar (@@MinAmount ile paylaşılır) + koşul ürünler + ikram ürünler -->
+        <div id="hediyeBlock">
+            <div class="frm-row" id="giftMinRow">
+                <label>Min. Sipariş Tutarı (ops., 0 = koşulsuz)</label>
+                <input type="number" step="0.01" min="0" class="field" id="hediyeMinMirror" placeholder="0" />
+                <small class="hint">Boş/0 ise yalnız koşul ürünler geçerli. (Hediye için Min. Tutar alanı buradan yönetilir.)</small>
+            </div>
+
+            <div class="frm-row">
+                <label>Koşul Ürünler (hepsi sağlanmalı; boş ise yalnız min tutar geçerli)</label>
+                <table class="bo-table" id="condTable" style="margin-top:8px">
+                    <thead>
+                        <tr><th style="width:70%">Ürün</th><th style="width:20%">En az miktar</th><th class="ar" style="width:10%">—</th></tr>
+                    </thead>
+                    <tbody id="condBody">
+                    @for (int i = 0; i < Model.Conditions.Count; i++)
+                    {
+                        <tr class="cond-row">
+                            <td>
+                                <select name="Conditions[@i].ProductId" class="field">
+                                    @foreach (var o in Model.ProductOptions)
+                                    {
+                                        <option value="@o.Value" selected="@(o.Value == Model.Conditions[i].ProductId.ToString())">@o.Text</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><input name="Conditions[@i].MinQty" value="@Model.Conditions[i].MinQty.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" /></td>
+                            <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeCond(this)">Sil</button></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm" onclick="addCond()" style="margin-top:8px">+ Koşul Ekle</button>
+            </div>
+
+            <div class="frm-row">
+                <label>İkram Ürünler (verilecek hediyeler)</label>
+                <table class="bo-table" id="giftTable" style="margin-top:8px">
+                    <thead>
+                        <tr><th style="width:70%">Ürün</th><th style="width:20%">Miktar</th><th class="ar" style="width:10%">—</th></tr>
+                    </thead>
+                    <tbody id="giftBody">
+                    @for (int i = 0; i < Model.Gifts.Count; i++)
+                    {
+                        <tr class="gift-row">
+                            <td>
+                                <select name="Gifts[@i].ProductId" class="field">
+                                    @foreach (var o in Model.ProductOptions)
+                                    {
+                                        <option value="@o.Value" selected="@(o.Value == Model.Gifts[i].ProductId.ToString())">@o.Text</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><input name="Gifts[@i].Qty" value="@Model.Gifts[i].Qty.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" /></td>
+                            <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeGift(this)">Sil</button></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm" onclick="addGift()" style="margin-top:8px">+ İkram Ekle</button>
+            </div>
+        </div>
+
+        <div class="frm-row">
+            <label>Tarih Aralığı *</label>
+            <div style="display:flex; gap:8px; align-items:center">
+                <input asp-for="StartDate" type="date" class="field" style="max-width:200px" required />
+                <span>–</span>
+                <input asp-for="EndDate" type="date" class="field" style="max-width:200px" required />
+            </div>
+        </div>
+
+        <div class="frm-row">
+            <label>Günler (hiçbiri seçili değilse her gün)</label>
+            <div style="display:flex; gap:14px; flex-wrap:wrap">
+                @for (int d = 0; d < 7; d++)
+                {
+                    <label class="chk"><input name="Days[@d]" value="true" type="checkbox" @(Model.Days[d] ? "checked" : "") /> @dayNames[d]</label>
+                    <input name="Days[@d]" value="false" type="hidden" />
+                }
+            </div>
+        </div>
+
+        <div class="frm-row">
+            <label>Günlük Saat Aralığı (SS:dd, ops. happy hour)</label>
+            <div style="display:flex; gap:8px; align-items:center">
+                <input asp-for="DailyStart" type="time" class="field" style="max-width:160px" />
+                <span>–</span>
+                <input asp-for="DailyEnd" type="time" class="field" style="max-width:160px" />
+            </div>
+        </div>
+
+        <div class="frm-row">
+            <label class="chk"><input asp-for="AllBranches" type="checkbox" id="allBranches" /> Tüm şubelerde geçerli</label>
+        </div>
+        <div class="frm-row" id="branchRow">
+            <label>Geçerli Şubeler</label>
+            @if (Model.Branches.Count == 0)
+            {
+                <small class="hint" style="color:var(--danger,#c00)">Bu şirkette tanımlı şube yok. Önce Lokasyon/Şube ekleyin.</small>
+            }
+            else
+            {
+                <div style="display:flex; gap:14px; flex-wrap:wrap">
+                    @foreach (var b in Model.Branches)
+                    {
+                        <label class="chk"><input name="BranchIds" value="@b.Id" type="checkbox" @(b.IsSelected ? "checked" : "") /> @b.Name</label>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Kampanya aktif</label>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="Stackable" type="checkbox" /> Başka kampanyalarla birleştirilebilir</label>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsMandatory" type="checkbox" /> ZORUNLU uygulansın (kriter karşılanınca otomatik)</label>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Campaigns" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // CampaignType enum karşılıkları (Campaign.cs ile birebir).
+        const T = { TumSiparisYuzde:0, TumSiparisTutar:1, KategoriYuzde:2, UrunYuzde:3, MinTutarYuzde:4, MinTutarTutar:5, XAlYOde:6, Hediye:7 };
+
+        const PRODUCT_OPTIONS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.ProductOptions.Select(o => new { v = o.Value, t = o.Text })));
+
+        const typeSelect = document.getElementById('typeSelect');
+        const minInput = document.querySelector('input[name="MinAmount"]');
+        const hediyeMirror = document.getElementById('hediyeMinMirror');
+
+        function show(id, on) { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; }
+
+        function syncType() {
+            const t = parseInt(typeSelect.value, 10);
+            show('catRow', t === T.KategoriYuzde);
+            show('prodRow', t === T.UrunYuzde || t === T.XAlYOde);
+            show('minRow', t === T.MinTutarYuzde || t === T.MinTutarTutar);
+            show('xyRow', t === T.XAlYOde);
+            show('hediyeBlock', t === T.Hediye);
+
+            const amount = (t === T.TumSiparisTutar || t === T.MinTutarTutar);
+            const noValue = (t === T.XAlYOde || t === T.Hediye);
+            document.getElementById('valueLabel').textContent = amount ? 'İndirim Tutarı (₺)' : 'İndirim (%)';
+            show('valueRow', !noValue);
+        }
+        typeSelect?.addEventListener('change', syncType);
+
+        // Hediye min tutar aynasını MinAmount alanına yaz (sunucu Hediye'de MinAmount okur).
+        function initMirror() {
+            if (minInput && hediyeMirror) { hediyeMirror.value = minInput.value || ''; }
+        }
+        hediyeMirror?.addEventListener('input', () => { if (minInput) minInput.value = hediyeMirror.value || 0; });
+
+        // Şube listesi: "Tüm şubeler" seçiliyken pasif + soluk (keşfedilebilir kalsın).
+        const allBranches = document.getElementById('allBranches');
+        function syncBranches() {
+            const on = !allBranches.checked;
+            const row = document.getElementById('branchRow');
+            if (row) { row.style.opacity = on ? '1' : '0.5'; row.querySelectorAll('input[name="BranchIds"]').forEach(c => c.disabled = !on); }
+        }
+        allBranches?.addEventListener('change', syncBranches);
+
+        // Koşul / İkram satırları (TaxGroups reindex desenine göre).
+        function prodOpts(sel) {
+            return PRODUCT_OPTIONS.map(o => `<option value="${o.v}" ${o.v === String(sel) ? 'selected' : ''}>${o.t}</option>`).join('');
+        }
+        function reindex(bodyId, rowClass, name) {
+            document.querySelectorAll(`#${bodyId} .${rowClass}`).forEach((row, i) => {
+                row.querySelectorAll('[name]').forEach(el => { el.name = el.name.replace(new RegExp(`${name}\\[\\d+\\]`), `${name}[${i}]`); });
+            });
+        }
+        function addCond() {
+            const body = document.getElementById('condBody');
+            const i = body.querySelectorAll('.cond-row').length;
+            const tr = document.createElement('tr'); tr.className = 'cond-row';
+            tr.innerHTML =
+                `<td><select name="Conditions[${i}].ProductId" class="field">${prodOpts(0)}</select></td>` +
+                `<td><input name="Conditions[${i}].MinQty" value="1" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeCond(this)">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+        function removeCond(btn) { btn.closest('.cond-row')?.remove(); reindex('condBody', 'cond-row', 'Conditions'); }
+        function addGift() {
+            const body = document.getElementById('giftBody');
+            const i = body.querySelectorAll('.gift-row').length;
+            const tr = document.createElement('tr'); tr.className = 'gift-row';
+            tr.innerHTML =
+                `<td><select name="Gifts[${i}].ProductId" class="field">${prodOpts(0)}</select></td>` +
+                `<td><input name="Gifts[${i}].Qty" value="1" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeGift(this)">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+        function removeGift(btn) { btn.closest('.gift-row')?.remove(); reindex('giftBody', 'gift-row', 'Gifts'); }
+
+        // İlk yükleme.
+        syncType(); initMirror(); syncBranches();
+    </script>
+}

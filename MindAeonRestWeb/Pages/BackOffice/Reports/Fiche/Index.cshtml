@@ -1,0 +1,142 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.Reports.Fiche.IndexModel
+@{
+    ViewData["Title"] = "Fiş / Adisyon Raporu";
+    Layout = "_BackOfficeLayout";
+    var qs = new Dictionary<string, string?>
+    {
+        ["BranchId"] = Model.BranchId?.ToString(),
+        ["From"] = Model.From?.ToString("yyyy-MM-dd"),
+        ["To"] = Model.To?.ToString("yyyy-MM-dd"),
+        ["Q"] = Model.Q,
+    };
+    string TabUrl(string tab)
+    {
+        var pairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+        pairs.Add($"Tab={tab}");
+        return "/BackOffice/Reports/Fiche?" + string.Join("&", pairs);
+    }
+    string CsvUrl()
+    {
+        var pairs = qs.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}").ToList();
+        pairs.Insert(0, "handler=Csv");
+        pairs.Add($"Tab={Model.Tab}");
+        return "/BackOffice/Reports/Fiche?" + string.Join("&", pairs);
+    }
+}
+
+<div class="bo-page-head">
+    <h1>📑 Fiş / Adisyon Raporu</h1>
+    <a class="btn btn-ghost" href="@CsvUrl()">⬇ CSV İndir</a>
+    <button type="button" class="btn btn-ghost" onclick="window.print()">🖨 Yazdır / PDF</button>
+</div>
+
+<form method="get" class="bo-filter">
+    <select name="BranchId" class="field">
+        @foreach (var b in Model.BranchOptions)
+        {
+            <option value="@b.Value" selected="@(Model.BranchId == b.Value)">@b.Text</option>
+        }
+    </select>
+    <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" />
+    <input type="text" name="Q" value="@Model.Q" placeholder="Ürün / fiş / garson ara..." class="field" />
+    <input type="hidden" name="Tab" value="@Model.Tab" />
+    <button type="submit" class="btn btn-primary">🔍 Göster</button>
+</form>
+
+<div class="bo-tabs" style="margin:12px 0;">
+    <a class="btn @(Model.CancelsTab ? "" : "btn-primary")" href="@TabUrl("fiches")">FİŞLER</a>
+    <a class="btn @(Model.CancelsTab ? "btn-primary" : "")" href="@TabUrl("cancels")">İPTALLER</a>
+</div>
+
+@if (!Model.CancelsTab)
+{
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Fiş No</th><th>Adisyon</th><th>Tarih</th><th>Şube</th><th>Lokasyon</th>
+                    <th>Masa</th><th>Garson</th><th>Kasiyer</th><th>Müşteri</th>
+                    <th class="ar">İndirim</th><th class="ar">İkram</th><th>Ödeme</th>
+                    <th class="ar">Tutar</th><th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Fiches.Count == 0)
+            {
+                <tr><td colspan="14" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var f in Model.Fiches)
+            {
+                <tr>
+                    <td><b>@f.FicheCode</b></td>
+                    <td>@f.OrderCode</td>
+                    <td>@f.DateText</td>
+                    <td>@f.BranchName</td>
+                    <td>@f.ZoneName</td>
+                    <td>@f.TableCodes</td>
+                    <td>@f.WaiterName</td>
+                    <td>@f.CashierName</td>
+                    <td>@f.CustomerName</td>
+                    <td class="ar">@f.DiscountText</td>
+                    <td class="ar">@f.TreatText</td>
+                    <td>@f.Payments</td>
+                    <td class="ar">@f.TotalText</td>
+                    <td>@f.StatusText</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-card">
+        <b>Fiş:</b> @Model.FicheCount &nbsp;·&nbsp;
+        <b>Ciro:</b> @Model.Ciro.ToString("N2") ₺ &nbsp;·&nbsp;
+        <b>İndirim:</b> @Model.ToplamIndirim.ToString("N2") ₺ &nbsp;·&nbsp;
+        <b>İkram:</b> @Model.ToplamIkram.ToString("N2") ₺
+    </div>
+}
+else
+{
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th><th>Adisyon</th><th>Masa</th><th>Ürün</th>
+                    <th class="ar">Miktar</th><th class="ar">Tutar</th><th>Sebep</th>
+                    <th>İptal Eden</th><th>Akıbet</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Cancels.Count == 0)
+            {
+                <tr><td colspan="9" class="empty">Kayıt yok.</td></tr>
+            }
+            @foreach (var c in Model.Cancels)
+            {
+                <tr>
+                    <td>@c.DateText</td>
+                    <td>@c.OrderCode</td>
+                    <td>@c.TableCodes</td>
+                    <td>@c.ProductName</td>
+                    <td class="ar">@c.QtyText</td>
+                    <td class="ar">@c.AmountText</td>
+                    <td>@c.Reason</td>
+                    <td>@c.CancelledByName</td>
+                    <td>@c.Disposition</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-card">
+        <b>İptal satırı:</b> @Model.CancelCount &nbsp;·&nbsp;
+        <b>Toplam iptal tutarı:</b> @Model.ToplamIptal.ToString("N2") ₺ &nbsp;·&nbsp;
+        <b>Fire:</b> @Model.FireCount &nbsp;·&nbsp;
+        <b>Stoğa iade:</b> @Model.IadeCount
+    </div>
+}
+
+<p class="bo-hint" style="margin-top:8px;color:var(--muted,#888);font-size:12px;">
+    Not: Excel / PDF dışa aktarım masaüstü (WPF) uygulamasına özeldir. Web'de CSV indirme (⬇ CSV İndir) ile yazdır/PDF için tarayıcının "Yazdır" penceresi (🖨 Yazdır) kullanılabilir.
+</p>

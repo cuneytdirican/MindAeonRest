@@ -1,0 +1,5 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.AiAskModel
+@* Bağlam-farkında AI Chat widget'ının SUNUCU UCU. Görsel çıktı yok; yalnız OnPostAsk JSON handler'ı kullanılır.
+   Cookie-auth alanında (AuthorizeFolder("/")) + WebTenantMiddleware Session/CompanyDb kurar + antiforgery otomatik.
+   İstemci: fetch POST /BackOffice/AiAsk?handler=Ask (header RequestVerificationToken). *@

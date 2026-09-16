@@ -1,0 +1,21 @@
+@page
+@model MindAeonRestWeb.Pages.PortalModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#0f1115" />
+    <title>Sadakat Portalı · MindAeon</title>
+    <link rel="stylesheet" href="~/css/portal.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="portal-app" aria-live="polite"></div>
+    <div id="portal-toast" class="pt-toast" role="status" aria-live="polite"></div>
+    <div id="portal-modal" class="pt-modal" aria-hidden="true"></div>
+    @* GİRİŞ token'ı yalnız istemciye taşınır; doğrulama PortalController'da (sunucuda) yapılır. *@
+    <script>window.PORTAL_TOKEN = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Token));</script>
+    <script src="~/js/portal.js" asp-append-version="true"></script>
+</body>
+</html>

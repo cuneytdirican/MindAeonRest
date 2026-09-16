@@ -1,0 +1,136 @@
+<Window x:Class="MindAeonRest.Views.RaporWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="X / Z Raporu" Height="720" Width="560"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="22,18,22,18">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock Text="X / Z Raporu" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                <Button Content="✕" Width="34" Height="34" HorizontalAlignment="Right" Background="Transparent" Foreground="{DynamicResource TextMutedBrush}" BorderThickness="0" Cursor="Hand" Click="Cancel_Click" />
+            </Grid>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
+                <TextBlock Text="Tarih:" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <DatePicker x:Name="DateBox" Width="150" Height="38" SelectedDateChanged="Date_Changed" />
+                <Button Content="Göster" Style="{StaticResource GhostButton}" Width="90" Margin="10,0,0,0" Click="Show_Click" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <Border x:Name="ReportPanel" Background="{DynamicResource SurfaceBrush}" CornerRadius="10" Padding="18">
+                    <StackPanel>
+                        <TextBlock x:Name="RepTitle" Text="GÜN RAPORU" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="RepSub" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,10" />
+
+                        <!-- AÇIK MASA UYARISI: Z denemesinde açık (Status=Açık) adisyon varsa burada listelenir. Varsayılan gizli. -->
+                        <Border x:Name="OpenTablesPanel" Visibility="Collapsed" Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="10,8" Margin="0,0,0,10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <Expander x:Name="OpenTablesExpander" IsExpanded="True">
+                                <Expander.Header>
+                                    <TextBlock x:Name="OpenTablesTitle" Text="⚠ AÇIK MASALAR" FontWeight="Bold" FontSize="12.5" Foreground="#E9A23B" TextWrapping="Wrap" />
+                                </Expander.Header>
+                                <ItemsControl x:Name="OpenTablesHost" Margin="0,6,0,0">
+                                    <ItemsControl.ItemTemplate><DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding TableCodes}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" />
+                                                <TextBlock Text="{Binding OrderCode}" Foreground="{DynamicResource TextMutedBrush}" Margin="6,0,0,0" />
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="8,0,0,0" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding RemainingText}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                    </DataTemplate></ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Expander>
+                        </Border>
+
+                        <Grid Margin="0,4">
+                            <TextBlock Text="TOPLAM SATIŞ" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="SalesText" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <TextBlock x:Name="CountText" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+
+                        <TextBlock Text="ÖDEME DAĞILIMI" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" />
+                        <ItemsControl x:Name="PayHost">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Grid Margin="0,2"><TextBlock Text="{Binding KindText}" Foreground="{DynamicResource TextBrush}" /><TextBlock Text="{Binding AmountText}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" /></Grid>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="KDV KIRILIMI" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" />
+                        <ItemsControl x:Name="KdvHost">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Grid Margin="0,2">
+                                    <TextBlock Text="{Binding RateText}" Foreground="{DynamicResource TextBrush}" />
+                                    <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource TextMutedBrush}"><Run Text="Matrah "/><Run Text="{Binding MatrahText, Mode=OneWay}"/><Run Text="  KDV "/><Run Text="{Binding TaxText, Mode=OneWay}"/></TextBlock>
+                                </Grid>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid Margin="0,14,0,0">
+                            <TextBlock Text="İkram / Fire" Foreground="{DynamicResource TextMutedBrush}" />
+                            <TextBlock x:Name="FireText" HorizontalAlignment="Right" Foreground="{DynamicResource TextBrush}" />
+                        </Grid>
+
+                        <TextBlock Text="KASA DURUMU" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" />
+                        <ItemsControl x:Name="CashHost">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Grid Margin="0,2"><TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextBrush}" /><TextBlock Text="{Binding BalanceText}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" /></Grid>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="BANKA DEFTER BAKİYELERİ" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" />
+                        <ItemsControl x:Name="BankHost">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Grid Margin="0,2"><TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextBrush}" /><TextBlock Text="{Binding BalanceText}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" /></Grid>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="POS DEFTER BAKİYELERİ" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" />
+                        <ItemsControl x:Name="PosHost">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Grid Margin="0,2"><TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextBrush}" /><TextBlock Text="{Binding BalanceText}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" /></Grid>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="YEMEK ÇEKİ DEFTER BAKİYELERİ" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" />
+                        <ItemsControl x:Name="MealHost">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Grid Margin="0,2"><TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextBrush}" /><TextBlock Text="{Binding BalanceText}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" /></Grid>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- GÜN SONU DEVRİ: Z'de nakit (seçilen tutar) + kart (tamamı) ŞUBE kasasına devredilir -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="12,10" Margin="0,16,0,0">
+                            <StackPanel>
+                                <TextBlock Text="🏦 GÜN SONU DEVRİ (ŞUBE KASASINA)" FontWeight="Bold" FontSize="12.5" Foreground="{DynamicResource AccentBrush}" />
+                                <TextBlock Text="Nakitin seçtiğiniz kısmı şube kasasına devredilir, kalanı kasada kalır. Kart bakiyeleri tamamen devredilir." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,8" />
+
+                                <TextBlock Text="HEDEF ŞUBE NAKİT KASASI" Style="{StaticResource FieldLabel}" />
+                                <ComboBox x:Name="TargetCashCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value">
+                                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text="NAKİT DEVİR TUTARI (₺)" Style="{StaticResource FieldLabel}" Margin="2,10,0,6" />
+                                <TextBox x:Name="CashTransferBox" Style="{StaticResource InputTextBox}" />
+
+                                <TextBlock Text="HEDEF ŞUBE POS (kart — tamamı devredilir)" Style="{StaticResource FieldLabel}" Margin="2,12,0,6" />
+                                <ComboBox x:Name="TargetPosCombo" Style="{StaticResource InputComboBox}" ItemContainerStyle="{StaticResource InputComboBoxItem}" SelectedValuePath="Value">
+                                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" /></DataTemplate></ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+
+            <Grid Grid.Row="3" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="1.3*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Kapat" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" Content="🖨 Yazdır" Style="{StaticResource GhostButton}" Click="Print_Click" />
+                <Button Grid.Column="4" Content="Z RAPORU AL" Style="{StaticResource PrimaryButton}" Click="TakeZ_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

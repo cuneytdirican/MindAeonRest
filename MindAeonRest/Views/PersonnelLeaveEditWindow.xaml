@@ -1,0 +1,30 @@
+<Window x:Class="MindAeonRest.Views.PersonnelLeaveEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="İzin" Height="380" Width="500"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="30,26,30,24">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <TextBlock x:Name="TitleText" Grid.Row="0" Text="Yeni İzin" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" MouseLeftButtonDown="Header_MouseLeftButtonDown" />
+            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                <TextBlock Text="İZİN TÜRÜ" Style="{StaticResource FieldLabel}" />
+                <ComboBox x:Name="TypeCombo" Style="{StaticResource InputComboBox}" SelectedValuePath="Value" DisplayMemberPath="Text" />
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0"><TextBlock Text="BAŞLANGIÇ" Style="{StaticResource FieldLabel}" /><DatePicker x:Name="StartBox" Height="38" /></StackPanel>
+                    <StackPanel Grid.Column="2"><TextBlock Text="BİTİŞ" Style="{StaticResource FieldLabel}" /><DatePicker x:Name="EndBox" Height="38" /></StackPanel>
+                </Grid>
+                <TextBlock Text="AÇIKLAMA" Style="{StaticResource FieldLabel}" Margin="2,14,0,6" />
+                <TextBox x:Name="NoteBox" Style="{StaticResource InputTextBox}" />
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="2,12,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+            </StackPanel>
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.4*" /></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button Grid.Column="2" x:Name="SaveButton" Content="KAYDET" Style="{StaticResource PrimaryButton}" Click="Save_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

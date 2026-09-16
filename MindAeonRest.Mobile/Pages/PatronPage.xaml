@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MindAeonRest.Mobile.Pages.PatronPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Background}">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Başlık + filtreler -->
+        <Border Grid.Row="0" BackgroundColor="{StaticResource Surface}" StrokeThickness="0" Padding="16,12">
+            <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout>
+                        <Label Text="📊 Patron Paneli" FontSize="21" FontAttributes="Bold" TextColor="{StaticResource Accent}" />
+                        <Label x:Name="SubTitle" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                    <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                        <Button x:Name="CountBtn" Text="Sayım" Clicked="Count_Clicked" IsVisible="False" BackgroundColor="{StaticResource ButtonColor}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" CornerRadius="12" Padding="12,4" />
+                        <Button x:Name="ShiftBtn" Text="Vardiya" Clicked="Shift_Clicked" IsVisible="False" BackgroundColor="{StaticResource Accent}" TextColor="White" FontAttributes="Bold" CornerRadius="12" Padding="12,4" />
+                        <Button x:Name="TimeClockBtn" Text="Mesai" Clicked="TimeClock_Clicked" BackgroundColor="{StaticResource ButtonColor}" TextColor="{StaticResource TextColor}" FontAttributes="Bold" CornerRadius="12" Padding="12,4" />
+                        <Button Text="Çıkış" Clicked="Logout_Clicked" Style="{StaticResource GhostButton}" Padding="12,4" />
+                    </HorizontalStackLayout>
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <Picker x:Name="BranchPicker" TextColor="{StaticResource TextColor}" TitleColor="{StaticResource TextMuted}" Title="Şube" ItemDisplayBinding="{Binding Name}" SelectedIndexChanged="Filter_Changed" />
+                    <DatePicker Grid.Column="1" x:Name="DayPicker" TextColor="{StaticResource TextColor}" Format="dd.MM.yyyy" DateSelected="Filter_Changed" />
+                    <Button Grid.Column="2" Text="↻" FontSize="18" Clicked="Refresh_Clicked" BackgroundColor="{StaticResource ButtonColor}" TextColor="{StaticResource TextColor}" CornerRadius="9" Padding="12,4" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <RefreshView Grid.Row="1" x:Name="Refresher" Refreshing="Refresh_Clicked">
+            <ScrollView>
+                <VerticalStackLayout Padding="12" Spacing="12">
+                    <!-- KPI kartları -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource Card}">
+                            <VerticalStackLayout><Label Text="CİRO" Style="{StaticResource FieldLabel}" /><Label x:Name="CiroLbl" Text="₺0,00" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Accent}" /></VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource Card}">
+                            <VerticalStackLayout><Label Text="FİŞ ADEDİ" Style="{StaticResource FieldLabel}" /><Label x:Name="FisLbl" Text="0" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource TextColor}" /></VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource Card}">
+                            <VerticalStackLayout><Label Text="ORT. FİŞ" Style="{StaticResource FieldLabel}" /><Label x:Name="OrtLbl" Text="₺0,00" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource TextColor}" /></VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource Card}">
+                            <VerticalStackLayout><Label Text="KASA" Style="{StaticResource FieldLabel}" /><Label x:Name="KasaLbl" Text="₺0,00" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Success}" /></VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource Card}" BackgroundColor="{StaticResource SurfaceAlt}">
+                            <Grid ColumnDefinitions="*,*">
+                                <VerticalStackLayout><Label Text="AÇIK MASA" Style="{StaticResource FieldLabel}" /><Label x:Name="OpenTablesLbl" Text="0" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource TextColor}" /></VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1"><Label Text="AÇIK TUTAR" Style="{StaticResource FieldLabel}" /><Label x:Name="OpenAmountLbl" Text="₺0,00" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Accent}" /></VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                        <!-- Yükümlülükler (parasal açık takibi) -->
+                        <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource Card}">
+                            <VerticalStackLayout><Label Text="HEDİYE ÇEKİ YÜK." Style="{StaticResource FieldLabel}" /><Label x:Name="GiftLiabLbl" Text="₺0,00" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Warning}" /></VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource Card}">
+                            <VerticalStackLayout><Label Text="PUAN YÜK." Style="{StaticResource FieldLabel}" /><Label x:Name="LoyaltyLiabLbl" Text="₺0,00" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Warning}" /></VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <!-- Ödeme dağılımı -->
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="ÖDEME DAĞILIMI" Style="{StaticResource FieldLabel}" />
+                            <VerticalStackLayout x:Name="PayBars" Spacing="10" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- En çok satan -->
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="EN ÇOK SATAN ÜRÜNLER" Style="{StaticResource FieldLabel}" />
+                            <VerticalStackLayout x:Name="TopBars" Spacing="10" />
+                            <Label x:Name="NoTop" Text="Bu gün için satış yok." Style="{StaticResource Muted}" IsVisible="False" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

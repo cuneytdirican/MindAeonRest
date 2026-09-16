@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <!-- MindAeon beyaz "M" — açılış ekranı (magenta zemin) -->
+    <circle cx="228" cy="228" r="138" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.5" />
+    <path d="M150 330 V146 L228 250 L306 146 V330"
+          fill="none" stroke="#FFFFFF" stroke-width="38"
+          stroke-linejoin="round" stroke-linecap="round" />
+</svg>

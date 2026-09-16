@@ -1,0 +1,20 @@
+@page
+@model MindAeonRestWeb.Pages.OrderModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#0f1115" />
+    <title>Sipariş · MindAeon</title>
+    <link rel="stylesheet" href="~/css/order.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="order-app" aria-live="polite"></div>
+    <div id="order-toast" class="ord-toast" role="status" aria-live="polite"></div>
+    @* Token yalnız istemciye taşınır; doğrulama PublicController'da (sunucuda) yapılır. *@
+    <script>window.ORDER_TOKEN = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Token));</script>
+    <script src="~/js/order.js" asp-append-version="true"></script>
+</body>
+</html>

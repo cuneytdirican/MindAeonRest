@@ -1,0 +1,124 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.SysAdmin.NewTenantModel
+@{
+    ViewData["Title"] = "Yeni Şirket (Sistem Yönetimi)";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>➕ Yeni Şirket Kur</h1>
+    <a class="btn btn-ghost" href="/BackOffice/SysAdmin/Tenants">← Şirketler</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+@if (Model.Result is { } res)
+{
+    <div class="alert-success">
+        ✅ <strong>@res.Name (@res.Code)</strong> kuruldu. Veritabanı: <code>@res.DbName</code>
+    </div>
+
+    <div class="bo-card bo-form">
+        <h3 style="margin:0 0 10px">🔑 İlk Yönetici Erişimi</h3>
+
+        <div class="bo-alert" style="margin-bottom:14px">
+            ⚠️ <strong>Geçici parola yalnızca bir kez gösterilir.</strong> Hiçbir yerde saklanmaz ve tekrar
+            görüntülenemez. Yöneticiye <strong>güvenli bir kanaldan</strong> iletin; ilk girişte parola
+            değiştirilmesi zorunludur.
+        </div>
+
+        <div class="frm-row">
+            <label>Kullanıcı Adı</label>
+            <input id="tuser" class="field" value="@res.AdminUsername" readonly onclick="this.select()" />
+        </div>
+
+        <div class="frm-row">
+            <label>Geçici Parola</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;max-width:560px">
+                <input id="tpass" class="field" value="@res.TempPassword" readonly onclick="this.select()"
+                       style="font-family:Consolas,monospace;flex:1;min-width:200px" />
+                <button type="button" class="btn btn-sm" id="copybtn"
+                        data-copy="@res.TempPassword">Kopyala</button>
+            </div>
+            <small class="hint" id="copymsg" style="visibility:hidden">Panoya kopyalandı.</small>
+        </div>
+
+        <div class="frm-row">
+            <label></label>
+            <div style="display:flex;gap:8px">
+                <a class="btn btn-primary" href="/BackOffice/SysAdmin/Tenants">Şirketler'e dön</a>
+                <span class="btn btn-ghost soon" title="Yakında" style="opacity:.55;cursor:default">Bu şirkete geç (yakında)</span>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            (function () {
+                var btn = document.getElementById('copybtn');
+                var msg = document.getElementById('copymsg');
+                if (!btn) return;
+                btn.addEventListener('click', function () {
+                    var val = btn.getAttribute('data-copy') || '';
+                    var done = function () {
+                        if (msg) {
+                            msg.style.visibility = 'visible';
+                            setTimeout(function () { msg.style.visibility = 'hidden'; }, 2500);
+                        }
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(val).then(done, function () {
+                            var inp = document.getElementById('tpass');
+                            if (inp) { inp.select(); document.execCommand('copy'); }
+                            done();
+                        });
+                    } else {
+                        var inp = document.getElementById('tpass');
+                        if (inp) { inp.select(); document.execCommand('copy'); }
+                        done();
+                    }
+                });
+            })();
+        </script>
+    }
+}
+else
+{
+    <div class="bo-card bo-hint" style="margin-bottom:12px">
+        Yeni bir kiracı şirket kurar: şirket kaydı + <code>MindAeonRest_{Kod}</code> veritabanı + MERKEZ şubesi +
+        yalnız bu şirkete kilitli ilk <strong>Yönetici</strong> kullanıcısı oluşturulur. Yalnız <strong>SysAdmin</strong> erişebilir.
+    </div>
+
+    <div class="bo-card bo-form">
+        <form method="post">
+            <div class="frm-row">
+                <label>Şirket Kodu *</label>
+                <input name="Code" class="field up" value="@Model.Code" required maxlength="20"
+                       placeholder="Örn: DEMO" autocomplete="off" />
+                <small class="hint">Yalnız harf/rakam. Veritabanı adı bu koddan türetilir; sonradan değişmez.</small>
+            </div>
+            <div class="frm-row">
+                <label>Unvan *</label>
+                <input name="Name" class="field" value="@Model.Name" required maxlength="200"
+                       placeholder="Şirket ticari unvanı" autocomplete="off" />
+            </div>
+            <div class="frm-row">
+                <label>Yönetici E-posta</label>
+                <input name="AdminEmail" type="email" class="field" value="@Model.AdminEmail" maxlength="200"
+                       placeholder="Kullanıcı adı bundan türetilir (boşsa admin_{kod})" autocomplete="off" />
+            </div>
+            <div class="frm-row">
+                <label>Yönetici Ad Soyad *</label>
+                <input name="AdminFullName" class="field" value="@Model.AdminFullName" required maxlength="200"
+                       placeholder="Ad Soyad" autocomplete="off" />
+            </div>
+            <div class="frm-row">
+                <label></label>
+                <button type="submit" class="btn btn-primary">🏗 Şirketi Kur</button>
+            </div>
+        </form>
+    </div>
+}

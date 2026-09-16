@@ -1,0 +1,189 @@
+@page
+@using System.Globalization
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Returns.IndexModel
+@{
+    ViewData["Title"] = "İade (Ödeme Sonrası)";
+    Layout = "_BackOfficeLayout";
+    CultureInfo inv = CultureInfo.InvariantCulture;
+    var dateStr = Model.Date?.ToString("yyyy-MM-dd");
+}
+
+<div class="bo-page-head">
+    <h1>↩ İade (Ödeme Sonrası)</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert-success">@Model.Message</div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error">@Model.Error</div> }
+
+@if (Model.NeedsSupervisor)
+{
+    <div class="alert-error">
+        İade yetkiniz yok. İade yapabilmek için 'İade' yetkisine (veya SysAdmin) sahip bir süpervizörün
+        kullanıcı adı ve şifresiyle onay vermesi gerekir. Aşağıya süpervizör bilgilerini girin; her iade
+        işleminde bu bilgiler kullanılacaktır. (WPF Süpervizör Onayı ekranı ile aynı davranış.)
+    </div>
+    <div class="bo-card">
+        <div class="bo-filter">
+            <label>Süpervizör Kullanıcı Adı
+                <input type="text" id="supUser" class="field" autocomplete="off" />
+            </label>
+            <label>Süpervizör Şifre
+                <input type="password" id="supPwd" class="field" autocomplete="off" />
+            </label>
+        </div>
+    </div>
+}
+
+<form method="get" class="bo-filter">
+    <label>Tarih <input type="date" name="Date" value="@dateStr" class="field" /></label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th>Kod</th><th>Müşteri</th><th class="ar">Tutar</th><th class="ar">İşlem</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Orders.Count == 0)
+        {
+            <tr><td colspan="4" class="empty">Bu tarihte kapanmış sipariş yok.</td></tr>
+        }
+        @foreach (var o in Model.Orders)
+        {
+            <tr>
+                <td><b>@o.Code</b></td>
+                <td>@o.CustomerName</td>
+                <td class="ar">@o.TotalText</td>
+                <td class="ar">
+                    <a class="btn btn-sm @(o.Id == Model.OrderId ? "btn-primary" : "")"
+                       href="/BackOffice/Returns?Date=@dateStr&OrderId=@o.Id">Satırlar</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Orders.Count kapanmış sipariş</div>
+
+@if (Model.SelectedOrder != null)
+{
+    <div class="bo-page-head" style="margin-top:22px">
+        <h1>Satırlar · @Model.SelectedOrder.Code</h1>
+        @if (!Model.NeedsSupervisor)
+        {
+            <form method="post" asp-page-handler="SendEInvoice"
+                  onsubmit="return confirm('@Model.SelectedOrder.Code fişi için e-Fatura gönderilsin mi?')">
+                <input type="hidden" name="orderId" value="@Model.SelectedOrder.Id" />
+                <input type="hidden" name="Date" value="@dateStr" />
+                <input type="hidden" name="OrderId" value="@Model.SelectedOrder.Id" />
+                <button type="submit" class="btn btn-primary">📄 e-Fatura Gönder</button>
+            </form>
+        }
+    </div>
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th>Ürün</th><th class="ar">İade Edilebilir</th><th class="ar">Birim</th>
+                    <th>İade Miktarı</th><th>İade Türü</th><th>Ödeme İadesi</th><th>Araç</th><th class="ar">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Lines.Count == 0)
+            {
+                <tr><td colspan="8" class="empty">İade edilebilir satır yok.</td></tr>
+            }
+            @foreach (var l in Model.Lines)
+            {
+                var rid = $"r{l.Id}";
+                <tr>
+                    <form method="post" asp-page-handler="Refund"
+                          onsubmit="return refundConfirm(this, '@l.ProductName')">
+                        <input type="hidden" name="lineId" value="@l.Id" />
+                        <input type="hidden" name="Date" value="@dateStr" />
+                        <input type="hidden" name="OrderId" value="@Model.SelectedOrder.Id" />
+                        @if (Model.NeedsSupervisor)
+                        {
+                            <input type="hidden" name="supervisorUser" value="" />
+                            <input type="hidden" name="supervisorPassword" value="" />
+                        }
+                        <td>@l.ProductName</td>
+                        <td class="ar">@l.RefundableQty.ToString("0.##", inv)</td>
+                        <td class="ar">@l.UnitPrice.ToString("N2")</td>
+                        <td>
+                            <input type="number" name="refundQty" step="0.01" min="0.01"
+                                   max="@l.RefundableQty.ToString("0.##", inv)"
+                                   value="@l.RefundableQty.ToString("0.##", inv)" class="field" style="width:90px" required />
+                        </td>
+                        <td>
+                            <select name="returnToStock" class="field">
+                                <option value="true">Stoğa İade (kullanılabilir)</option>
+                                <option value="false">Fire (stoğa dönmez)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="refundKind" class="field" onchange="syncInstr('@rid', this.value)">
+                                <option value="0">Nakit</option>
+                                <option value="1">Kredi Kartı</option>
+                                <option value="2">Yemek Çeki</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="instrumentId" id="@rid" class="field" required>
+                                @foreach (var c in Model.CashRegisters)
+                                {
+                                    <option value="@c.Id" data-kind="0">@c.Name</option>
+                                }
+                                @foreach (var p in Model.Poses)
+                                {
+                                    <option value="@p.Id" data-kind="1" hidden>@p.Name</option>
+                                }
+                                @foreach (var m in Model.MealAccounts)
+                                {
+                                    <option value="@m.Id" data-kind="2" hidden>@m.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td class="ar"><button type="submit" class="btn btn-sm btn-danger">İade Et</button></td>
+                    </form>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="bo-count">@Model.Lines.Count iade edilebilir satır</div>
+}
+
+@section Scripts {
+    <script>
+        // İade aracını seçili ödeme türüne göre süz (WPF RefundDialog.Method_Changed).
+        function syncInstr(selId, kind) {
+            const sel = document.getElementById(selId);
+            let first = null;
+            sel.querySelectorAll('option').forEach(o => {
+                const match = o.getAttribute('data-kind') === kind;
+                o.hidden = !match;
+                if (match && first === null) first = o;
+            });
+            if (first) sel.value = first.value;
+            else sel.value = '';
+        }
+        // İlk yüklemede her araç seçicisini Nakit'e göre süz.
+        document.querySelectorAll('select[name="instrumentId"]').forEach(sel => syncInstr(sel.id, '0'));
+
+        // İade onayı: yetkisiz kullanıcı için süpervizör bilgilerini forma taşı (WPF SupervisorAuthWindow).
+        var needsSup = @(Model.NeedsSupervisor ? "true" : "false");
+        function refundConfirm(form, name) {
+            if (needsSup) {
+                var u = (document.getElementById('supUser').value || '').trim();
+                var p = document.getElementById('supPwd').value || '';
+                if (!u || !p) { alert('Süpervizör kullanıcı adı ve şifresini girin.'); return false; }
+                form.querySelector('input[name="supervisorUser"]').value = u;
+                form.querySelector('input[name="supervisorPassword"]').value = p;
+            }
+            return confirm(name + ' iade edilsin mi?');
+        }
+    </script>
+}

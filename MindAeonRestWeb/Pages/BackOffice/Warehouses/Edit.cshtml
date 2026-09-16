@@ -1,0 +1,100 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Warehouses.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Depo" : $"Depo · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🏬 @(Model.IsNew ? "Yeni Depo" : "Depo Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Warehouses">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Depo kodu firma genelinde tekildir; her depo bir şubeye aittir.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Depo Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Şube *</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <select asp-for="BranchId" asp-items="Model.BranchOptions" id="branchSel" class="field" style="flex:1" required></select>
+                <button type="button" class="btn btn-sm" onclick="toggleBranchAdd()" title="Yeni şube ekle">+</button>
+            </div>
+            <div id="branchAdd" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <input id="newBranchCode" class="field up" maxlength="50" placeholder="Kod" autocomplete="off" style="flex:0 0 120px" />
+                    <input id="newBranchName" class="field" maxlength="150" placeholder="Şube adı" autocomplete="off" style="flex:1" />
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveBranch()">Ekle</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleBranchAdd()">Vazgeç</button>
+                </div>
+                <small class="hint" id="branchAddErr" style="color:#c0392b"></small>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Depo aktif</label>
+        </div>
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Warehouses" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // ---- "+" hızlı şube ekleme (proje kuralı; WPF EntityPicker "+ Yeni"): fetch → OnPostAddBranch → listeye ekle + seç. ----
+        function toggleBranchAdd() {
+            const box = document.getElementById('branchAdd');
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            document.getElementById('branchAddErr').textContent = '';
+            if (show) document.getElementById('newBranchCode').focus();
+        }
+
+        document.getElementById('newBranchCode')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        async function saveBranch() {
+            const err = document.getElementById('branchAddErr');
+            err.textContent = '';
+            const code = document.getElementById('newBranchCode').value.trim();
+            const name = document.getElementById('newBranchName').value.trim();
+            if (!code || !name) { err.textContent = 'Kod ve şube adı zorunludur.'; return; }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            try {
+                const params = new URLSearchParams({ code, name });
+                const res = await fetch('?handler=AddBranch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                    body: params.toString()
+                });
+                const data = await res.json();
+                if (!data.ok) { err.textContent = data.error || 'Şube eklenemedi.'; return; }
+                const sel = document.getElementById('branchSel');
+                const o = document.createElement('option');
+                o.value = String(data.id); o.textContent = data.text; o.selected = true;
+                sel.appendChild(o);
+                document.getElementById('newBranchCode').value = '';
+                document.getElementById('newBranchName').value = '';
+                toggleBranchAdd();
+            } catch (ex) {
+                err.textContent = 'Şube eklenirken hata oluştu.';
+            }
+        }
+    </script>
+}

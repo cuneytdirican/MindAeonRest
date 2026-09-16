@@ -1,0 +1,107 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.GiftCards.IssueModel
+@{
+    ViewData["Title"] = "Yeni Hediye Çeki (Sat)";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🎁 Yeni Hediye Çeki (Sat)</h1>
+    <a class="btn btn-ghost" href="/BackOffice/GiftCards">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <p class="hint" style="margin-top:0">Çek bedeli seçtiğiniz kasaya (Nakit) veya POS'a (Kart) tahsilat olarak yazılır.</p>
+    <form method="post">
+        <div class="frm-row">
+            <label>Tutar *</label>
+            <input asp-for="Amount" class="field" autocomplete="off" required placeholder="Örn: 250,00" />
+        </div>
+        <div class="frm-row">
+            <label>Döviz *</label>
+            <select asp-for="CurrencyId" asp-items="Model.CurrencyOptions" class="field" required></select>
+        </div>
+        <div class="frm-row">
+            <label>Müşteri</label>
+            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>Kod</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" placeholder="Boş bırakırsanız otomatik üretilir" />
+        </div>
+        <div class="frm-row">
+            <label>Son Kullanım</label>
+            <input asp-for="Expires" type="date" class="field" />
+        </div>
+        <div class="frm-row">
+            <label>Not</label>
+            <input asp-for="Note" class="field" maxlength="250" autocomplete="off" />
+        </div>
+
+        <hr />
+        <p class="hint">Satış Tahsilatı</p>
+        <div class="frm-row">
+            <label>Yöntem *</label>
+            <select asp-for="SaleMethod" class="field" id="methodSelect" required>
+                <option value="0">Nakit (Kasa)</option>
+                <option value="1">Kart (POS)</option>
+            </select>
+        </div>
+        <div class="frm-row" id="cashRow">
+            <label>Kasa *</label>
+            <select class="field" id="cashSelect">
+                <option value="0">(Kasa seçiniz)</option>
+                @foreach (var k in Model.CashOptions)
+                {
+                    <option value="@k.Value">@k.Text</option>
+                }
+            </select>
+        </div>
+        <div class="frm-row" id="posRow" style="display:none">
+            <label>POS *</label>
+            <select class="field" id="posSelect">
+                <option value="0">(POS seçiniz)</option>
+                @foreach (var p in Model.PosOptions)
+                {
+                    <option value="@p.Value">@p.Text</option>
+                }
+            </select>
+        </div>
+        <input type="hidden" asp-for="SaleInstrumentId" id="instrumentHidden" />
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Sat ve Oluştur</button>
+            <a href="/BackOffice/GiftCards" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        // Yöntem Nakit ise kasa, Kart ise POS gösterilir. Aktif satırın değeri gizli SaleInstrumentId'ye yazılır.
+        const methodSelect = document.getElementById('methodSelect');
+        const cashRow = document.getElementById('cashRow');
+        const posRow = document.getElementById('posRow');
+        const cashSelect = document.getElementById('cashSelect');
+        const posSelect = document.getElementById('posSelect');
+        const instrumentHidden = document.getElementById('instrumentHidden');
+
+        function sync() {
+            const cash = methodSelect.value === '0';
+            cashRow.style.display = cash ? '' : 'none';
+            posRow.style.display = cash ? 'none' : '';
+            instrumentHidden.value = cash ? cashSelect.value : posSelect.value;
+        }
+        methodSelect.addEventListener('change', sync);
+        cashSelect.addEventListener('change', sync);
+        posSelect.addEventListener('change', sync);
+        sync();
+    </script>
+}

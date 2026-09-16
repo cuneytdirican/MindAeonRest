@@ -1,0 +1,71 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.DemosModel
+@{
+    ViewData["Title"] = "Demolar — MindAeon";
+    var rate = Model.Total > 0 ? (int)Math.Round(100.0 * Model.Converted / Model.Total) : 0;
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetim", "/Admin", "Demolar"))
+
+<div class="page-head">
+    <h1>Demo Kurulumları</h1>
+    <div class="subtitle">Masaüstü/bayi demo kayıtları ve lisansa dönüşüm oranı.</div>
+</div>
+
+<div class="grid grid-3">
+    <div class="kpi">
+        <div class="kpi__label">Toplam Demo</div>
+        <div class="kpi__value">@Model.Total</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Dönüşen</div>
+        <div class="kpi__value">@Model.Converted</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__label">Dönüşüm Oranı</div>
+        <div class="kpi__value">@rate%</div>
+        <div class="progress" style="margin-top:var(--sp-2);"><div class="progress__bar" style="width:@rate%;"></div></div>
+    </div>
+</div>
+
+<div class="card mt-4" x-data="demoActions()">
+    <div id="demoTable">
+        @await Html.PartialAsync("_DemosTable", Model)
+    </div>
+
+    <template x-if="modal === 'convert'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Demoyu Dönüştür</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Demos?handler=Convert" hx-target="#demoTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" x-bind:value="id" />
+                    <div class="modal__body">
+                        <p class="text-muted">Demo, lisansa dönüştürüldü olarak işaretlenir.</p>
+                        <div class="form-field"><label>Lisans ID (opsiyonel)</label><input type="number" name="licenseId" placeholder="Üretilmiş lisans #" /></div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Dönüştür</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+        function demoActions() {
+            return {
+                modal: null, id: null,
+                openConvert(id) { this.id = id; this.modal = 'convert'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+                close() { this.modal = null; this.id = null; }
+            };
+        }
+    </script>
+}

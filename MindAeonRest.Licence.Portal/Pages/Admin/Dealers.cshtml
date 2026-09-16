@@ -1,0 +1,79 @@
+@page
+@model MindAeonRest.Licence.Portal.Pages.Admin.DealersModel
+@{
+    ViewData["Title"] = "Bayiler — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Yönetim", "/Admin", "Bayiler"))
+
+<div class="card" x-data="dealerPage()" x-on:open-detail="detailOpen = true">
+    <div class="page-head flex items-center justify-between" style="margin-bottom:var(--sp-4);">
+        <div>
+            <h1 style="margin-bottom:var(--sp-1);">Bayiler</h1>
+            <div class="subtitle">Portföy, marj ve tahsilat modeli — kazanç özetiyle.</div>
+        </div>
+        <button type="button" class="btn btn-primary" x-on:click="openCreate()"><i data-lucide="plus"></i> Yeni Bayi</button>
+    </div>
+
+    <div id="dlrTable">
+        @await Html.PartialAsync("_DealersTable", Model)
+    </div>
+
+    <div x-show="detailOpen" x-transition style="margin-top:var(--sp-5);">
+        <div id="dlrDetail"></div>
+    </div>
+
+    <!-- Yeni bayi modalı -->
+    <template x-if="modal === 'create'">
+        <div class="modal-backdrop" x-on:click.self="close()">
+            <div class="modal">
+                <div class="modal__head">
+                    <h3 class="modal__title">Yeni Bayi</h3>
+                    <button class="btn btn-ghost btn-icon" x-on:click="close()"><i data-lucide="x"></i></button>
+                </div>
+                <form hx-post="/Admin/Dealers?handler=Create" hx-target="#dlrTable" hx-swap="innerHTML"
+                      x-on:htmx:after-request="if($event.detail.successful) close()">
+                    @Html.AntiForgeryToken()
+                    <div class="modal__body">
+                        <div class="grid grid-2">
+                            <div class="form-field"><label>Bayi Adı *</label><input type="text" name="name" required /></div>
+                            <div class="form-field"><label>Bayi Kodu</label><input type="text" name="code" placeholder="Boş bırakılırsa otomatik üretilir" style="text-transform:uppercase" /></div>
+                        </div>
+                        <div class="grid grid-2">
+                            <div class="form-field"><label>İlgili Kişi</label><input type="text" name="contactName" /></div>
+                            <div class="form-field"><label>Telefon</label><input type="text" name="phone" /></div>
+                        </div>
+                        <div class="form-field"><label>E-posta</label><input type="email" name="email" /></div>
+                        <div class="grid grid-2">
+                            <div class="form-field"><label>Marj (%)</label><input type="number" step="0.01" min="0" max="100" name="marginPercent" value="0" /></div>
+                            <div class="form-field">
+                                <label>Tahsilat Modeli</label>
+                                <select name="billingMode">
+                                    <option value="0">Müşteri öder</option>
+                                    <option value="1">Bayi öder</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-field"><label>Not</label><textarea name="notes" rows="2"></textarea></div>
+                    </div>
+                    <div class="modal__foot">
+                        <button type="button" class="btn" x-on:click="close()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <script>
+        document.body.addEventListener('portalToast', e => window.toast(e.detail.message, e.detail.kind));
+        function dealerPage() {
+            return {
+                modal: null, detailOpen: false,
+                openCreate() { this.modal = 'create'; this.$nextTick(() => window.lucide && lucide.createIcons()); },
+                close() { this.modal = null; }
+            };
+        }
+    </script>
+}

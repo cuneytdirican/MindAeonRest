@@ -1,0 +1,69 @@
+@page
+@model MindAeonRestWeb.Pages.BackOffice.GiftCards.IndexModel
+@{
+    ViewData["Title"] = "Hediye Çekleri";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>🎁 Hediye Çekleri</h1>
+    <a class="btn btn-primary" href="/BackOffice/GiftCards/Issue">+ Yeni Hediye Çeki (Sat)</a>
+</div>
+
+@if (TempData["Error"] is string err && !string.IsNullOrEmpty(err))
+{
+    <div class="alert-error">@err</div>
+}
+
+<div class="bo-card" style="display:flex;justify-content:space-between;align-items:center;">
+    <div><b>Toplam Yükümlülük</b> <span class="muted">(dolaşımdaki aktif çeklerin bakiye toplamı)</span></div>
+    <div style="font-size:1.4em;font-weight:bold;">@Model.TotalLiability.ToString("N2") ₺</div>
+</div>
+
+<form method="get" class="bo-filter">
+    <input type="text" name="Q" value="@Model.Q" placeholder="Kod veya müşteri ara..." class="field" />
+    <label class="chk"><input type="checkbox" name="ShowInactive" value="true" @(Model.ShowInactive ? "checked" : "") /> Pasifleri göster</label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<div class="bo-card">
+    <table class="bo-table">
+        <thead>
+            <tr><th>Kod</th><th>Bakiye</th><th>İlk Tutar</th><th>Durum</th><th>Müşteri</th><th>Tarih</th><th class="ar">İşlem</th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="empty">Kayıt yok.</td></tr>
+        }
+        @foreach (var g in Model.Items)
+        {
+            <tr>
+                <td><b>@g.Code</b></td>
+                <td>@g.Balance.ToString("N2") @(g.CurrencyCode ?? "₺")</td>
+                <td>@g.InitialAmount.ToString("N2") @(g.CurrencyCode ?? "₺")</td>
+                <td>
+                    @if (g.Status == MindAeonRest.Models.GiftCardStatus.Aktif) { <span class="badge-ok">Aktif</span> }
+                    else if (g.Status == MindAeonRest.Models.GiftCardStatus.Bitti) { <span class="badge-off">Bitti</span> }
+                    else { <span class="badge-del">İptal</span> }
+                </td>
+                <td>@(g.CustomerName ?? "—")</td>
+                <td>@g.IssuedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                <td class="ar">
+                    <a class="btn btn-sm" href="/BackOffice/GiftCards/Movements/@g.Id">Ekstre</a>
+                    @if (g.Status == MindAeonRest.Models.GiftCardStatus.Aktif)
+                    {
+                        <form method="post" asp-page-handler="Cancel" style="display:inline"
+                              onsubmit="return confirm('@g.Code kodlu hediye çeki iptal edilecek (kalan bakiye silinir). Devam?')">
+                            <input type="hidden" name="id" value="@g.Id" />
+                            <input type="hidden" name="Q" value="@Model.Q" /><input type="hidden" name="ShowInactive" value="@Model.ShowInactive" />
+                            <button class="btn btn-sm btn-danger" type="submit">İptal</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<div class="bo-count">@Model.Items.Count kayıt</div>

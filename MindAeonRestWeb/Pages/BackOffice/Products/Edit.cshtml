@@ -1,0 +1,603 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Products.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Ürün" : $"Ürün · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>📦 @(Model.IsNew ? "Yeni Ürün" : "Ürün Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Products">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post" enctype="multipart/form-data">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Ürün Adı *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Açıklama</label>
+            <textarea asp-for="Description" class="field" rows="2" maxlength="500"></textarea>
+        </div>
+
+        <div class="frm-row">
+            <label>Ana Birim</label>
+            <div class="sub-grid" style="grid-template-columns:1fr auto;gap:6px;align-items:center">
+                <select asp-for="MainUnitId" asp-items="Model.MainUnitOptions" class="field" id="mainUnitSelect"></select>
+                <button type="button" class="btn btn-sm" onclick="quickAddUnit()" title="Yeni birim ekle">+</button>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>Takip Detayı</label>
+            <select asp-for="TrackingType" class="field">
+                @foreach (var (val, text) in MindAeonRestWeb.Pages.BackOffice.Products.EditModel.TrackingOptions)
+                {
+                    <option value="@val" selected="@(Model.TrackingType == val)">@text</option>
+                }
+            </select>
+        </div>
+
+        <div class="frm-row">
+            <label>Satış Vergi Grubu</label>
+            <div class="sub-grid" style="grid-template-columns:1fr auto;gap:6px;align-items:center">
+                <select asp-for="SalesTaxGroupId" asp-items="Model.TaxOptions" class="field tax-select"></select>
+                <button type="button" class="btn btn-sm" onclick="quickAddTax()" title="Yeni vergi grubu ekle">+</button>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>Alış Vergi Grubu</label>
+            <div class="sub-grid" style="grid-template-columns:1fr auto;gap:6px;align-items:center">
+                <select asp-for="PurchaseTaxGroupId" asp-items="Model.TaxOptions" class="field tax-select"></select>
+                <button type="button" class="btn btn-sm" onclick="quickAddTax()" title="Yeni vergi grubu ekle">+</button>
+            </div>
+        </div>
+        <div class="frm-row">
+            <label>İade Vergi Grubu</label>
+            <div class="sub-grid" style="grid-template-columns:1fr auto;gap:6px;align-items:center">
+                <select asp-for="ReturnTaxGroupId" asp-items="Model.TaxOptions" class="field tax-select"></select>
+                <button type="button" class="btn btn-sm" onclick="quickAddTax()" title="Yeni vergi grubu ekle">+</button>
+            </div>
+        </div>
+
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsSpicy" type="checkbox" /> 🌶 Acı (mutfak ekranında rozet)</label>
+        </div>
+
+        @* ---------------- KATEGORİLER ---------------- *@
+        <div class="frm-row">
+            <label>Kategoriler <button type="button" class="btn btn-sm" onclick="quickAddCategory()" title="Yeni kategori ekle">+</button></label>
+            <div class="chk-grid" id="categoryGrid">
+                @foreach (var c in Model.CategoryPicks)
+                {
+                    <label class="chk">
+                        <input type="checkbox" name="CategoryIds" value="@c.Id" @(Model.CategoryIds.Contains(c.Id) ? "checked" : "") />
+                        @c.Name <span class="muted">(@c.Code)</span>
+                    </label>
+                }
+            </div>
+            @if (Model.CategoryPicks.Count == 0)
+            {
+                <small class="hint" id="noCategoryHint">Tanımlı kategori yok — "+" ile ekleyin.</small>
+            }
+        </div>
+
+        @* ---------------- RESİMLER ---------------- *@
+        <div class="frm-row">
+            <label>Resimler</label>
+            <small class="hint">Görsel ekleyin, ana görseli işaretleyin (kiosk ekranında gösterilir).</small>
+            <div class="img-prev" id="imagesGrid" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px">
+                @for (int i = 0; i < Model.Images.Count; i++)
+                {
+                    var im = Model.Images[i];
+                    <div class="field" style="width:150px;text-align:center;padding:8px">
+                        <input type="hidden" name="Images[@i].Id" value="@im.Id" />
+                        <input type="hidden" name="Images[@i].Remove" value="false" class="img-remove-flag" />
+                        <img src="?handler=Image&imageId=@im.Id" alt="ürün resmi" style="max-width:130px;max-height:110px;object-fit:contain" />
+                        <div style="margin-top:6px">
+                            <label class="chk"><input type="radio" name="MainImageId" value="@im.Id" @(Model.MainImageId == im.Id ? "checked" : "") /> Ana</label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-danger" style="margin-top:6px" onclick="removeExistingImage(this)">Sil</button>
+                    </div>
+                }
+            </div>
+            <div style="margin-top:8px">
+                <input type="file" name="imageFiles" accept="image/*" multiple class="field" />
+                <label class="chk" style="margin-top:6px"><input asp-for="NewImageIsMain" type="checkbox" /> İlk yeni yüklenen resmi ana yap</label>
+            </div>
+        </div>
+
+        @* ---------------- FİYATLAR ---------------- *@
+        <div class="frm-row">
+            <label>Fiyatlar</label>
+            <small class="hint">Genel (tüm şube) fiyatları. Şube/liste/müşteri bazlı fiyatlar Fiyat Matrisi ekranında yönetilir ve burada değiştirilemez (korunur).</small>
+            <table class="bo-table" id="pricesTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:16%">Tip</th>
+                        <th style="width:20%">Birim</th>
+                        <th style="width:16%">Fiyat</th>
+                        <th style="width:16%">Liste</th>
+                        <th style="width:14%">KDV Dahil</th>
+                        <th style="width:12%">Kapsam</th>
+                        <th class="ar" style="width:6%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="pricesBody">
+                @for (int i = 0; i < Model.Prices.Count; i++)
+                {
+                    var row = Model.Prices[i];
+                    if (row.Scoped)
+                    {
+                        @* Kapsamlı (matris) fiyat: SALT-OKUNUR gösterim + tüm alanlar hidden ile pass-through *@
+                        <tr class="price-row scoped-row">
+                            <td>
+                                @(((MindAeonRest.Models.PriceType)row.PriceType).ToTr())
+                                <input type="hidden" name="Prices[@i].PriceType" value="@row.PriceType" />
+                                <input type="hidden" name="Prices[@i].Scoped" value="true" />
+                            </td>
+                            <td><span class="muted">#@row.UnitId</span><input type="hidden" name="Prices[@i].UnitId" value="@row.UnitId" /></td>
+                            <td>@row.Price.ToString("N2")<input type="hidden" name="Prices[@i].Price" value="@row.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)" /></td>
+                            <td>@(row.ListPrice is null ? "—" : row.ListPrice.Value.ToString("N2"))<input type="hidden" name="Prices[@i].ListPrice" value="@(row.ListPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture))" /></td>
+                            <td>@(row.IsTaxIncluded ? "Evet" : "Hayır")<input type="hidden" name="Prices[@i].IsTaxIncluded" value="@row.IsTaxIncluded.ToString().ToLower()" /></td>
+                            <td><span class="badge-off">@(row.BranchName ?? "Kapsamlı")</span></td>
+                            <td class="ar">
+                                <input type="hidden" name="Prices[@i].CurrencyId" value="@row.CurrencyId" />
+                                <input type="hidden" name="Prices[@i].BranchId" value="@row.BranchId" />
+                                <input type="hidden" name="Prices[@i].CustomerId" value="@row.CustomerId" />
+                                <input type="hidden" name="Prices[@i].CustomerGroupId" value="@row.CustomerGroupId" />
+                                <input type="hidden" name="Prices[@i].PriceListId" value="@row.PriceListId" />
+                                <input type="hidden" name="Prices[@i].StartDateTime" value="@(row.StartDateTime?.ToString("s"))" />
+                                <input type="hidden" name="Prices[@i].EndDateTime" value="@(row.EndDateTime?.ToString("s"))" />
+                                <input type="hidden" name="Prices[@i].IsActive" value="@row.IsActive.ToString().ToLower()" />
+                                🔒
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr class="price-row">
+                            <td>
+                                <select name="Prices[@i].PriceType" class="field">
+                                    @foreach (var (val, text) in MindAeonRestWeb.Pages.BackOffice.Products.EditModel.PriceTypeOptions)
+                                    {
+                                        <option value="@val" selected="@(row.PriceType == val)">@text</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select name="Prices[@i].UnitId" class="field">
+                                    @foreach (var opt in Model.UnitOptionsForRows)
+                                    {
+                                        <option value="@opt.Value" selected="@(row.UnitId.ToString() == opt.Value)">@opt.Text</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><input name="Prices[@i].Price" value="@row.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="field" /></td>
+                            <td><input name="Prices[@i].ListPrice" value="@(row.ListPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" min="0" class="field" /></td>
+                            <td><label class="chk"><input name="Prices[@i].IsTaxIncluded" type="checkbox" value="true" @(row.IsTaxIncluded ? "checked" : "") /></label></td>
+                            <td><span class="muted">Genel</span></td>
+                            <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'price')">Sil</button></td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addPrice()" style="margin-top:8px">+ Fiyat Ekle</button>
+        </div>
+
+        @* ---------------- BİRİMLER ---------------- *@
+        <div class="frm-row">
+            <label>Birimler</label>
+            <small class="hint">Ana birim + alternatif birimler ve çevrim katsayıları. İlk "Ana" işaretli satır ana birim olur.</small>
+            <table class="bo-table" id="unitsTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:22%">Birim</th>
+                        <th style="width:8%">Ana</th>
+                        <th style="width:11%">Çevrim 1</th>
+                        <th style="width:11%">Çevrim 2</th>
+                        <th style="width:9%">En</th>
+                        <th style="width:9%">Boy</th>
+                        <th style="width:11%">Yükseklik</th>
+                        <th style="width:11%">Ağırlık</th>
+                        <th class="ar" style="width:6%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="unitsBody">
+                @for (int i = 0; i < Model.UnitRows.Count; i++)
+                {
+                    var u = Model.UnitRows[i];
+                    <tr class="unit-row">
+                        <td>
+                            <select name="UnitRows[@i].UnitId" class="field">
+                                @foreach (var opt in Model.UnitOptionsForRows)
+                                {
+                                    <option value="@opt.Value" selected="@(u.UnitId.ToString() == opt.Value)">@opt.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td><label class="chk"><input name="UnitRows[@i].IsMainUnit" type="checkbox" value="true" @(u.IsMainUnit ? "checked" : "") /></label></td>
+                        <td><input name="UnitRows[@i].ConversionFactor1" value="@u.ConversionFactor1.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.0001" min="0" class="field" /></td>
+                        <td><input name="UnitRows[@i].ConversionFactor2" value="@u.ConversionFactor2.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.0001" min="0" class="field" /></td>
+                        <td><input name="UnitRows[@i].Width" value="@(u.Width?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" class="field" /></td>
+                        <td><input name="UnitRows[@i].Length" value="@(u.Length?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" class="field" /></td>
+                        <td><input name="UnitRows[@i].Height" value="@(u.Height?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" class="field" /></td>
+                        <td><input name="UnitRows[@i].Weight" value="@(u.Weight?.ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" step="0.01" class="field" /></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'unit')">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addUnit()" style="margin-top:8px">+ Birim Ekle</button>
+        </div>
+
+        @* ---------------- BARKODLAR ---------------- *@
+        <div class="frm-row">
+            <label>Barkodlar</label>
+            <table class="bo-table" id="barcodesTable" style="margin-top:8px">
+                <thead>
+                    <tr><th style="width:55%">Barkod</th><th style="width:39%">Birim</th><th class="ar" style="width:6%">—</th></tr>
+                </thead>
+                <tbody id="barcodesBody">
+                @for (int i = 0; i < Model.Barcodes.Count; i++)
+                {
+                    var b = Model.Barcodes[i];
+                    <tr class="barcode-row">
+                        <td><input name="Barcodes[@i].Barcode" value="@b.Barcode" class="field" maxlength="60" /></td>
+                        <td>
+                            <select name="Barcodes[@i].UnitId" class="field">
+                                @foreach (var opt in Model.UnitOptionsForRows)
+                                {
+                                    <option value="@opt.Value" selected="@(b.UnitId.ToString() == opt.Value)">@opt.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'barcode')">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addBarcode()" style="margin-top:8px">+ Barkod Ekle</button>
+        </div>
+
+        @* ---------------- SEÇENEKLER (VARYANT) ---------------- *@
+        <div class="frm-row">
+            <label>Seçenekler (Varyant)</label>
+            <small class="hint">Grup bazlı seçenekler (ör. Boyut → Küçük/Orta/Büyük) ve fiyat farkı. POS'ta her gruptan bir seçim sorulur.</small>
+            <table class="bo-table" id="optionsTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:28%">Grup</th>
+                        <th style="width:28%">Seçenek</th>
+                        <th style="width:18%">Fiyat Farkı</th>
+                        <th style="width:12%">Varsayılan</th>
+                        <th class="ar" style="width:6%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="optionsBody">
+                @for (int i = 0; i < Model.Options.Count; i++)
+                {
+                    var o = Model.Options[i];
+                    <tr class="option-row">
+                        <td><input name="Options[@i].GroupName" value="@o.GroupName" class="field" maxlength="60" /></td>
+                        <td><input name="Options[@i].Name" value="@o.Name" class="field" maxlength="60" /></td>
+                        <td><input name="Options[@i].PriceDelta" value="@o.PriceDelta.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" class="field" /></td>
+                        <td><label class="chk"><input name="Options[@i].IsDefault" type="checkbox" value="true" @(o.IsDefault ? "checked" : "") /></label></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'option')">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addOption()" style="margin-top:8px">+ Seçenek Ekle</button>
+        </div>
+
+        @* ---------------- REÇETE / MENÜ BİLEŞENLERİ ---------------- *@
+        <div class="frm-row">
+            <label>Reçete / Menü Bileşenleri</label>
+            <small class="hint">Bu ürün bir menü/reçete ise bileşen ürünler ve miktarları. Mutfağa gönderince stoktan reçeteyle düşer.</small>
+            <table class="bo-table" id="recipeTable" style="margin-top:8px">
+                <thead>
+                    <tr>
+                        <th style="width:44%">Bileşen Ürün</th>
+                        <th style="width:22%">Miktar</th>
+                        <th style="width:28%">Birim</th>
+                        <th class="ar" style="width:6%">—</th>
+                    </tr>
+                </thead>
+                <tbody id="recipeBody">
+                @for (int i = 0; i < Model.Recipe.Count; i++)
+                {
+                    var r = Model.Recipe[i];
+                    <tr class="recipe-row">
+                        <td>
+                            <select name="Recipe[@i].ComponentProductId" class="field">
+                                @foreach (var opt in Model.ComponentOptions)
+                                {
+                                    <option value="@opt.Value" selected="@(r.ComponentProductId.ToString() == opt.Value)">@opt.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input name="Recipe[@i].Quantity" value="@r.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.001" min="0" class="field" /></td>
+                        <td>
+                            <select name="Recipe[@i].UnitId" class="field">
+                                @foreach (var opt in Model.UnitOptionsForRows)
+                                {
+                                    <option value="@opt.Value" selected="@(r.UnitId.ToString() == opt.Value)">@opt.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'recipe')">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addRecipe()" style="margin-top:8px">+ Bileşen Ekle</button>
+        </div>
+
+        @* ---------------- AÇIKLAMALAR ---------------- *@
+        <div class="frm-row">
+            <label>Açıklamalar (Hazır Notlar)</label>
+            <small class="hint">Kiosk siparişinde seçilebilen, mutfakta görünen hazır notlar (ör. "Soğan olmasın").</small>
+            <table class="bo-table" id="descTable" style="margin-top:8px">
+                <thead>
+                    <tr><th style="width:78%">Açıklama</th><th style="width:16%">Aktif</th><th class="ar" style="width:6%">—</th></tr>
+                </thead>
+                <tbody id="descBody">
+                @for (int i = 0; i < Model.Descriptions.Count; i++)
+                {
+                    var d = Model.Descriptions[i];
+                    <tr class="desc-row">
+                        <td><input name="Descriptions[@i].Description" value="@d.Description" class="field" maxlength="200" /></td>
+                        <td><label class="chk"><input name="Descriptions[@i].IsActive" type="checkbox" value="true" @(d.IsActive ? "checked" : "") /></label></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'desc')">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addDesc()" style="margin-top:8px">+ Açıklama Ekle</button>
+        </div>
+
+        @* ---------------- ŞUBE TÜKETİM DEPOLARI ---------------- *@
+        <div class="frm-row">
+            <label>Şube Tüketim Depoları</label>
+            <small class="hint">Her şube için bu ürünün stok düşümünde kullanılacak depo.</small>
+            @if (Model.Consume.Count == 0)
+            {
+                <small class="hint">Tanımlı şube yok.</small>
+            }
+            else
+            {
+                <table class="bo-table" style="margin-top:8px">
+                    <thead>
+                        <tr><th style="width:45%">Şube</th><th style="width:55%">Tüketim Deposu</th></tr>
+                    </thead>
+                    <tbody>
+                    @for (int i = 0; i < Model.Consume.Count; i++)
+                    {
+                        var c = Model.Consume[i];
+                        var whForBranch = Model.WarehousePicks.Where(w => w.BranchId == c.BranchId).ToList();
+                        <tr class="consume-row">
+                            <td>
+                                @c.BranchName
+                                <input type="hidden" name="Consume[@i].BranchId" value="@c.BranchId" />
+                                <input type="hidden" name="Consume[@i].BranchName" value="@c.BranchName" />
+                            </td>
+                            <td>
+                                <select name="Consume[@i].ConsumeWarehouseId" class="field">
+                                    <option value="0" selected="@(c.ConsumeWarehouseId == 0)">(Depo seçiniz)</option>
+                                    @foreach (var w in whForBranch)
+                                    {
+                                        <option value="@w.Id" selected="@(c.ConsumeWarehouseId == w.Id)">@w.Name</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Products" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        const PRICE_TYPES = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            MindAeonRestWeb.Pages.BackOffice.Products.EditModel.PriceTypeOptions.Select(o => new { v = o.Value, t = o.Text })));
+        const UNIT_OPTS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.UnitOptionsForRows.Select(o => new { v = o.Value, t = o.Text })));
+        const COMPONENT_OPTS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.ComponentOptions.Select(o => new { v = o.Value, t = o.Text })));
+        const DEFAULT_PRICE_TYPE = @((int)MindAeonRest.Models.PriceType.Satis);
+        const ANTIFORGERY = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+        function unitOptionsHtml(sel) {
+            return UNIT_OPTS.map(o => `<option value="${o.v}" ${o.v === (sel ?? '0') ? 'selected' : ''}>${o.t}</option>`).join('');
+        }
+        function componentOptionsHtml(sel) {
+            return COMPONENT_OPTS.map(o => `<option value="${o.v}" ${o.v === (sel ?? '0') ? 'selected' : ''}>${o.t}</option>`).join('');
+        }
+
+        // Yalnız görünür satırları yeniden indeksle; kapsamlı (kilitli) fiyat satırları da sırada.
+        function reindex(bodyId, prefix) {
+            let i = 0;
+            document.querySelectorAll('#' + bodyId + ' > tr').forEach(row => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(new RegExp(prefix + '\\\\[\\\\d+\\\\]'), prefix + '[' + i + ']');
+                });
+                i++;
+            });
+        }
+
+        function removeRow(btn, kind) {
+            const map = {
+                price: ['pricesBody', 'Prices'], unit: ['unitsBody', 'UnitRows'], barcode: ['barcodesBody', 'Barcodes'],
+                option: ['optionsBody', 'Options'], recipe: ['recipeBody', 'Recipe'], desc: ['descBody', 'Descriptions']
+            };
+            const [bodyId, prefix] = map[kind];
+            btn.closest('tr')?.remove();
+            reindex(bodyId, prefix);
+        }
+
+        function addPrice() {
+            const body = document.getElementById('pricesBody');
+            const i = body.querySelectorAll('tr').length;
+            const pt = PRICE_TYPES.map(o => `<option value="${o.v}" ${o.v === DEFAULT_PRICE_TYPE ? 'selected' : ''}>${o.t}</option>`).join('');
+            const tr = document.createElement('tr');
+            tr.className = 'price-row';
+            tr.innerHTML =
+                `<td><select name="Prices[${i}].PriceType" class="field">${pt}</select></td>` +
+                `<td><select name="Prices[${i}].UnitId" class="field">${unitOptionsHtml()}</select></td>` +
+                `<td><input name="Prices[${i}].Price" value="0" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td><input name="Prices[${i}].ListPrice" value="" type="number" step="0.01" min="0" class="field" /></td>` +
+                `<td><label class="chk"><input name="Prices[${i}].IsTaxIncluded" type="checkbox" value="true" checked /></label></td>` +
+                `<td><span class="muted">Genel</span></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'price')">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function addUnit() {
+            const body = document.getElementById('unitsBody');
+            const i = body.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'unit-row';
+            tr.innerHTML =
+                `<td><select name="UnitRows[${i}].UnitId" class="field">${unitOptionsHtml()}</select></td>` +
+                `<td><label class="chk"><input name="UnitRows[${i}].IsMainUnit" type="checkbox" value="true" /></label></td>` +
+                `<td><input name="UnitRows[${i}].ConversionFactor1" value="1" type="number" step="0.0001" min="0" class="field" /></td>` +
+                `<td><input name="UnitRows[${i}].ConversionFactor2" value="1" type="number" step="0.0001" min="0" class="field" /></td>` +
+                `<td><input name="UnitRows[${i}].Width" value="" type="number" step="0.01" class="field" /></td>` +
+                `<td><input name="UnitRows[${i}].Length" value="" type="number" step="0.01" class="field" /></td>` +
+                `<td><input name="UnitRows[${i}].Height" value="" type="number" step="0.01" class="field" /></td>` +
+                `<td><input name="UnitRows[${i}].Weight" value="" type="number" step="0.01" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'unit')">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function addBarcode() {
+            const body = document.getElementById('barcodesBody');
+            const i = body.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'barcode-row';
+            tr.innerHTML =
+                `<td><input name="Barcodes[${i}].Barcode" value="" class="field" maxlength="60" /></td>` +
+                `<td><select name="Barcodes[${i}].UnitId" class="field">${unitOptionsHtml()}</select></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'barcode')">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function addOption() {
+            const body = document.getElementById('optionsBody');
+            const i = body.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'option-row';
+            tr.innerHTML =
+                `<td><input name="Options[${i}].GroupName" value="" class="field" maxlength="60" /></td>` +
+                `<td><input name="Options[${i}].Name" value="" class="field" maxlength="60" /></td>` +
+                `<td><input name="Options[${i}].PriceDelta" value="0" type="number" step="0.01" class="field" /></td>` +
+                `<td><label class="chk"><input name="Options[${i}].IsDefault" type="checkbox" value="true" /></label></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'option')">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function addRecipe() {
+            const body = document.getElementById('recipeBody');
+            const i = body.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'recipe-row';
+            tr.innerHTML =
+                `<td><select name="Recipe[${i}].ComponentProductId" class="field">${componentOptionsHtml()}</select></td>` +
+                `<td><input name="Recipe[${i}].Quantity" value="1" type="number" step="0.001" min="0" class="field" /></td>` +
+                `<td><select name="Recipe[${i}].UnitId" class="field">${unitOptionsHtml()}</select></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'recipe')">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function addDesc() {
+            const body = document.getElementById('descBody');
+            const i = body.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'desc-row';
+            tr.innerHTML =
+                `<td><input name="Descriptions[${i}].Description" value="" class="field" maxlength="200" /></td>` +
+                `<td><label class="chk"><input name="Descriptions[${i}].IsActive" type="checkbox" value="true" checked /></label></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this,'desc')">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        // Mevcut resmi "sil" işaretle (gizle + Remove=true; hidden Id form ile gider).
+        function removeExistingImage(btn) {
+            const card = btn.closest('.field');
+            if (!card) return;
+            card.querySelector('.img-remove-flag').value = 'true';
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio) radio.checked = false;
+            card.style.display = 'none';
+        }
+
+        // ---- "+" hızlı ekleme (AJAX → Service.Save → seçici/listeye ekle) ----
+        async function quickPost(handler, code, name) {
+            const fd = new FormData();
+            fd.append('code', code);
+            fd.append('name', name);
+            fd.append('__RequestVerificationToken', ANTIFORGERY);
+            const res = await fetch(`?handler=${handler}`, { method: 'POST', body: fd });
+            return await res.json();
+        }
+
+        async function quickAddUnit() {
+            const code = prompt('Yeni birim kodu (ör. ADET):'); if (!code) return;
+            const name = prompt('Birim adı:'); if (!name) return;
+            const r = await quickPost('QuickUnit', code, name);
+            if (!r.ok) { alert(r.error); return; }
+            // Tüm birim seçicilerine ekle.
+            document.querySelectorAll('#mainUnitSelect, select[name$=".UnitId"]').forEach(sel => {
+                sel.appendChild(new Option(r.text, r.id));
+            });
+            document.getElementById('mainUnitSelect').value = r.id;
+        }
+
+        async function quickAddTax() {
+            const code = prompt('Yeni vergi grubu kodu:'); if (!code) return;
+            const name = prompt('Vergi grubu adı:'); if (!name) return;
+            const r = await quickPost('QuickTax', code, name);
+            if (!r.ok) { alert(r.error); return; }
+            document.querySelectorAll('.tax-select').forEach(sel => sel.appendChild(new Option(r.text, r.id)));
+        }
+
+        async function quickAddCategory() {
+            const code = prompt('Yeni kategori kodu:'); if (!code) return;
+            const name = prompt('Kategori adı:'); if (!name) return;
+            const r = await quickPost('QuickCategory', code, name);
+            if (!r.ok) { alert(r.error); return; }
+            const grid = document.getElementById('categoryGrid');
+            const lbl = document.createElement('label');
+            lbl.className = 'chk';
+            lbl.innerHTML = `<input type="checkbox" name="CategoryIds" value="${r.id}" checked /> ${r.name} <span class="muted">(${r.code})</span>`;
+            grid.appendChild(lbl);
+            document.getElementById('noCategoryHint')?.remove();
+        }
+    </script>
+}

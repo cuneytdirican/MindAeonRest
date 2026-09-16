@@ -1,0 +1,141 @@
+@page
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Dealer.TicketsModel
+@{
+    ViewData["Title"] = "Destek — MindAeon";
+}
+@await Html.PartialAsync("_Breadcrumb", ("Bayi", "/Dealer", "Destek"))
+
+<div class="page-head flex items-center justify-between" style="gap:var(--sp-4); flex-wrap:wrap;">
+    <div>
+        <h1>Destek</h1>
+        <div class="subtitle">Destek taleplerinizi açın ve yöneticiyle yazışın.</div>
+    </div>
+    <button class="btn btn-primary" type="button" onclick="window.dispatchEvent(new CustomEvent('open-tk'))">
+        <i data-lucide="plus"></i> Yeni Talep
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Flash))
+{
+    <div class="toast @(Model.FlashKind ?? "info")" style="margin-bottom:var(--sp-4); max-width:none;">
+        <i data-lucide="info"></i><div>@Model.Flash</div>
+    </div>
+}
+
+<div class="grid" style="grid-template-columns: 1fr 1.4fr; gap:var(--sp-4);">
+    <!-- Talep listesi -->
+    <div class="card" style="padding:0; overflow:hidden;">
+        <div class="card__head" style="padding:var(--sp-4) var(--sp-5); margin:0; border-bottom:1px solid var(--border);">
+            <h3 class="card__title">Taleplerim (@Model.Tickets.Count)</h3>
+            <span class="badge info">@Model.OpenCount açık</span>
+        </div>
+        @if (Model.Tickets.Count == 0)
+        {
+            <div class="text-muted text-sm" style="padding:var(--sp-5);">Henüz destek talebi yok.</div>
+        }
+        else
+        {
+            <div>
+                @foreach (var t in Model.Tickets)
+                {
+                    var st = DealerLabels.TicketStatus(t.Status);
+                    var pr = DealerLabels.TicketPriority(t.Priority);
+                    var active = Model.SelectedId == t.Id;
+                    <a href="?SelectedId=@t.Id"
+                       style="display:block; padding:var(--sp-3) var(--sp-5); border-bottom:1px solid var(--border); text-decoration:none; @(active ? "background:color-mix(in srgb, var(--primary) 8%, transparent);" : "")">
+                        <div class="flex items-center justify-between gap-2">
+                            <span style="font-weight:600; color:var(--text-1);">@t.Subject</span>
+                            <span class="badge @st.Css">@st.Text</span>
+                        </div>
+                        <div class="flex items-center gap-2" style="margin-top:4px;">
+                            <span class="badge @pr.Css">@pr.Text</span>
+                            <span class="text-sm text-muted">#@t.Id · @t.MessageCount mesaj · @t.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Talep detayı -->
+    <div class="card">
+        @if (Model.Selected is null)
+        {
+            <div class="text-muted text-sm" style="display:flex; flex-direction:column; align-items:center; gap:var(--sp-3); padding:var(--sp-6) 0;">
+                <i data-lucide="messages-square" style="width:40px; height:40px; color:var(--text-3);"></i>
+                Soldan bir talep seçin veya yeni talep açın.
+            </div>
+        }
+        else
+        {
+            var st = DealerLabels.TicketStatus(Model.Selected.Status);
+            <div class="card__head">
+                <div>
+                    <h3 class="card__title">@Model.Selected.Subject</h3>
+                    <div class="text-sm text-muted">#@Model.Selected.Id · açılış @Model.Selected.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                </div>
+                <span class="badge @st.Css"><span class="dot"></span>@st.Text</span>
+            </div>
+
+            <div class="timeline" style="margin-bottom:var(--sp-5);">
+                @foreach (var m in Model.Selected.Messages)
+                {
+                    <div class="timeline__item">
+                        <div class="timeline__time">@m.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                        <div style="white-space:pre-wrap; color:var(--text-1); margin-top:4px;">@m.Body</div>
+                    </div>
+                }
+            </div>
+
+            @if (Model.Selected.Status != 3)
+            {
+                <form method="post" asp-page-handler="Reply">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ticketId" value="@Model.Selected.Id" />
+                    <div class="form-field">
+                        <label>Yanıt</label>
+                        <textarea name="ReplyBody" rows="3" required placeholder="Mesajınızı yazın…"></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit"><i data-lucide="send"></i> Gönder</button>
+                </form>
+            }
+            else
+            {
+                <div class="text-sm text-muted">Bu talep kapatılmıştır.</div>
+            }
+        }
+    </div>
+</div>
+
+<!-- ============ Yeni Talep modalı ============ -->
+<div id="tkModal" x-data="{open:false}" x-show="open" x-cloak @@open-tk.window="open=true" class="modal-backdrop" @@keydown.escape.window="open=false" style="display:none;">
+    <div class="modal" @@click.outside="open=false">
+        <form method="post" asp-page-handler="Create">
+            @Html.AntiForgeryToken()
+            <div class="modal__head">
+                <h3 class="modal__title">Yeni Destek Talebi</h3>
+                <button class="btn btn-ghost btn-icon" type="button" @@click="open=false"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal__body">
+                <div class="form-field"><label>Konu *</label><input name="Subject" required /></div>
+                <div class="form-field">
+                    <label>Öncelik</label>
+                    <select name="Priority">
+                        <option value="0">Düşük</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="2">Yüksek</option>
+                        <option value="3">Acil</option>
+                    </select>
+                </div>
+                <div class="form-field"><label>Mesaj *</label><textarea name="Body" rows="4" required></textarea></div>
+            </div>
+            <div class="modal__foot">
+                <button class="btn" type="button" @@click="open=false">Vazgeç</button>
+                <button class="btn btn-primary" type="submit"><i data-lucide="send"></i> Talebi Aç</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <script>lucide.createIcons();</script> }

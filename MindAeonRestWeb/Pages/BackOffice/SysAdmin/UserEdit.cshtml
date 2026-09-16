@@ -1,0 +1,170 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.SysAdmin.UserEditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Kullanıcı (Süper Admin)" : $"Kullanıcı · {Model.Username}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>👤 @(Model.IsNew ? "Yeni Kullanıcı" : "Kullanıcı Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/SysAdmin/Users">← Kullanıcılar</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+@if (Model.Result is { } res)
+{
+    <div class="alert-success">
+        ✅ <strong>@res.FullName (@res.Username)</strong> kaydedildi.
+    </div>
+
+    @if (res.TempPassword is { } tp)
+    {
+        <div class="bo-card bo-form" style="border:1px solid var(--warn,#c98a00)">
+            <h3 style="margin:0 0 10px">🔑 Geçici Parola</h3>
+            <div class="bo-alert" style="margin-bottom:14px">
+                ⚠️ <strong>Geçici parola yalnızca bir kez gösterilir.</strong> Hiçbir yerde saklanmaz, loglanmaz ve
+                tekrar görüntülenemez. Kullanıcıya <strong>güvenli bir kanaldan</strong> iletin; ilk girişte değişmesi zorunludur.
+            </div>
+            <div class="frm-row">
+                <label>Geçici Parola</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;max-width:560px">
+                    <input id="tpass" class="field" value="@tp" readonly onclick="this.select()"
+                           style="font-family:Consolas,monospace;flex:1;min-width:200px" />
+                    <button type="button" class="btn btn-sm" id="copybtn" data-copy="@tp">Kopyala</button>
+                </div>
+                <small class="hint" id="copymsg" style="visibility:hidden">Panoya kopyalandı.</small>
+            </div>
+            <div class="frm-row">
+                <label></label>
+                <a class="btn btn-primary" href="/BackOffice/SysAdmin/Users">Kullanıcılar'a dön</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <a class="btn btn-primary" href="/BackOffice/SysAdmin/Users">Kullanıcılar'a dön</a>
+    }
+
+    @section Scripts {
+        <script>
+            (function () {
+                var btn = document.getElementById('copybtn');
+                var msg = document.getElementById('copymsg');
+                if (!btn) return;
+                btn.addEventListener('click', function () {
+                    var val = btn.getAttribute('data-copy') || '';
+                    var done = function () {
+                        if (msg) { msg.style.visibility = 'visible'; setTimeout(function () { msg.style.visibility = 'hidden'; }, 2500); }
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(val).then(done, function () {
+                            var inp = document.getElementById('tpass');
+                            if (inp) { inp.select(); document.execCommand('copy'); } done();
+                        });
+                    } else {
+                        var inp = document.getElementById('tpass');
+                        if (inp) { inp.select(); document.execCommand('copy'); } done();
+                    }
+                });
+            })();
+        </script>
+    }
+}
+else
+{
+    <div class="bo-card bo-hint" style="margin-bottom:12px">
+        Kullanıcı SİSTEM geneline aittir; buradaki <strong>şirket erişimi</strong> kullanıcının hangi kiracı şirketlere
+        (tüm şubeleriyle) giriş yapabileceğini belirler. Yalnız <strong>SysAdmin</strong> erişebilir.
+    </div>
+
+    <div class="bo-card bo-form">
+        <form method="post">
+            <div class="frm-row">
+                <label>Kullanıcı Adı *</label>
+                <input asp-for="Username" class="field" maxlength="100" autocomplete="off"
+                       readonly="@(!Model.IsNew)" required />
+                @if (!Model.IsNew)
+                {
+                    <small class="hint">Kullanıcı adı değiştirilemez.</small>
+                }
+            </div>
+            <div class="frm-row">
+                <label>Ad Soyad *</label>
+                <input asp-for="FullName" class="field" maxlength="150" required />
+            </div>
+
+            <div class="frm-row">
+                <label>@(Model.IsNew ? "Parola / PIN" : "Yeni Parola / PIN")</label>
+                <input asp-for="Password" type="password" class="field" autocomplete="new-password" />
+                <small class="hint">
+                    @if (Model.IsNew) { <text>Boş bırakırsanız güvenli bir <strong>geçici parola</strong> üretilir ve bir kez gösterilir.</text> }
+                    else { <text>Boş bırakılırsa parola değişmez.</text> }
+                </small>
+            </div>
+
+            <div class="frm-row">
+                <label>Roller *</label>
+                <div style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+                    @foreach (var r in Model.RoleOptions)
+                    {
+                        <label class="chk">
+                            <input type="checkbox" name="SelectedRoleIds" value="@r.Id"
+                                   class="@(r.Id == Model.SysAdminRoleId ? "sysadmin-role" : "")"
+                                   @(Model.SelectedRoleIds.Contains(r.Id) ? "checked" : "") />
+                            @r.Name
+                        </label>
+                    }
+                </div>
+                <small class="hint">Mutfak ve SysAdmin tek başına atanır. Garson + Kasiyer birlikte olabilir.</small>
+                <div id="sysadminWarn" class="alert-error" style="display:none;margin-top:8px">
+                    ⚠️ <strong>SysAdmin</strong> rolü çapraz-kiracılı TAM yetki verir (tüm şirketler, tüm veriler, provisioning).
+                    Bu rolü yalnızca gerçekten güvenilen sistem yöneticisine atayın.
+                </div>
+            </div>
+
+            <div class="frm-row">
+                <label class="chk"><input asp-for="IsActive" type="checkbox" /> Kullanıcı aktif</label>
+            </div>
+
+            <div class="frm-row">
+                <label>Şirket Erişimi</label>
+                <div style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;max-height:280px;overflow:auto">
+                    @if (Model.CompanyOptions.Count == 0)
+                    {
+                        <small class="hint">Kayıtlı şirket yok.</small>
+                    }
+                    @foreach (var c in Model.CompanyOptions)
+                    {
+                        <label class="chk">
+                            <input type="checkbox" name="SelectedCompanyIds" value="@c.Id"
+                                   @(Model.SelectedCompanyIds.Contains(c.Id) ? "checked" : "") />
+                            <b>@c.Code</b> — @c.Name
+                        </label>
+                    }
+                </div>
+                <small class="hint">İşaretlenen her şirkete <strong>tüm şubeleriyle</strong> erişim verilir. SysAdmin rolü zaten tüm şirketlere erişir.</small>
+            </div>
+
+            <div class="frm-actions">
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+                <a href="/BackOffice/SysAdmin/Users" class="btn btn-ghost">Vazgeç</a>
+            </div>
+        </form>
+    </div>
+
+    @section Scripts {
+        <script>
+            // SysAdmin rolü işaretliyse görünür uyarı (atama yine izinli).
+            (function () {
+                var warn = document.getElementById('sysadminWarn');
+                var chk = document.querySelector('input.sysadmin-role');
+                function sync() { if (warn) warn.style.display = (chk && chk.checked) ? 'block' : 'none'; }
+                if (chk) { chk.addEventListener('change', sync); sync(); }
+            })();
+        </script>
+    }
+}

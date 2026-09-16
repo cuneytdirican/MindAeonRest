@@ -1,0 +1,97 @@
+@using MindAeonRest.Licence.Data
+@using MindAeonRest.Licence.Portal.Models
+@model MindAeonRest.Licence.Portal.Pages.Admin.TicketsModel
+@{
+    var t = Model.Detail;
+}
+@if (t is null)
+{
+    <div class="card"><p class="text-muted mb-0">Talep bulunamadı.</p></div>
+}
+else
+{
+    var st = AdminLabels.Ticket(t.Status);
+    var pr = AdminLabels.Priority(t.Priority);
+    <div class="card" style="border-color:var(--primary);">
+        <div class="card__head">
+            <div>
+                <h3 class="card__title">@t.Subject</h3>
+                <div class="text-sm text-muted">#@t.Id · Açılış @t.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+            <span class="badge @st.Css"><span class="dot"></span> @st.Text</span>
+        </div>
+
+        <!-- Yönetim aksiyonları -->
+        <div class="flex items-center gap-2" style="flex-wrap:wrap; margin-bottom:var(--sp-4);">
+            <span class="badge @pr.Css">@pr.Text öncelik</span>
+            @if (!string.IsNullOrWhiteSpace(t.AssignedToUserId))
+            {
+                <span class="badge info"><i data-lucide="user-check" style="width:14px;height:14px;"></i> @t.AssignedToUserId</span>
+            }
+            <div class="topbar__spacer"></div>
+            <form hx-post="/Admin/Tickets?handler=Status" hx-target="#tkDetail" hx-swap="innerHTML" class="flex items-center gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@t.Id" />
+                <select name="status" class="btn btn-sm" style="padding:6px 10px;" onchange="this.form.requestSubmit()">
+                    <option value="0" selected="@(t.Status == TicketStatus.Open)">Açık</option>
+                    <option value="1" selected="@(t.Status == TicketStatus.InProgress)">İşlemde</option>
+                    <option value="2" selected="@(t.Status == TicketStatus.Answered)">Yanıtlandı</option>
+                    <option value="3" selected="@(t.Status == TicketStatus.Closed)">Kapalı</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Atama -->
+        <form hx-post="/Admin/Tickets?handler=Assign" hx-target="#tkDetail" hx-swap="innerHTML"
+              class="form-field flex items-end gap-2" style="flex-direction:row; flex-wrap:wrap; margin-bottom:var(--sp-4);">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@t.Id" />
+            <div class="form-field" style="margin:0; flex:1 1 220px;">
+                <label>Atanan Kullanıcı</label>
+                <input type="text" name="assignedToUserId" value="@t.AssignedToUserId" placeholder="E-posta / kullanıcı ID (boş = atamayı kaldır)" />
+            </div>
+            <button type="submit" class="btn"><i data-lucide="user-cog"></i> Ata</button>
+        </form>
+
+        <!-- Mesaj akışı -->
+        <div class="timeline" style="max-height:340px; overflow-y:auto;">
+            @foreach (var m in t.Messages)
+            {
+                <div class="timeline__item">
+                    <div class="timeline__time">
+                        @m.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                        @if (m.IsInternal)
+                        {
+                            <span class="badge warning" style="margin-left:6px;">İç not</span>
+                        }
+                    </div>
+                    <div class="text-sm" style="white-space:pre-wrap;">@m.Body</div>
+                </div>
+            }
+        </div>
+
+        <!-- Yanıt -->
+        @if (t.Status != TicketStatus.Closed)
+        {
+            <form hx-post="/Admin/Tickets?handler=Reply" hx-target="#tkDetail" hx-swap="innerHTML"
+                  x-data x-on:htmx:after-request="$el.reset()" style="margin-top:var(--sp-4);">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@t.Id" />
+                <div class="form-field">
+                    <label>Yanıt</label>
+                    <textarea name="body" rows="3" required placeholder="Yanıtınızı yazın…"></textarea>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 text-sm" style="flex-direction:row;">
+                        <input type="checkbox" name="isInternal" value="true" style="width:auto;" /> İç not (müşteri görmez)
+                    </label>
+                    <button type="submit" class="btn btn-primary"><i data-lucide="send"></i> Gönder</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <p class="text-muted" style="margin-top:var(--sp-4);">Kapalı talebe mesaj eklenemez.</p>
+        }
+    </div>
+}

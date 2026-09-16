@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MindAeonRest.Licence.Api/MindAeonRest.Licence.Api.csproj" />
+  <Project Path="MindAeonRest.Licence.Data/MindAeonRest.Licence.Data.csproj" />
+  <Project Path="MindAeonRest.Licence.Portal/MindAeonRest.Licence.Portal.csproj" />
+  <Project Path="MindAeonRest.Licensing/MindAeonRest.Licensing.csproj" />
+</Solution>

@@ -1,0 +1,64 @@
+@page
+@using MindAeonRest.Models
+@model MindAeonRestWeb.Pages.BackOffice.Documents.ConvertModel
+@{
+    ViewData["Title"] = $"{Model.SourceTitle} → {Model.TargetTitle}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>⇪ @Model.SourceTitle → @Model.TargetTitle</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Documents?type=@((int)Model.Type)">← Liste</a>
+</div>
+
+<div class="bo-count">@Model.SourceTitle seçip @Model.TargetTitle taslağı oluşturun. Aynı cariye ait olmalı; yalnız kalan (dönüşmemiş) miktar aktarılır.</div>
+
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error">@Model.Error</div> }
+
+<form method="get" class="bo-filter">
+    <input type="hidden" name="type" value="@((int)Model.Type)" />
+    <label>Başlangıç <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <label>Bitiş <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="field" /></label>
+    <button type="submit" class="btn">Göster</button>
+</form>
+
+<form method="post" asp-page-handler="Create">
+    <input type="hidden" name="Type" value="@((int)Model.Type)" />
+    <input type="hidden" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+    <input type="hidden" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+    <div class="bo-card">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th style="width:4%">Seç</th>
+                    <th>Fiş No</th><th>Tarih</th><th>Cari</th>
+                    <th class="ar">Tutar</th><th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Sources.Count == 0)
+            {
+                <tr><td colspan="6" class="empty">Dönüştürülebilir kaynak evrak yok.</td></tr>
+            }
+            @foreach (var d in Model.Sources)
+            {
+                <tr>
+                    <td><input type="checkbox" name="SelectedIds" value="@d.Id" /></td>
+                    <td><b>@d.FisNo</b></td>
+                    <td>@d.DateText</td>
+                    <td>@d.CustomerName</td>
+                    <td class="ar">@d.GrandTotalText</td>
+                    <td><span class="badge-ok">@d.StatusText</span></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Sources.Count > 0)
+    {
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">⇪ Taslak Oluştur</button>
+            <a href="/BackOffice/Documents?type=@((int)Model.Type)" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    }
+</form>

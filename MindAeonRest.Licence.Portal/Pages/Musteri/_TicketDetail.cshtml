@@ -1,0 +1,61 @@
+@using MindAeonRest.Licence.Data
+@model MindAeonRest.Licence.Portal.Pages.Musteri.TicketDetailVm?
+@{
+    var meId = User.FindFirst("sub")?.Value;
+}
+@if (Model is null)
+{
+    <div class="text-muted text-sm" style="padding:var(--sp-4)">Talep bulunamadı veya görüntüleme yetkiniz yok.</div>
+}
+else
+{
+    <div class="card__head" style="margin-bottom:var(--sp-3)">
+        <div>
+            <h2 class="card__title">@Model.Subject</h2>
+            <span class="text-muted text-sm tabular">#@Model.Id · Açılış: @Model.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+        </div>
+        <div class="flex gap-2">
+            <span class="badge @CustomerUi.PriorityBadge(Model.Priority)">@CustomerUi.PriorityLabel(Model.Priority)</span>
+            <span class="badge @CustomerUi.TicketBadge(Model.Status)"><span class="dot"></span>@CustomerUi.TicketLabel(Model.Status)</span>
+        </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--sp-3);max-height:420px;overflow-y:auto;padding:var(--sp-1)">
+        @foreach (var m in Model.Messages)
+        {
+            var mine = m.AuthorUserId == meId;
+            <div style="align-self:@(mine ? "flex-end" : "flex-start");max-width:78%">
+                <div style="padding:var(--sp-3) var(--sp-4);border-radius:var(--radius);background:@(mine ? "color-mix(in srgb, var(--primary) 12%, transparent)" : "var(--surface-2)");border:1px solid @(mine ? "color-mix(in srgb, var(--primary) 30%, transparent)" : "var(--border)")">
+                    <div style="white-space:pre-wrap;font-size:var(--fs-sm)">@m.Body</div>
+                </div>
+                <div class="text-muted text-sm" style="margin-top:4px;text-align:@(mine ? "right" : "left")">
+                    @(mine ? "Siz" : "Destek") · @m.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.Status != TicketStatus.Closed)
+    {
+        <form hx-post="/Musteri/Destek?handler=Reply" hx-target="#ticketDetail" hx-swap="innerHTML"
+              style="margin-top:var(--sp-4);border-top:1px solid var(--border);padding-top:var(--sp-4)"
+              hx-on::after-request="if(event.detail.successful) this.reset()">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="form-field" style="margin-bottom:var(--sp-3)">
+                <label for="replyBody">Yanıtınız</label>
+                <textarea id="replyBody" name="body" rows="3" required placeholder="Mesajınızı yazın…"></textarea>
+            </div>
+            <div class="flex" style="justify-content:flex-end">
+                <button class="btn btn-primary" type="submit"><i data-lucide="send"></i>Gönder</button>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="text-muted text-sm" style="margin-top:var(--sp-4);border-top:1px solid var(--border);padding-top:var(--sp-4)">
+            Bu talep kapatılmıştır. Yeni bir konu için yeni talep oluşturabilirsiniz.
+        </div>
+    }
+    <script>if (window.lucide) lucide.createIcons();</script>
+}

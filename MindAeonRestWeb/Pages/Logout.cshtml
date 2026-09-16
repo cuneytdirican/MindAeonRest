@@ -1,0 +1,17 @@
+@page
+@model LogoutModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8" /><title>Çıkış…</title></head>
+<body style="font-family:system-ui;background:#0f1115;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh">
+    <p>Çıkış yapılıyor…</p>
+    <script>
+        // Aynı origin PWA'nın oturumunu da temizle (back-office çıkışı = POS çıkışı).
+        try {
+            localStorage.removeItem('mag.token');
+            localStorage.removeItem('mag.session');
+            localStorage.removeItem('mag.creds');
+        } catch (e) { }
+        location.replace('/Index');
+    </script>
+</body></html>

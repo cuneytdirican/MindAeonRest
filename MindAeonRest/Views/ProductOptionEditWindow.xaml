@@ -1,0 +1,31 @@
+<Window x:Class="MindAeonRest.Views.ProductOptionEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Seçenek" SizeToContent="Height" Width="440" MinHeight="320"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="14" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <StackPanel Margin="28,22,28,20">
+            <TextBlock Text="Varyant / Seçenek" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" MouseLeftButtonDown="Header_MouseLeftButtonDown" />
+            <TextBlock Text="Örn. Grup: Boyut → Seçenek: Büyük, Fiyat farkı: +10" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
+
+            <TextBlock Text="GRUP (Boyut / Sıcaklık / Porsiyon…)" Style="{StaticResource FieldLabel}" Margin="0,16,0,6" />
+            <TextBox x:Name="GroupBox" Style="{StaticResource InputTextBox}" />
+
+            <TextBlock Text="SEÇENEK ADI (Küçük / Orta / Büyük…)" Style="{StaticResource FieldLabel}" Margin="0,12,0,6" />
+            <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" />
+
+            <TextBlock Text="FİYAT FARKI (₺) — 0 = aynı fiyat, +/- olabilir" Style="{StaticResource FieldLabel}" Margin="0,12,0,6" />
+            <TextBox x:Name="DeltaBox" Style="{StaticResource InputTextBox}" Text="0" />
+
+            <CheckBox x:Name="DefaultCheck" Content="Varsayılan seçenek" Foreground="{DynamicResource TextBrush}" Margin="0,14,0,0" />
+
+            <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                <Button Content="Vazgeç" Style="{StaticResource GhostButton}" Width="100" Height="40" Click="Cancel_Click" />
+                <Button Content="Kaydet" Style="{StaticResource PrimaryButton}" Width="120" Height="40" Margin="10,0,0,0" Click="Save_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Mutfak">
+  <defs>
+    <linearGradient id="kbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#182231"/><stop offset="1" stop-color="#0f141c"/></linearGradient>
+    <radialGradient id="kg" cx="50%" cy="35%" r="65%"><stop offset="0" stop-color="#ff7a45" stop-opacity=".35"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient>
+    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4356"/><stop offset="1" stop-color="#232a38"/></linearGradient>
+  </defs>
+  <rect width="400" height="300" rx="16" fill="url(#kbg)"/>
+  <ellipse cx="200" cy="120" rx="190" ry="130" fill="url(#kg)"/>
+  <!-- buhar -->
+  <g stroke="#c7d0dd" stroke-width="5" fill="none" stroke-linecap="round" opacity=".5">
+    <path d="M176 96 c-12 -14 12 -22 0 -38"/><path d="M200 92 c-12 -14 12 -22 0 -38"/><path d="M224 96 c-12 -14 12 -22 0 -38"/>
+  </g>
+  <!-- ocak -->
+  <rect x="60" y="236" width="280" height="16" rx="6" fill="#26314a"/>
+  <!-- tencere -->
+  <path d="M120 150 h160 v54 a30 30 0 0 1 -30 30 h-100 a30 30 0 0 1 -30 -30 Z" fill="url(#pot)"/>
+  <ellipse cx="200" cy="150" rx="80" ry="16" fill="#3a4356"/>
+  <ellipse cx="200" cy="150" rx="66" ry="12" fill="#c65a2a" opacity=".85"/>
+  <rect x="96" y="146" width="26" height="10" rx="5" fill="#4a5568"/>
+  <rect x="278" y="146" width="26" height="10" rx="5" fill="#4a5568"/>
+  <!-- alev -->
+  <g fill="#f5a623"><path d="M150 236 q-8 -18 6 -28 q-2 12 8 8 q6 12 -6 20 Z"/><path d="M250 236 q-8 -18 6 -28 q-2 12 8 8 q6 12 -6 20 Z"/></g>
+  <g fill="#ff7a45" opacity=".8"><path d="M154 236 q-4 -10 3 -16 q0 7 4 5 q3 7 -3 11Z"/><path d="M254 236 q-4 -10 3 -16 q0 7 4 5 q3 7 -3 11Z"/></g>
+  <!-- kepçe -->
+  <line x1="316" y1="120" x2="300" y2="200" stroke="#aeb9c8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M300 200 a16 12 0 1 0 .1 0" fill="#aeb9c8"/>
+</svg>

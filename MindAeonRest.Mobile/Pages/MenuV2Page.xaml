@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:p="clr-namespace:MindAeonRest.Mobile.Pages"
+             xmlns:m="clr-namespace:MindAeonRest.Mobile.Models"
+             x:Class="MindAeonRest.Mobile.Pages.MenuV2Page"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{DynamicResource Background}">
+
+    <Grid>
+        <Grid RowDefinitions="Auto,Auto,Auto,*">
+
+            <!-- ÜST ÇUBUK -->
+            <Border Grid.Row="0" Background="{DynamicResource HeaderBrush}" StrokeThickness="0" Padding="10,10">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+                    <Button Text="‹ Masalar" Clicked="Back_Clicked" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold" Padding="0" VerticalOptions="Center" />
+                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Label x:Name="ZoneLabel" Text="" FontSize="10" TextColor="#E8FFF6" HorizontalOptions="Center" />
+                        <Label x:Name="TitleLabel" Text="Masa" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                    <!-- Kişi stepper -->
+                    <HorizontalStackLayout Grid.Column="2" Spacing="0" VerticalOptions="Center" Margin="0,0,8,0">
+                        <Button Text="−" FontSize="16" FontAttributes="Bold" Clicked="CoverMinus_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="8" Padding="8,2" />
+                        <Label x:Name="CoverLabel" Text="👤 0" TextColor="White" FontAttributes="Bold" FontSize="13" VerticalOptions="Center" Margin="6,0" />
+                        <Button Text="+" FontSize="16" FontAttributes="Bold" Clicked="CoverPlus_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="8" Padding="8,2" />
+                    </HorizontalStackLayout>
+                    <Button Grid.Column="3" Text="⇄" FontSize="16" Clicked="Ops_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="8" Padding="8,4" Margin="0,0,8,0" />
+                    <Button Grid.Column="4" Text="📝" FontSize="16" Clicked="Note_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="8" Padding="8,4" Margin="0,0,8,0" />
+                    <Button Grid.Column="5" x:Name="ThemeBtn" Text="🌊" FontSize="16" Clicked="Theme_Clicked" BackgroundColor="#33FFFFFF" TextColor="White" CornerRadius="8" Padding="8,4" />
+                </Grid>
+            </Border>
+
+            <!-- SEGMENT (Menü | Adisyon) + toplam -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" Padding="12,8" ColumnSpacing="8">
+                <Button x:Name="MenuTabBtn" Text="Menü" Clicked="Tab_Menu" CornerRadius="18" Padding="20,6" FontAttributes="Bold" />
+                <Button x:Name="AdisyonTabBtn" Grid.Column="1" Text="Adisyon (0)" Clicked="Tab_Adisyon" CornerRadius="18" Padding="20,6" FontAttributes="Bold" />
+                <Label x:Name="TotalLabel" Grid.Column="3" Text="₺0,00" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource Accent}" VerticalOptions="Center" />
+            </Grid>
+
+            <Label Grid.Row="2" x:Name="ErrorLabel" IsVisible="False" TextColor="{DynamicResource Danger}" FontSize="12.5" Margin="16,0" />
+
+            <!-- İÇERİK -->
+            <Grid Grid.Row="3">
+
+                <!-- ===== MENÜ ===== -->
+                <Grid x:Name="MenuView" ColumnDefinitions="*,Auto">
+                  <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto">
+                    <!-- Arama -->
+                    <Border Grid.Row="0" StrokeShape="RoundRectangle 12" BackgroundColor="{DynamicResource SurfaceAlt}" Stroke="{DynamicResource BorderColor}" Padding="10,2" Margin="12,4">
+                        <Entry Placeholder="Ürün ara…" TextChanged="Search_Changed" BackgroundColor="Transparent"
+                               TextColor="{DynamicResource TextColor}" PlaceholderColor="{DynamicResource TextMuted}" />
+                    </Border>
+
+                    <!-- Kampanyalar (belirgin: uygun olan parlar + KULLANILABİLİR) -->
+                    <ScrollView Grid.Row="1" x:Name="CampaignsScroll" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Padding="12,2,12,6" IsVisible="False">
+                        <CollectionView x:Name="CampaignsView" SelectionMode="None" HeightRequest="50">
+                            <CollectionView.ItemsLayout><LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" /></CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="p:CampaignChipVm">
+                                    <Border StrokeShape="RoundRectangle 16" BackgroundColor="{Binding BgColor}" Stroke="{Binding StrokeColor}" StrokeThickness="{Binding StrokeW}" Padding="14,6">
+                                        <Border.GestureRecognizers><TapGestureRecognizer Tapped="Campaign_Tapped" /></Border.GestureRecognizers>
+                                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                            <Label Text="{Binding Label}" TextColor="{Binding FgColor}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                            <Border IsVisible="{Binding HasStatus}" StrokeShape="RoundRectangle 8" BackgroundColor="{Binding BadgeBg}" StrokeThickness="0" Padding="6,1" VerticalOptions="Center">
+                                                <Label Text="{Binding StatusText}" TextColor="{Binding BadgeFg}" FontSize="9" FontAttributes="Bold" />
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
+
+                    <!-- Kategoriler -->
+                    <CollectionView Grid.Row="2" x:Name="CatsView" SelectionMode="Single" SelectionChanged="Cat_Selected" Margin="12,0" HeightRequest="44">
+                        <CollectionView.ItemsLayout><LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" /></CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="m:CategoryDto">
+                                <Border StrokeShape="RoundRectangle 9" BackgroundColor="{DynamicResource SurfaceAlt}" Stroke="{DynamicResource BorderColor}" Padding="14,7">
+                                    <Label Text="{Binding Name}" TextColor="{DynamicResource TextColor}" VerticalOptions="Center" />
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Ürün kartları -->
+                    <CollectionView Grid.Row="3" x:Name="ProductsView" Margin="12,6,12,0">
+                        <CollectionView.ItemsLayout>
+                            <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Label Text="Ürün bulunamadı." Style="{StaticResource Muted}" HorizontalOptions="Center" Margin="0,30,0,0" />
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="p:MenuProductVm">
+                                <Border StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource BorderColor}" StrokeThickness="1" Padding="0">
+                                    <Grid RowDefinitions="80,*,Auto">
+                                        <Image Grid.Row="0" Source="{Binding ImageUrl}" Aspect="AspectFill" IsVisible="{Binding ShowImage}" />
+                                        <Border Grid.Row="0" BackgroundColor="{DynamicResource SurfaceAlt}" StrokeThickness="0" IsVisible="{Binding ShowPlaceholder}">
+                                            <Label Text="🍴" FontSize="30" HorizontalOptions="Center" VerticalOptions="Center" Opacity="0.5" />
+                                        </Border>
+                                        <VerticalStackLayout Grid.Row="1" Padding="10,6,10,0" Spacing="1">
+                                            <Label Text="{Binding Name}" TextColor="{DynamicResource TextColor}" FontAttributes="Bold" MaxLines="2" FontSize="14" />
+                                            <Label Text="{Binding Description}" IsVisible="{Binding HasDescription}" TextColor="{DynamicResource TextMuted}" FontSize="11" MaxLines="2" />
+                                            <Label Text="{Binding PriceText}" TextColor="{DynamicResource Accent}" FontSize="14" FontAttributes="Bold" Margin="0,2,0,0" />
+                                        </VerticalStackLayout>
+                                        <Button Grid.Row="2" Text="+ Ekle" Clicked="Add_Clicked" Style="{StaticResource PrimaryButton}" HeightRequest="40" CornerRadius="0" Margin="0,6,0,0" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Alt eylem çubuğu -->
+                    <VerticalStackLayout Grid.Row="4" Padding="12,8" Spacing="8" BackgroundColor="{DynamicResource Surface}">
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Text="Özet" Clicked="Summary_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                                <Button Text="Yazdır" Clicked="Reprint_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                                <Button Text="Genel Not" Clicked="Note_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                                <Button Text="Sıfırla" Clicked="Reset_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                            </HorizontalStackLayout>
+                        </ScrollView>
+                        <Button x:Name="SendBtn" Text="Sepet boş — menüden ürün ekleyin" Clicked="Send_Clicked"
+                                Style="{StaticResource PrimaryButton}" HeightRequest="52" />
+                    </VerticalStackLayout>
+                  </Grid>
+
+                  <!-- ===== CANLI SEPET / ADİSYON ÖZETİ (geniş ekran yan panel) ===== -->
+                  <Border x:Name="CartPanel" Grid.Column="1" IsVisible="False" WidthRequest="280"
+                          StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource Surface}"
+                          Stroke="{DynamicResource BorderColor}" StrokeThickness="1" Margin="0,4,12,12" Padding="0">
+                      <Grid RowDefinitions="Auto,*,Auto">
+                          <!-- Başlık -->
+                          <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="14,12" BackgroundColor="{DynamicResource SurfaceAlt}">
+                              <VerticalStackLayout>
+                                  <Label Text="🧾 Canlı Adisyon" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" />
+                                  <Label x:Name="CartCountLabel" Text="Sepet boş" FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                              </VerticalStackLayout>
+                          </Grid>
+
+                          <!-- Satırlar -->
+                          <ScrollView Grid.Row="1">
+                              <VerticalStackLayout Padding="10,8">
+                                  <Label x:Name="CartEmptyLabel" Text="Menüden ürün ekleyin." Style="{StaticResource Muted}" HorizontalOptions="Center" Margin="0,30,0,0" />
+                                  <CollectionView x:Name="CartView" SelectionMode="None" IsVisible="False">
+                                      <CollectionView.ItemTemplate>
+                                          <DataTemplate x:DataType="p:CartLineVm">
+                                              <Grid ColumnDefinitions="Auto,*,Auto" Padding="2,5" ColumnSpacing="8">
+                                                  <Label Text="{Binding QtyText}" FontSize="13" FontAttributes="Bold" TextColor="{Binding StatusColor}" VerticalOptions="Center" />
+                                                  <VerticalStackLayout Grid.Column="1">
+                                                      <Label Text="{Binding Name}" FontSize="13" FontAttributes="Bold" TextColor="{Binding NameColor}" MaxLines="2" />
+                                                      <Label Text="{Binding StatusText}" FontSize="10" TextColor="{Binding StatusColor}" />
+                                                  </VerticalStackLayout>
+                                                  <Label Grid.Column="2" Text="{Binding TotalText}" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" VerticalOptions="Center" />
+                                              </Grid>
+                                          </DataTemplate>
+                                      </CollectionView.ItemTemplate>
+                                  </CollectionView>
+                              </VerticalStackLayout>
+                          </ScrollView>
+
+                          <!-- Toplam + Gönder -->
+                          <VerticalStackLayout Grid.Row="2" Padding="12,10" Spacing="8" BackgroundColor="{DynamicResource SurfaceAlt}">
+                              <Grid ColumnDefinitions="*,Auto">
+                                  <Label Text="TOPLAM" FontSize="11" FontAttributes="Bold" TextColor="{DynamicResource TextMuted}" VerticalOptions="Center" />
+                                  <Label x:Name="CartTotalLabel" Grid.Column="1" Text="₺0,00" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource Accent}" />
+                              </Grid>
+                              <Button x:Name="CartSendBtn" Text="Bekleyen yok" Clicked="Send_Clicked" Style="{StaticResource PrimaryButton}" HeightRequest="46" IsEnabled="False" />
+                          </VerticalStackLayout>
+                      </Grid>
+                  </Border>
+                </Grid>
+
+                <!-- ===== ADİSYON ===== -->
+                <Grid x:Name="AdisyonView" IsVisible="False" RowDefinitions="Auto,*,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="14,8">
+                        <Label Text="Masa Siparişleri" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" />
+                        <Label x:Name="DateLabel" Grid.Column="1" Text="" FontSize="12" TextColor="{DynamicResource TextMuted}" VerticalOptions="Center" />
+                    </Grid>
+                    <CollectionView Grid.Row="1" x:Name="LinesView" Margin="10,0,10,10">
+                        <CollectionView.EmptyView>
+                            <Label Text="Bu masada sipariş yok." Style="{StaticResource Muted}" HorizontalOptions="Center" Margin="0,40,0,0" />
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="p:LineV2Vm">
+                                <Border StrokeShape="RoundRectangle 12" BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource BorderColor}" StrokeThickness="1" Padding="12,10" Margin="0,0,0,8">
+                                    <!-- Satıra dokunma: açıklama / iptal aksiyon menüsü (gönderilmiş satırlar dahil) -->
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="Line_Tapped" />
+                                    </Border.GestureRecognizers>
+                                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                        <VerticalStackLayout Grid.Row="0" Grid.Column="0">
+                                            <Label Text="{Binding Name}" TextColor="{DynamicResource TextColor}" FontAttributes="Bold" FontSize="15" />
+                                            <Label Text="{Binding StatusText}" FontSize="11" TextColor="{Binding StatusColor}" FontAttributes="Bold" />
+                                            <Label Text="{Binding UnitText, StringFormat='Birim: {0}'}" FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TotalText}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" VerticalOptions="Center" />
+                                        <!-- Açıklama / mutfak notu (varsa) -->
+                                        <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding NoteText}" FontSize="12" TextColor="{DynamicResource Accent}" Margin="0,6,0,0" IsVisible="{Binding HasNote}" />
+                                        <!-- Düzenleme satırı -->
+                                        <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto" ColumnSpacing="6" Margin="0,8,0,0" IsVisible="{Binding Editable}">
+                                            <Button Text="−" FontSize="18" FontAttributes="Bold" Clicked="LineMinus_Clicked" BackgroundColor="{DynamicResource ButtonColor}" TextColor="{DynamicResource TextColor}" CornerRadius="8" Padding="0" WidthRequest="40" HeightRequest="36" />
+                                            <Label Grid.Column="1" Text="{Binding QtyText}" FontAttributes="Bold" FontSize="15" TextColor="{DynamicResource TextColor}" VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="40" />
+                                            <Button Grid.Column="2" Text="+" FontSize="18" FontAttributes="Bold" Clicked="LinePlus_Clicked" BackgroundColor="{DynamicResource Accent}" TextColor="White" CornerRadius="8" Padding="0" WidthRequest="40" HeightRequest="36" />
+                                            <Button Grid.Column="4" Text="📝" FontSize="15" Clicked="LineNote_Clicked" BackgroundColor="{DynamicResource ButtonColor}" TextColor="{DynamicResource TextColor}" CornerRadius="8" Padding="0" WidthRequest="44" HeightRequest="36" />
+                                            <Button Grid.Column="5" Text="İptal" Clicked="LineCancel_Clicked" BackgroundColor="{DynamicResource Danger}" TextColor="White" CornerRadius="8" Padding="14,4" HeightRequest="36" />
+                                        </Grid>
+                                        <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding QtyText, StringFormat='Adet: {0}'}" FontSize="12" TextColor="{DynamicResource TextMuted}" Margin="0,6,0,0" IsVisible="{Binding NotEditable}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <!-- Ödeme (yalnız ödeme yetkili rolde görünür; CanPay code-behind'de ayarlanır) -->
+                    <VerticalStackLayout Grid.Row="2" x:Name="PayBar" IsVisible="False" Padding="12,8" BackgroundColor="{DynamicResource Surface}">
+                        <Button x:Name="PayBtn" Text="💳 Ödeme Al" Clicked="Pay_Clicked" Style="{StaticResource PrimaryButton}" HeightRequest="52" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ===== MASA NOTU MODAL ===== -->
+        <Grid x:Name="NoteOverlay" IsVisible="False" BackgroundColor="#99000000">
+            <Border VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="340"
+                    StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource BorderColor}" Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Masa Notu" FontSize="17" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" />
+
+                    <Label Text="Hızlı Notlar" Style="{StaticResource FieldLabel}" />
+                    <FlexLayout x:Name="NoteGeneralFlex">
+                        <CollectionView x:Name="NoteGeneralView" SelectionMode="None" HeightRequest="40">
+                            <CollectionView.ItemsLayout><LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" /></CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Border StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource SurfaceAlt}" Stroke="{DynamicResource BorderColor}" Padding="10,4">
+                                        <Border.GestureRecognizers><TapGestureRecognizer Tapped="NoteGeneral_Tapped" /></Border.GestureRecognizers>
+                                        <Label Text="{Binding .}" TextColor="{DynamicResource TextColor}" FontSize="12" />
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </FlexLayout>
+
+                    <Label Text="Alerji" Style="{StaticResource FieldLabel}" />
+                    <CollectionView x:Name="NoteAllergyView" SelectionMode="None" HeightRequest="40">
+                        <CollectionView.ItemsLayout><LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" /></CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Border StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource SurfaceAlt}" Stroke="{DynamicResource Danger}" StrokeThickness="1" Padding="10,4">
+                                    <Border.GestureRecognizers><TapGestureRecognizer Tapped="NoteAllergy_Tapped" /></Border.GestureRecognizers>
+                                    <Label Text="{Binding .}" TextColor="{DynamicResource TextColor}" FontSize="12" />
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <Label x:Name="AllergyLabel" IsVisible="False" FontSize="11" TextColor="{DynamicResource Danger}" />
+
+                    <HorizontalStackLayout Spacing="18" Margin="0,4,0,0">
+                        <HorizontalStackLayout Spacing="6">
+                            <Switch x:Name="VipSwitch" />
+                            <Label Text="⭐ VIP" VerticalOptions="Center" TextColor="{DynamicResource TextColor}" FontAttributes="Bold" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Spacing="6">
+                            <Switch x:Name="PrioritySwitch" />
+                            <Label Text="⏫ Öncelik" VerticalOptions="Center" TextColor="{DynamicResource TextColor}" FontAttributes="Bold" />
+                        </HorizontalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <Border StrokeShape="RoundRectangle 10" BackgroundColor="{DynamicResource SurfaceAlt}" Stroke="{DynamicResource BorderColor}" Padding="6">
+                        <Editor x:Name="NoteEditor" Placeholder="Not yazın…" HeightRequest="80" BackgroundColor="Transparent"
+                                TextColor="{DynamicResource TextColor}" PlaceholderColor="{DynamicResource TextMuted}" />
+                    </Border>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" Margin="0,4,0,0">
+                        <Button Text="Kaldır" Clicked="NoteClear_Clicked" BackgroundColor="{DynamicResource Danger}" TextColor="White" CornerRadius="10" Padding="14,6" />
+                        <Button Grid.Column="2" Text="Vazgeç" Clicked="NoteCancel_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                        <Button Grid.Column="3" Text="Kaydet" Clicked="NoteSave_Clicked" Style="{StaticResource PrimaryButton}" HeightRequest="40" Padding="16,0" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- ===== KALEM SEÇİM MODALI (Böl / Kişi Aktar) ===== -->
+        <Grid x:Name="LinePickOverlay" IsVisible="False" BackgroundColor="#99000000">
+            <Border VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="360"
+                    StrokeShape="RoundRectangle 16" BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource BorderColor}" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label x:Name="LinePickTitle" Text="Kalem Seçin" FontSize="17" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" />
+                    <CollectionView x:Name="LinePickView" SelectionMode="None" HeightRequest="320">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="p:PickLineVm">
+                                <Border StrokeShape="RoundRectangle 10" BackgroundColor="{Binding BgColor}" Stroke="{Binding StrokeColor}" StrokeThickness="1" Padding="10,8" Margin="0,0,0,6">
+                                    <Border.GestureRecognizers><TapGestureRecognizer Tapped="PickLine_Tapped" /></Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+                                        <Label Text="{Binding Check}" FontSize="16" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding QtyText}" FontAttributes="Bold" TextColor="{DynamicResource Accent}" VerticalOptions="Center" />
+                                        <Label Grid.Column="2" Text="{Binding Name}" TextColor="{DynamicResource TextColor}" VerticalOptions="Center" MaxLines="2" />
+                                        <Label Grid.Column="3" Text="{Binding TotalText}" FontAttributes="Bold" TextColor="{DynamicResource TextColor}" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                        <Button Text="Tümü" Clicked="PickLineAll_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                        <Button Grid.Column="1" Text="Vazgeç" Clicked="PickLineCancel_Clicked" Style="{StaticResource GhostButton}" Padding="14,6" />
+                        <Button Grid.Column="2" x:Name="PickLineGoBtn" Text="Devam →" Clicked="PickLineGo_Clicked" Style="{StaticResource PrimaryButton}" HeightRequest="40" Padding="16,0" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- ===== ANLIK BİLDİRİM (toast) ===== -->
+        <Border x:Name="ToastBorder" IsVisible="False" InputTransparent="True"
+                VerticalOptions="End" HorizontalOptions="Center" Margin="0,0,0,90"
+                StrokeShape="RoundRectangle 22" BackgroundColor="{DynamicResource Accent}" StrokeThickness="0" Padding="18,10">
+            <Label x:Name="ToastLabel" Text="" TextColor="White" FontSize="13.5" FontAttributes="Bold" />
+        </Border>
+    </Grid>
+</ContentPage>

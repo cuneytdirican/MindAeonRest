@@ -1,0 +1,137 @@
+@page "{id:int?}"
+@model MindAeonRestWeb.Pages.BackOffice.Personnel.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Yeni Personel" : $"Personel · {Model.Code}";
+    Layout = "_BackOfficeLayout";
+}
+
+<div class="bo-page-head">
+    <h1>👷 @(Model.IsNew ? "Yeni Personel" : "Personel Düzenle")</h1>
+    <a class="btn btn-ghost" href="/BackOffice/Personnel">← Liste</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">@Model.Error</div>
+}
+
+<div class="bo-card bo-form">
+    <form method="post">
+        <div class="frm-row">
+            <label>Kod *</label>
+            <input asp-for="Code" class="field up" maxlength="50" autocomplete="off" required />
+            <small class="hint">Firma bazında benzersiz; otomatik BÜYÜK harfe çevrilir.</small>
+        </div>
+        <div class="frm-row">
+            <label>Ad Soyad *</label>
+            <input asp-for="Name" class="field" maxlength="150" required />
+        </div>
+        <div class="frm-row">
+            <label>Görev</label>
+            <input asp-for="Title" class="field" maxlength="100" />
+        </div>
+        <div class="frm-row">
+            <label>Departman</label>
+            <input asp-for="Department" class="field" maxlength="100" />
+        </div>
+        <div class="frm-row">
+            <label>TC Kimlik</label>
+            <input asp-for="NationalId" class="field" maxlength="20" />
+        </div>
+        <div class="frm-row">
+            <label>Telefon</label>
+            <input asp-for="Phone" class="field" maxlength="30" />
+        </div>
+        <div class="frm-row">
+            <label>Şube</label>
+            <select asp-for="BranchId" asp-items="Model.BranchOptions" class="field"></select>
+        </div>
+        <div class="frm-row">
+            <label>İşe Giriş</label>
+            <input asp-for="HireDate" type="date" class="field" />
+        </div>
+        <div class="frm-row">
+            <label>Maaş</label>
+            <input asp-for="Salary" type="number" step="0.01" min="0" class="field" />
+        </div>
+        <div class="frm-row">
+            <label class="chk"><input asp-for="IsActive" type="checkbox" /> Aktif</label>
+        </div>
+
+        <div class="frm-row">
+            <label>İzinler</label>
+            <small class="hint">Personelin yıllık/ücretsiz/hastalık vb. izin kayıtları. Gün sayısı tarih aralığından hesaplanır.</small>
+            <table class="bo-table" id="leavesTable" style="margin-top:8px">
+                <thead>
+                    <tr><th style="width:24%">Tür</th><th style="width:22%">Başlangıç</th><th style="width:22%">Bitiş</th><th>Açıklama</th><th class="ar" style="width:10%">—</th></tr>
+                </thead>
+                <tbody id="leavesBody">
+                @for (int i = 0; i < Model.Leaves.Count; i++)
+                {
+                    <tr class="leave-row">
+                        <td>
+                            <input type="hidden" name="Leaves[@i].Id" value="@Model.Leaves[i].Id" />
+                            <select name="Leaves[@i].LeaveType" class="field">
+                                @foreach (var (val, text) in MindAeonRestWeb.Pages.BackOffice.Personnel.EditModel.LeaveTypeOptions)
+                                {
+                                    <option value="@val" selected="@(Model.Leaves[i].LeaveType == val)">@text</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input name="Leaves[@i].StartDate" value="@Model.Leaves[i].StartDate" type="date" class="field" /></td>
+                        <td><input name="Leaves[@i].EndDate" value="@Model.Leaves[i].EndDate" type="date" class="field" /></td>
+                        <td><input name="Leaves[@i].Note" value="@Model.Leaves[i].Note" maxlength="250" class="field" /></td>
+                        <td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeLeave(this)">Sil</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm" onclick="addLeave()" style="margin-top:8px">+ İzin Ekle</button>
+        </div>
+
+        <div class="frm-actions">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/BackOffice/Personnel" class="btn btn-ghost">Vazgeç</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Kod alanı: elle BÜYÜK harf (server CodeHelper.Normalize ile de garanti).
+        document.querySelector('input[name="Code"]')?.addEventListener('input', e => e.target.value = e.target.value.toLocaleUpperCase('tr-TR'));
+
+        const LEAVE_OPTIONS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            MindAeonRestWeb.Pages.BackOffice.Personnel.EditModel.LeaveTypeOptions.Select(o => new { v = o.Value, t = o.Text })));
+        const DEFAULT_LEAVE = @((int)MindAeonRest.Models.LeaveType.Yillik);
+
+        function reindex() {
+            document.querySelectorAll('#leavesBody .leave-row').forEach((row, i) => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/Leaves\[\d+\]/, 'Leaves[' + i + ']');
+                });
+            });
+        }
+
+        function addLeave() {
+            const body = document.getElementById('leavesBody');
+            const i = body.querySelectorAll('.leave-row').length;
+            const opts = LEAVE_OPTIONS.map(o => `<option value="${o.v}" ${o.v === DEFAULT_LEAVE ? 'selected' : ''}>${o.t}</option>`).join('');
+            const today = new Date().toISOString().slice(0, 10);
+            const tr = document.createElement('tr');
+            tr.className = 'leave-row';
+            tr.innerHTML =
+                `<td><input type="hidden" name="Leaves[${i}].Id" value="0" /><select name="Leaves[${i}].LeaveType" class="field">${opts}</select></td>` +
+                `<td><input name="Leaves[${i}].StartDate" value="${today}" type="date" class="field" /></td>` +
+                `<td><input name="Leaves[${i}].EndDate" value="${today}" type="date" class="field" /></td>` +
+                `<td><input name="Leaves[${i}].Note" value="" maxlength="250" class="field" /></td>` +
+                `<td class="ar"><button type="button" class="btn btn-sm btn-danger" onclick="removeLeave(this)">Sil</button></td>`;
+            body.appendChild(tr);
+        }
+
+        function removeLeave(btn) {
+            btn.closest('.leave-row')?.remove();
+            reindex();
+        }
+    </script>
+}
