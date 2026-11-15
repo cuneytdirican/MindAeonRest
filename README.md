@@ -2,8 +2,13 @@
 
 MindAeonRest, restoranlar ve kafeler için geliştirilmiş çok kiracılı (multi-tenant) bir adisyon, POS ve işletme yönetimi platformudur. Masa/QR siparişi, mutfak ekranı, kasa, stok, cari, raporlama, sadakat ve online rezervasyon modüllerini tek ekosistemde birleştirir.
 
-> **Bu proje Mindaeon ile geliştirilmiştir.**
-> İsteyen herkes projeyi **ücretsiz** olarak kullanabilir; **ticari kullanım dahil** her türlü kullanıma açıktır. Lisans: **MIT** (bkz. [LICENSE](LICENSE)).
+## Geliştirme
+
+Bu yazılım, **Mindaeon** ile geliştirilmiştir.
+
+## Kullanım ve Lisans
+
+MindAeonRest, **MIT Lisansı** kapsamında; **ticari kullanım dahil** olmak üzere herkesin ücretsiz olarak kullanımına, kopyalamasına, değiştirmesine ve dağıtmasına açıktır. Lisans koşullarının tamamı için [LICENSE](LICENSE) dosyasına başvurulmalıdır.
 
 ## Özellikler
 
