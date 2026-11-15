@@ -35,3 +35,7 @@ App_Data/
 
 # Kişisel IDE ayarları
 .cr/
+
+# Ajan / araç durum dosyaları
+.mindcode/
+.claude/scheduled_tasks.lock
