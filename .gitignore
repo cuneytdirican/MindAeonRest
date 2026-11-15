@@ -38,4 +38,6 @@ App_Data/
 
 # Ajan / araç durum dosyaları
 .mindcode/
+.mindaeon/
+.playwright-mcp/
 .claude/scheduled_tasks.lock
