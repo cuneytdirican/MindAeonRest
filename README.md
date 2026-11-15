@@ -4,7 +4,7 @@ MindAeonRest, restoranlar ve kafeler için geliştirilmiş çok kiracılı (mult
 
 ## Geliştirme
 
-Bu yazılım, **Mindaeon** ile geliştirilmiştir.
+Bu yazılım, **[Mindaeon](https://mindaeon.ai)** ile geliştirilmiştir.
 
 ## Kullanım ve Lisans
 
